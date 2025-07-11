@@ -3926,6 +3926,7 @@ const FamApp = () => {
     };
     
     return (
+      <>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b">
@@ -6992,6 +6993,247 @@ const FamApp = () => {
           </div>
         )}
       </div>
+      
+      {/* Add Traveler Modal */}
+      {showAddTravelerModal && (() => {
+        console.log('Modal is rendering!');
+        return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" style={{backgroundColor: 'rgba(0,0,0,0.8)'}} onClick={() => console.log('Modal overlay clicked')}>
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold">Add Traveler</h2>
+              <Button variant="ghost" size="sm" onClick={() => {
+                setShowAddTravelerModal(false);
+                setNewTravelerForm({
+                  name: '',
+                  type: 'adult',
+                  age: '',
+                  relationship: '',
+                  email: ''
+                });
+              }}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            
+            <div className="p-6">
+              {/* Existing Family Members */}
+              {(() => {
+                // Get all family profiles not currently on the trip
+                const availableProfiles = familyProfiles.filter(profile => {
+                  // Check if this profile is already on the trip
+                  const isAdult = profile.type === 'adult';
+                  const currentMembers = isAdult ? (tripData.adults || []) : (tripData.kids || []);
+                  return !currentMembers.some(member => member.name === profile.name);
+                });
+                
+                if (availableProfiles.length > 0) {
+                  return (
+                    <div className="mb-8">
+                      <h3 className="text-lg font-medium mb-4">Add Existing Family Members</h3>
+                      <div className="space-y-3">
+                        {availableProfiles.map((profile) => (
+                          <div key={profile.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                profile.type === 'adult' ? 'bg-blue-100' : 'bg-pink-100'
+                              }`}>
+                                <span className={`text-sm font-medium ${
+                                  profile.type === 'adult' ? 'text-blue-700' : 'text-pink-700'
+                                }`}>
+                                  {profile.name?.[0] || (profile.type === 'adult' ? 'A' : 'K')}
+                                </span>
+                              </div>
+                              <div>
+                                <div className="font-medium">{profile.name}</div>
+                                <div className="text-sm text-gray-500">
+                                  {profile.relationship || (profile.type === 'adult' ? 'Adult' : 'Child')}
+                                  {profile.age && ` (${profile.age})`}
+                                </div>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                // Add this profile to the current trip
+                                const updatedTripData = { ...tripData };
+                                
+                                if (profile.type === 'adult') {
+                                  updatedTripData.adults = [...(tripData.adults || []), profile];
+                                } else {
+                                  updatedTripData.kids = [...(tripData.kids || []), profile];
+                                }
+                                
+                                setTripData(updatedTripData);
+                                
+                                // Update user trips
+                                const updatedTrips = userTrips.map(trip => 
+                                  trip.id === tripData.id ? updatedTripData : trip
+                                );
+                                setUserTrips(updatedTrips);
+                                
+                                // Save to localStorage
+                                localStorage.setItem('famapp-user-trips', JSON.stringify(updatedTrips));
+                              }}
+                            >
+                              Add to Trip
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+              
+              {/* Create New Family Member */}
+              <div>
+                <h3 className="text-lg font-medium mb-4">Create New Family Member</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="new-traveler-name">Name *</Label>
+                      <Input
+                        id="new-traveler-name"
+                        value={newTravelerForm.name}
+                        onChange={(e) => setNewTravelerForm(prev => ({...prev, name: e.target.value}))}
+                        placeholder="Enter name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="new-traveler-type">Type</Label>
+                      <Select 
+                        value={newTravelerForm.type} 
+                        onValueChange={(value: 'adult' | 'child') => setNewTravelerForm(prev => ({...prev, type: value}))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="adult">Adult</SelectItem>
+                          <SelectItem value="child">Child</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="new-traveler-age">Age</Label>
+                      <Input
+                        id="new-traveler-age"
+                        value={newTravelerForm.age}
+                        onChange={(e) => setNewTravelerForm(prev => ({...prev, age: e.target.value}))}
+                        placeholder="e.g., 32, 8 years old"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="new-traveler-relationship">Relationship</Label>
+                      <Select 
+                        value={newTravelerForm.relationship} 
+                        onValueChange={(value) => setNewTravelerForm(prev => ({...prev, relationship: value}))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select relationship" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {newTravelerForm.type === 'adult' ? (
+                            <>
+                              <SelectItem value="Mom">Mom</SelectItem>
+                              <SelectItem value="Dad">Dad</SelectItem>
+                              <SelectItem value="Grandma">Grandma</SelectItem>
+                              <SelectItem value="Grandpa">Grandpa</SelectItem>
+                              <SelectItem value="Parent">Parent</SelectItem>
+                              <SelectItem value="Guardian">Guardian</SelectItem>
+                              <SelectItem value="Family Friend">Family Friend</SelectItem>
+                            </>
+                          ) : (
+                            <>
+                              <SelectItem value="Son">Son</SelectItem>
+                              <SelectItem value="Daughter">Daughter</SelectItem>
+                              <SelectItem value="Child">Child</SelectItem>
+                            </>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  {newTravelerForm.type === 'adult' && (
+                    <div>
+                      <Label htmlFor="new-traveler-email">Email</Label>
+                      <Input
+                        id="new-traveler-email"
+                        type="email"
+                        value={newTravelerForm.email}
+                        onChange={(e) => setNewTravelerForm(prev => ({...prev, email: e.target.value}))}
+                        placeholder="email@example.com"
+                      />
+                    </div>
+                  )}
+                  
+                  <Button 
+                    onClick={() => {
+                      if (!newTravelerForm.name.trim()) return;
+                      
+                      // Create new family member
+                      const newMember: FamilyMember = {
+                        id: Date.now().toString(),
+                        name: newTravelerForm.name,
+                        type: newTravelerForm.type,
+                        age: newTravelerForm.age,
+                        relationship: newTravelerForm.relationship,
+                        email: newTravelerForm.email,
+                        createdAt: new Date().toISOString()
+                      };
+                      
+                      // Add to family profiles
+                      const updatedProfiles = [...familyProfiles, newMember];
+                      setFamilyProfiles(updatedProfiles);
+                      localStorage.setItem('famapp-family-profiles', JSON.stringify(updatedProfiles));
+                      
+                      // Add to current trip
+                      const updatedTripData = { ...tripData };
+                      if (newTravelerForm.type === 'adult') {
+                        updatedTripData.adults = [...(tripData.adults || []), newMember];
+                      } else {
+                        updatedTripData.kids = [...(tripData.kids || []), newMember];
+                      }
+                      
+                      setTripData(updatedTripData);
+                      
+                      // Update user trips
+                      const updatedTrips = userTrips.map(trip => 
+                        trip.id === tripData.id ? updatedTripData : trip
+                      );
+                      setUserTrips(updatedTrips);
+                      localStorage.setItem('famapp-user-trips', JSON.stringify(updatedTrips));
+                      
+                      // Reset form and close modal
+                      setNewTravelerForm({
+                        name: '',
+                        type: 'adult',
+                        age: '',
+                        relationship: '',
+                        email: ''
+                      });
+                      setShowAddTravelerModal(false);
+                    }}
+                    disabled={!newTravelerForm.name.trim()}
+                    className="w-full"
+                  >
+                    Create & Add to Trip
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
+      </>
     );
   }
   // Trip wizard view
@@ -7088,246 +7330,6 @@ const FamApp = () => {
         )}
       </div>
     </div>
-    
-    {/* Add Traveler Modal */}
-    {showAddTravelerModal && (() => {
-      console.log('Modal is rendering!');
-      return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" style={{backgroundColor: 'rgba(0,0,0,0.8)'}} onClick={() => console.log('Modal overlay clicked')}>
-        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-            <h2 className="text-xl font-bold">Add Traveler</h2>
-            <Button variant="ghost" size="sm" onClick={() => {
-              setShowAddTravelerModal(false);
-              setNewTravelerForm({
-                name: '',
-                type: 'adult',
-                age: '',
-                relationship: '',
-                email: ''
-              });
-            }}>
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
-          
-          <div className="p-6">
-            {/* Existing Family Members */}
-            {(() => {
-              // Get all family profiles not currently on the trip
-              const availableProfiles = familyProfiles.filter(profile => {
-                // Check if this profile is already on the trip
-                const isAdult = profile.type === 'adult';
-                const currentMembers = isAdult ? (tripData.adults || []) : (tripData.kids || []);
-                return !currentMembers.some(member => member.name === profile.name);
-              });
-              
-              if (availableProfiles.length > 0) {
-                return (
-                  <div className="mb-8">
-                    <h3 className="text-lg font-medium mb-4">Add Existing Family Members</h3>
-                    <div className="space-y-3">
-                      {availableProfiles.map((profile) => (
-                        <div key={profile.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                              profile.type === 'adult' ? 'bg-blue-100' : 'bg-pink-100'
-                            }`}>
-                              <span className={`text-sm font-medium ${
-                                profile.type === 'adult' ? 'text-blue-700' : 'text-pink-700'
-                              }`}>
-                                {profile.name?.[0] || (profile.type === 'adult' ? 'A' : 'K')}
-                              </span>
-                            </div>
-                            <div>
-                              <div className="font-medium">{profile.name}</div>
-                              <div className="text-sm text-gray-500">
-                                {profile.relationship || (profile.type === 'adult' ? 'Adult' : 'Child')}
-                                {profile.age && ` (${profile.age})`}
-                              </div>
-                            </div>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              // Add this profile to the current trip
-                              const updatedTripData = { ...tripData };
-                              
-                              if (profile.type === 'adult') {
-                                updatedTripData.adults = [...(tripData.adults || []), profile];
-                              } else {
-                                updatedTripData.kids = [...(tripData.kids || []), profile];
-                              }
-                              
-                              setTripData(updatedTripData);
-                              
-                              // Update user trips
-                              const updatedTrips = userTrips.map(trip => 
-                                trip.id === tripData.id ? updatedTripData : trip
-                              );
-                              setUserTrips(updatedTrips);
-                              
-                              // Save to localStorage
-                              localStorage.setItem('famapp-user-trips', JSON.stringify(updatedTrips));
-                            }}
-                          >
-                            Add to Trip
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              }
-              return null;
-            })()}
-            
-            {/* Create New Family Member */}
-            <div>
-              <h3 className="text-lg font-medium mb-4">Create New Family Member</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="new-traveler-name">Name *</Label>
-                    <Input
-                      id="new-traveler-name"
-                      value={newTravelerForm.name}
-                      onChange={(e) => setNewTravelerForm(prev => ({...prev, name: e.target.value}))}
-                      placeholder="Enter name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="new-traveler-type">Type</Label>
-                    <Select 
-                      value={newTravelerForm.type} 
-                      onValueChange={(value: 'adult' | 'child') => setNewTravelerForm(prev => ({...prev, type: value}))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="adult">Adult</SelectItem>
-                        <SelectItem value="child">Child</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="new-traveler-age">Age</Label>
-                    <Input
-                      id="new-traveler-age"
-                      value={newTravelerForm.age}
-                      onChange={(e) => setNewTravelerForm(prev => ({...prev, age: e.target.value}))}
-                      placeholder="e.g., 32, 8 years old"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="new-traveler-relationship">Relationship</Label>
-                    <Select 
-                      value={newTravelerForm.relationship} 
-                      onValueChange={(value) => setNewTravelerForm(prev => ({...prev, relationship: value}))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select relationship" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {newTravelerForm.type === 'adult' ? (
-                          <>
-                            <SelectItem value="Mom">Mom</SelectItem>
-                            <SelectItem value="Dad">Dad</SelectItem>
-                            <SelectItem value="Grandma">Grandma</SelectItem>
-                            <SelectItem value="Grandpa">Grandpa</SelectItem>
-                            <SelectItem value="Parent">Parent</SelectItem>
-                            <SelectItem value="Guardian">Guardian</SelectItem>
-                            <SelectItem value="Family Friend">Family Friend</SelectItem>
-                          </>
-                        ) : (
-                          <>
-                            <SelectItem value="Son">Son</SelectItem>
-                            <SelectItem value="Daughter">Daughter</SelectItem>
-                            <SelectItem value="Child">Child</SelectItem>
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                {newTravelerForm.type === 'adult' && (
-                  <div>
-                    <Label htmlFor="new-traveler-email">Email</Label>
-                    <Input
-                      id="new-traveler-email"
-                      type="email"
-                      value={newTravelerForm.email}
-                      onChange={(e) => setNewTravelerForm(prev => ({...prev, email: e.target.value}))}
-                      placeholder="email@example.com"
-                    />
-                  </div>
-                )}
-                
-                <Button 
-                  onClick={() => {
-                    if (!newTravelerForm.name.trim()) return;
-                    
-                    // Create new family member
-                    const newMember: FamilyMember = {
-                      id: Date.now().toString(),
-                      name: newTravelerForm.name,
-                      type: newTravelerForm.type,
-                      age: newTravelerForm.age,
-                      relationship: newTravelerForm.relationship,
-                      email: newTravelerForm.email,
-                      createdAt: new Date().toISOString()
-                    };
-                    
-                    // Add to family profiles
-                    const updatedProfiles = [...familyProfiles, newMember];
-                    setFamilyProfiles(updatedProfiles);
-                    localStorage.setItem('famapp-family-profiles', JSON.stringify(updatedProfiles));
-                    
-                    // Add to current trip
-                    const updatedTripData = { ...tripData };
-                    if (newTravelerForm.type === 'adult') {
-                      updatedTripData.adults = [...(tripData.adults || []), newMember];
-                    } else {
-                      updatedTripData.kids = [...(tripData.kids || []), newMember];
-                    }
-                    
-                    setTripData(updatedTripData);
-                    
-                    // Update user trips
-                    const updatedTrips = userTrips.map(trip => 
-                      trip.id === tripData.id ? updatedTripData : trip
-                    );
-                    setUserTrips(updatedTrips);
-                    localStorage.setItem('famapp-user-trips', JSON.stringify(updatedTrips));
-                    
-                    // Reset form and close modal
-                    setNewTravelerForm({
-                      name: '',
-                      type: 'adult',
-                      age: '',
-                      relationship: '',
-                      email: ''
-                    });
-                    setShowAddTravelerModal(false);
-                  }}
-                  disabled={!newTravelerForm.name.trim()}
-                  className="w-full"
-                >
-                  Create & Add to Trip
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      );
-    })()}
     </>
   );
 };
