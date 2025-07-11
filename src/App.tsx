@@ -3129,6 +3129,7 @@ const FamApp = () => {
     arrival: '',
     date: '',
     time: '',
+    assignedMembers: [] as string[],
     confirmationNumber: '',
     status: 'confirmed'
   });
@@ -3144,6 +3145,7 @@ const FamApp = () => {
       arrival: '',
       date: '',
       time: '',
+      assignedMembers: [],
       confirmationNumber: '',
       status: 'confirmed'
     });
@@ -4213,9 +4215,8 @@ const FamApp = () => {
                       size="sm" 
                       className="w-full"
                       onClick={() => {
-                        // Navigate to wizard to add family members
-                        setCurrentView('wizard');
-                        setCurrentStep(1); // Family setup step
+                        // Navigate to family profiles to add new member
+                        setCurrentView('family-profiles');
                       }}
                     >
                       <UserPlus className="w-4 h-4 mr-2" />
@@ -4681,6 +4682,42 @@ const FamApp = () => {
                                           </p>
                                         )}
                                         
+                                        {/* Assigned Family Members */}
+                                        {transport.assignedMembers && transport.assignedMembers.length > 0 && (
+                                          <div className="mt-2">
+                                            <p className="text-sm text-gray-600 mb-2">
+                                              <strong>Using this transport:</strong>
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                              {transport.assignedMembers.map((memberId: string) => {
+                                                // Parse member ID to get type and index
+                                                const [memberType, memberIndex] = memberId.split('-');
+                                                let member = null;
+                                                let bgColor = '';
+                                                
+                                                if (memberType === 'adult' && tripData.adults) {
+                                                  member = tripData.adults[parseInt(memberIndex)];
+                                                  bgColor = 'bg-blue-100 text-blue-700';
+                                                } else if (memberType === 'kid' && tripData.kids) {
+                                                  member = tripData.kids[parseInt(memberIndex)];
+                                                  bgColor = 'bg-pink-100 text-pink-700';
+                                                }
+                                                
+                                                if (!member) return null;
+                                                
+                                                return (
+                                                  <div key={memberId} className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${bgColor}`}>
+                                                    <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                                                      <span className="text-xs font-medium">{member.name?.[0] || (memberType === 'adult' ? 'A' : 'K')}</span>
+                                                    </div>
+                                                    <span>{member.name || (memberType === 'adult' ? 'Adult' : 'Kid')}</span>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                        
                                         {/* Confirmation number */}
                                         {transport.confirmationNumber && (
                                           <div className="mt-2 text-sm">
@@ -4982,6 +5019,7 @@ const FamApp = () => {
                                         arrival: transport.arrival || '',
                                         date: transport.date || transport.dates || '',
                                         time: transport.time || '',
+                                        assignedMembers: transport.assignedMembers || [],
                                         confirmationNumber: transport.confirmationNumber || '',
                                         status: transport.status || 'confirmed'
                                       });
@@ -5027,6 +5065,42 @@ const FamApp = () => {
                                             <strong>Date:</strong> {transport.date || transport.dates}
                                             {transport.time && <span> at {transport.time}</span>}
                                           </p>
+                                        )}
+                                        
+                                        {/* Assigned Family Members */}
+                                        {transport.assignedMembers && transport.assignedMembers.length > 0 && (
+                                          <div className="mt-2">
+                                            <p className="text-sm text-gray-600 mb-2">
+                                              <strong>Using this transport:</strong>
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                              {transport.assignedMembers.map((memberId: string) => {
+                                                // Parse member ID to get type and index
+                                                const [memberType, memberIndex] = memberId.split('-');
+                                                let member = null;
+                                                let bgColor = '';
+                                                
+                                                if (memberType === 'adult' && tripData.adults) {
+                                                  member = tripData.adults[parseInt(memberIndex)];
+                                                  bgColor = 'bg-blue-100 text-blue-700';
+                                                } else if (memberType === 'kid' && tripData.kids) {
+                                                  member = tripData.kids[parseInt(memberIndex)];
+                                                  bgColor = 'bg-pink-100 text-pink-700';
+                                                }
+                                                
+                                                if (!member) return null;
+                                                
+                                                return (
+                                                  <div key={memberId} className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${bgColor}`}>
+                                                    <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                                                      <span className="text-xs font-medium">{member.name?.[0] || (memberType === 'adult' ? 'A' : 'K')}</span>
+                                                    </div>
+                                                    <span>{member.name || (memberType === 'adult' ? 'Adult' : 'Kid')}</span>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
                                         )}
                                         
                                         {/* Confirmation number */}
@@ -6373,6 +6447,57 @@ const FamApp = () => {
                 </div>
 
                 <div>
+                  <Label>Who's Using This Transportation?</Label>
+                  <div className="space-y-2 mt-2">
+                    {/* Adults */}
+                    {tripData.adults && tripData.adults.map((adult, idx) => (
+                      <div key={`adult-${idx}`} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={transportFormData.assignedMembers?.includes(`adult-${idx}`) || false}
+                          onCheckedChange={(checked) => {
+                            const currentAssigned = transportFormData.assignedMembers || [];
+                            const memberId = `adult-${idx}`;
+                            const updatedAssigned = checked
+                              ? [...currentAssigned, memberId]
+                              : currentAssigned.filter(id => id !== memberId);
+                            setTransportFormData(prev => ({...prev, assignedMembers: updatedAssigned}));
+                          }}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-blue-700">{adult.name?.[0] || 'A'}</span>
+                          </div>
+                          <span className="text-sm">{adult.name || 'Adult'}</span>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Kids */}
+                    {tripData.kids && tripData.kids.map((kid, idx) => (
+                      <div key={`kid-${idx}`} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={transportFormData.assignedMembers?.includes(`kid-${idx}`) || false}
+                          onCheckedChange={(checked) => {
+                            const currentAssigned = transportFormData.assignedMembers || [];
+                            const memberId = `kid-${idx}`;
+                            const updatedAssigned = checked
+                              ? [...currentAssigned, memberId]
+                              : currentAssigned.filter(id => id !== memberId);
+                            setTransportFormData(prev => ({...prev, assignedMembers: updatedAssigned}));
+                          }}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-pink-100 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-pink-700">{kid.name?.[0] || 'K'}</span>
+                          </div>
+                          <span className="text-sm">{kid.name || 'Kid'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
                   <Label htmlFor="transport-confirmation">Confirmation/Reference (optional)</Label>
                   <Input id="transport-confirmation" placeholder="e.g., CAR789" />
                 </div>
@@ -6434,6 +6559,7 @@ const FamApp = () => {
                     arrival: '',
                     date: '',
                     time: '',
+                    assignedMembers: [],
                     confirmationNumber: '',
                     status: 'confirmed'
                   });
