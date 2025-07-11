@@ -3115,6 +3115,7 @@ const FamApp = () => {
     checkIn: '',
     checkOut: '',
     details: '',
+    roomQuantity: '1',
     status: 'confirmed',
     confirmationNumber: ''
   });
@@ -3129,6 +3130,22 @@ const FamApp = () => {
     confirmationNumber: '',
     status: 'confirmed'
   });
+
+  // Helper function to reset transportation modal
+  const resetTransportationModal = () => {
+    setShowTransportModal(false);
+    setEditingTransportationIndex(null);
+    setTransportFormData({
+      type: 'driving',
+      details: '',
+      departure: '',
+      arrival: '',
+      date: '',
+      time: '',
+      confirmationNumber: '',
+      status: 'confirmed'
+    });
+  };
   const addressInputRef = useRef<HTMLInputElement>(null);
   const [newActivity, setNewActivity] = useState({
     name: '',
@@ -4561,29 +4578,103 @@ const FamApp = () => {
                             ))}
 
                             {/* Show primary transportation (driving/train/bus) */}
-                            {tripData.transportation?.filter((t: any) => ['driving', 'train', 'bus'].includes(t.type)).map((transport: any, index: number) => (
-                              <div key={`primary-transport-${index}`} className="border rounded-lg p-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-4">
-                                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                      {transport.type === 'driving' && <Car className="w-5 h-5 text-green-600" />}
-                                      {transport.type === 'train' && <span className="text-lg">🚄</span>}
-                                      {transport.type === 'bus' && <span className="text-lg">🚌</span>}
+                            {tripData.transportation?.filter((t: any) => ['driving', 'train', 'bus'].includes(t.type)).map((transport: any, originalIndex: number) => {
+                              const getTransportIcon = (type: string) => {
+                                switch (type) {
+                                  case 'driving': return <Car className="w-6 h-6 text-green-600" />;
+                                  case 'train': return <span className="text-xl">🚄</span>;
+                                  case 'bus': return <span className="text-xl">🚌</span>;
+                                  default: return <Car className="w-6 h-6 text-green-600" />;
+                                }
+                              };
+                              
+                              const getTypeLabel = (type: string) => {
+                                switch (type) {
+                                  case 'driving': return 'Driving';
+                                  case 'train': return 'Train';
+                                  case 'bus': return 'Bus';
+                                  default: return transport.type;
+                                }
+                              };
+                              
+                              // Find the actual index in the full transportation array
+                              const actualIndex = tripData.transportation.findIndex((t: any) => t === transport);
+                              
+                              return (
+                                <div key={`primary-transport-${originalIndex}`} className="border rounded-lg p-4 relative">
+                                  {/* Edit button in top right corner */}
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => {
+                                      setEditingTransportationIndex(actualIndex);
+                                      setTransportFormData({
+                                        type: transport.type || 'driving',
+                                        details: transport.details || '',
+                                        departure: transport.departure || '',
+                                        arrival: transport.arrival || '',
+                                        date: transport.date || transport.dates || '',
+                                        time: transport.time || '',
+                                        confirmationNumber: transport.confirmationNumber || '',
+                                        status: transport.status || 'confirmed'
+                                      });
+                                      setShowTransportModal(true);
+                                    }}
+                                    className="absolute top-3 right-3 h-8 w-8 p-0 hover:bg-gray-100"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  
+                                  {/* Main transportation info */}
+                                  <div className="pr-12">
+                                    <div className="flex items-start space-x-4">
+                                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        {getTransportIcon(transport.type)}
+                                      </div>
+                                      <div className="flex-1">
+                                        {/* Transport type and status */}
+                                        <div className="flex items-center space-x-2 mb-1">
+                                          <h4 className="font-semibold text-lg">{getTypeLabel(transport.type)}</h4>
+                                          <Badge variant={transport.status === 'booked' || transport.status === 'confirmed' ? 'default' : 'secondary'}>
+                                            {transport.status || 'planned'}
+                                          </Badge>
+                                        </div>
+                                        
+                                        {/* Details */}
+                                        {transport.details && (
+                                          <p className="text-sm text-gray-600 mb-1">
+                                            <strong>Details:</strong> {transport.details}
+                                          </p>
+                                        )}
+                                        
+                                        {/* Route information */}
+                                        {transport.departure && transport.arrival && (
+                                          <p className="text-sm text-gray-600 mb-1">
+                                            <strong>Route:</strong> {transport.departure} → {transport.arrival}
+                                          </p>
+                                        )}
+                                        
+                                        {/* Date and time */}
+                                        {(transport.date || transport.dates) && (
+                                          <p className="text-sm text-gray-600 mb-1">
+                                            <strong>Date:</strong> {transport.date || transport.dates}
+                                            {transport.time && <span> at {transport.time}</span>}
+                                          </p>
+                                        )}
+                                        
+                                        {/* Confirmation number */}
+                                        {transport.confirmationNumber && (
+                                          <div className="mt-2 text-sm">
+                                            <span className="text-gray-600">Confirmation: </span>
+                                            <span className="font-medium text-gray-900">{transport.confirmationNumber}</span>
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
-                                    <div>
-                                      <h4 className="font-medium">{transport.type === 'driving' ? 'Driving' : transport.type === 'train' ? 'Train' : 'Bus'}</h4>
-                                      <p className="text-sm text-gray-500">{transport.details}</p>
-                                    </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-sm text-gray-500">{transport.dates}</p>
-                                    <Badge variant={transport.status === 'booked' ? 'default' : 'secondary'}>
-                                      {transport.status}
-                                    </Badge>
                                   </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })
 
                             <div className="flex gap-2">
                               {(!tripData.flights || tripData.flights.length === 0) && (
@@ -4686,6 +4777,7 @@ const FamApp = () => {
                                         checkIn: accommodation.checkIn || '',
                                         checkOut: accommodation.checkOut || '',
                                         details: accommodation.roomType || accommodation.details || '',
+                                        roomQuantity: accommodation.roomQuantity || '1',
                                         status: accommodation.status || 'confirmed',
                                         confirmationNumber: accommodation.confirmationNumber || ''
                                       });
@@ -4714,6 +4806,7 @@ const FamApp = () => {
                                         {/* Type and details */}
                                         <p className="text-sm text-gray-600 mb-1">
                                           <span className="font-medium">{getTypeLabel(type)}</span>
+                                          {accommodation.roomQuantity && parseInt(accommodation.roomQuantity) > 1 && <span> • {accommodation.roomQuantity} rooms</span>}
                                           {accommodation.details && <span> • {accommodation.details}</span>}
                                           {accommodation.roomType && <span> • {accommodation.roomType}</span>}
                                         </p>
@@ -4785,27 +4878,106 @@ const FamApp = () => {
                           </div>
                         ) : (
                           <div className="space-y-4">
-                            {tripData.transportation.map((transport: any, index: number) => (
-                              <div key={index} className="border rounded-lg p-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-4">
-                                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                                      <Car className="w-5 h-5 text-orange-600" />
+                            {tripData.transportation.map((transport: any, index: number) => {
+                              const getTransportIcon = (type: string) => {
+                                switch (type) {
+                                  case 'driving': return <Car className="w-6 h-6 text-orange-600" />;
+                                  case 'train': return <span className="text-xl">🚄</span>;
+                                  case 'bus': return <span className="text-xl">🚌</span>;
+                                  case 'rental': return <Car className="w-6 h-6 text-blue-600" />;
+                                  case 'taxi': return <span className="text-xl">🚕</span>;
+                                  case 'subway': return <span className="text-xl">🚇</span>;
+                                  default: return <Car className="w-6 h-6 text-orange-600" />;
+                                }
+                              };
+                              
+                              const getTypeLabel = (type: string) => {
+                                switch (type) {
+                                  case 'driving': return 'Personal Car';
+                                  case 'train': return 'Train/Railway';
+                                  case 'bus': return 'Bus/Coach';
+                                  case 'rental': return 'Rental Car';
+                                  case 'taxi': return 'Taxi/Rideshare';
+                                  case 'subway': return 'Subway/Metro';
+                                  default: return transport.type;
+                                }
+                              };
+                              
+                              return (
+                                <div key={index} className="border rounded-lg p-4 relative">
+                                  {/* Edit button in top right corner */}
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => {
+                                      setEditingTransportationIndex(index);
+                                      setTransportFormData({
+                                        type: transport.type || 'driving',
+                                        details: transport.details || '',
+                                        departure: transport.departure || '',
+                                        arrival: transport.arrival || '',
+                                        date: transport.date || transport.dates || '',
+                                        time: transport.time || '',
+                                        confirmationNumber: transport.confirmationNumber || '',
+                                        status: transport.status || 'confirmed'
+                                      });
+                                      setShowTransportModal(true);
+                                    }}
+                                    className="absolute top-3 right-3 h-8 w-8 p-0 hover:bg-gray-100"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  
+                                  {/* Main transportation info */}
+                                  <div className="pr-12">
+                                    <div className="flex items-start space-x-4">
+                                      <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        {getTransportIcon(transport.type)}
+                                      </div>
+                                      <div className="flex-1">
+                                        {/* Transport type and status */}
+                                        <div className="flex items-center space-x-2 mb-1">
+                                          <h4 className="font-semibold text-lg">{getTypeLabel(transport.type)}</h4>
+                                          <Badge variant={transport.status === 'booked' || transport.status === 'confirmed' ? 'default' : 'secondary'}>
+                                            {transport.status || 'planned'}
+                                          </Badge>
+                                        </div>
+                                        
+                                        {/* Details */}
+                                        {transport.details && (
+                                          <p className="text-sm text-gray-600 mb-1">
+                                            <strong>Details:</strong> {transport.details}
+                                          </p>
+                                        )}
+                                        
+                                        {/* Route information */}
+                                        {transport.departure && transport.arrival && (
+                                          <p className="text-sm text-gray-600 mb-1">
+                                            <strong>Route:</strong> {transport.departure} → {transport.arrival}
+                                          </p>
+                                        )}
+                                        
+                                        {/* Date and time */}
+                                        {(transport.date || transport.dates) && (
+                                          <p className="text-sm text-gray-600 mb-1">
+                                            <strong>Date:</strong> {transport.date || transport.dates}
+                                            {transport.time && <span> at {transport.time}</span>}
+                                          </p>
+                                        )}
+                                        
+                                        {/* Confirmation number */}
+                                        {transport.confirmationNumber && (
+                                          <div className="mt-2 text-sm">
+                                            <span className="text-gray-600">Confirmation: </span>
+                                            <span className="font-medium text-gray-900">{transport.confirmationNumber}</span>
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
-                                    <div>
-                                      <h4 className="font-medium">{transport.type}</h4>
-                                      <p className="text-sm text-gray-500">{transport.details}</p>
-                                    </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="text-sm text-gray-500">{transport.dates}</p>
-                                    <Badge variant={transport.status === 'booked' ? 'default' : 'secondary'}>
-                                      {transport.status}
-                                    </Badge>
                                   </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })
                             <Button variant="outline" onClick={() => setShowTransportModal(true)}>
                               <Plus className="w-4 h-4 mr-2" />
                               Add More Transportation
@@ -5841,6 +6013,18 @@ const FamApp = () => {
                 </div>
 
                 <div>
+                  <Label htmlFor="accommodation-room-quantity">Number of Rooms</Label>
+                  <Input 
+                    id="accommodation-room-quantity" 
+                    type="number"
+                    min="1"
+                    placeholder="1" 
+                    value={accommodationFormData.roomQuantity}
+                    onChange={(e) => setAccommodationFormData(prev => ({...prev, roomQuantity: e.target.value}))}
+                  />
+                </div>
+
+                <div>
                   <Label htmlFor="accommodation-name">Name</Label>
                   <Input 
                     id="accommodation-name" 
@@ -5921,7 +6105,21 @@ const FamApp = () => {
               </div>
 
               <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex justify-end space-x-3">
-                <Button variant="outline" onClick={() => setShowHotelModal(false)}>
+                <Button variant="outline" onClick={() => {
+                  setAccommodationFormData({
+                    type: 'hotel',
+                    name: '',
+                    address: '',
+                    checkIn: '',
+                    checkOut: '',
+                    details: '',
+                    roomQuantity: '1',
+                    status: 'confirmed',
+                    confirmationNumber: ''
+                  });
+                  setEditingAccommodationIndex(null);
+                  setShowHotelModal(false);
+                }}>
                   Cancel
                 </Button>
                 <Button onClick={() => {
@@ -5954,9 +6152,11 @@ const FamApp = () => {
                     checkIn: '',
                     checkOut: '',
                     details: '',
+                    roomQuantity: '1',
                     status: 'confirmed',
                     confirmationNumber: ''
                   });
+                  setEditingAccommodationIndex(null);
                   setShowHotelModal(false);
                 }}>
                   Add Accommodation
@@ -5971,8 +6171,8 @@ const FamApp = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold">Add Transportation</h2>
-                <Button variant="ghost" size="sm" onClick={() => setShowTransportModal(false)}>
+                <h2 className="text-xl font-bold">{editingTransportationIndex !== null ? 'Edit Transportation' : 'Add Transportation'}</h2>
+                <Button variant="ghost" size="sm" onClick={resetTransportationModal}>
                   <X className="w-5 h-5" />
                 </Button>
               </div>
@@ -6028,30 +6228,52 @@ const FamApp = () => {
               </div>
 
               <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex justify-end space-x-3">
-                <Button variant="outline" onClick={() => setShowTransportModal(false)}>
+                <Button variant="outline" onClick={resetTransportationModal}>
                   Cancel
                 </Button>
                 <Button onClick={() => {
-                  // Create transportation object from form data
-                  const newTransportation = {
-                    id: Date.now().toString(),
-                    ...transportFormData,
-                    createdAt: new Date().toISOString()
-                  };
-                  
-                  // Add to trip data
-                  const updatedTripData = {
-                    ...tripData,
-                    transportation: [...(tripData.transportation || []), newTransportation]
-                  };
-                  
-                  setTripData(updatedTripData);
-                  
-                  // Update user trips
-                  const updatedTrips = userTrips.map(trip => 
-                    trip.id === tripData.id ? updatedTripData : trip
-                  );
-                  setUserTrips(updatedTrips);
+                  if (editingTransportationIndex !== null) {
+                    // Edit mode - update existing transportation
+                    const updatedTransportation = [...(tripData.transportation || [])];
+                    updatedTransportation[editingTransportationIndex] = {
+                      ...updatedTransportation[editingTransportationIndex],
+                      ...transportFormData,
+                      updatedAt: new Date().toISOString()
+                    };
+                    
+                    const updatedTripData = {
+                      ...tripData,
+                      transportation: updatedTransportation
+                    };
+                    
+                    setTripData(updatedTripData);
+                    
+                    const updatedTrips = userTrips.map(trip => 
+                      trip.id === tripData.id ? updatedTripData : trip
+                    );
+                    setUserTrips(updatedTrips);
+                    
+                    setEditingTransportationIndex(null);
+                  } else {
+                    // Add mode - create new transportation
+                    const newTransportation = {
+                      id: Date.now().toString(),
+                      ...transportFormData,
+                      createdAt: new Date().toISOString()
+                    };
+                    
+                    const updatedTripData = {
+                      ...tripData,
+                      transportation: [...(tripData.transportation || []), newTransportation]
+                    };
+                    
+                    setTripData(updatedTripData);
+                    
+                    const updatedTrips = userTrips.map(trip => 
+                      trip.id === tripData.id ? updatedTripData : trip
+                    );
+                    setUserTrips(updatedTrips);
+                  }
                   
                   // Reset form and close modal
                   setTransportFormData({
@@ -6066,7 +6288,7 @@ const FamApp = () => {
                   });
                   setShowTransportModal(false);
                 }}>
-                  Add Transportation
+                  {editingTransportationIndex !== null ? 'Update Transportation' : 'Add Transportation'}
                 </Button>
               </div>
             </div>
