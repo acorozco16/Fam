@@ -194,17 +194,19 @@ const calculateTripReadinessData = (trip: any) => {
   }
   
   // Primary Transportation (Flights or Alternative)
-  const hasFlights = trip.flights && trip.flights.length > 0;
-  const hasPrimaryTransport = trip.transportation?.some((t: any) => ['driving', 'train', 'bus'].includes(t.type));
+  const hasFlights = trip.flights && trip.flights.some((f: any) => f.status === 'booked' || f.status === 'confirmed');
+  const hasPrimaryTransport = trip.transportation?.some((t: any) => 
+    ['driving', 'train', 'bus'].includes(t.type) && (t.status === 'booked' || t.status === 'confirmed')
+  );
   const hasTransportation = hasFlights || hasPrimaryTransport;
   
   items.push({
     id: 'airfare',
     title: hasFlights ? 'Flights Booked' : 'Transportation Arranged',
     subtitle: hasFlights 
-      ? `${trip.flights.length} flights booked`
+      ? `${trip.flights.filter((f: any) => f.status === 'booked' || f.status === 'confirmed').length} flights booked`
       : hasPrimaryTransport 
-        ? 'Primary transportation planned'
+        ? 'Primary transportation confirmed'
         : 'Need flights or transportation method',
     status: hasTransportation ? 'complete' : 'incomplete',
     category: 'travel',
@@ -212,21 +214,21 @@ const calculateTripReadinessData = (trip: any) => {
   });
   
   // Accommodations
-  const hasAccommodations = trip.accommodations && trip.accommodations.length > 0;
+  const hasAccommodations = trip.accommodations && trip.accommodations.some((a: any) => a.status === 'booked' || a.status === 'confirmed');
   items.push({
     id: 'hotel',
     title: 'Hotel Accommodations Secured',
-    subtitle: hasAccommodations ? `${trip.accommodations.length} accommodations booked` : 'No accommodations booked',
+    subtitle: hasAccommodations ? `${trip.accommodations.filter((a: any) => a.status === 'booked' || a.status === 'confirmed').length} accommodations booked` : 'No accommodations booked',
     status: hasAccommodations ? 'complete' : 'incomplete',
     category: 'travel'
   });
   
   // Transportation
-  const hasTransport = trip.transportation && trip.transportation.length > 0;
+  const hasTransport = trip.transportation && trip.transportation.some((t: any) => t.status === 'booked' || t.status === 'confirmed');
   items.push({
     id: 'transport',
     title: 'Transportation Arranged',
-    subtitle: hasTransport ? `${trip.transportation.length} bookings confirmed` : 'Local transport needed',
+    subtitle: hasTransport ? `${trip.transportation.filter((t: any) => t.status === 'booked' || t.status === 'confirmed').length} bookings confirmed` : 'Local transport needed',
     status: hasTransport ? 'complete' : 'incomplete',
     category: 'travel'
   });
@@ -3089,6 +3091,11 @@ const FamApp = () => {
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [showReadinessEditMode, setShowReadinessEditMode] = useState(false);
   
+  // Edit state for travel items
+  const [editingFlightIndex, setEditingFlightIndex] = useState<number | null>(null);
+  const [editingAccommodationIndex, setEditingAccommodationIndex] = useState<number | null>(null);
+  const [editingTransportationIndex, setEditingTransportationIndex] = useState<number | null>(null);
+  
   // Modal form data state
   const [flightFormData, setFlightFormData] = useState({
     airline: '',
@@ -4492,6 +4499,29 @@ const FamApp = () => {
                                     </div>
                                   </div>
                                   <div className="text-right">
+                                    <div className="flex items-center space-x-2 mb-2">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => {
+                                          setEditingFlightIndex(index);
+                                          setFlightFormData({
+                                            airline: flight.airline || '',
+                                            flightNumber: flight.flightNumber || '',
+                                            departure: flight.from || '',
+                                            arrival: flight.to || '',
+                                            departureTime: flight.date + 'T' + (flight.time || ''),
+                                            arrivalTime: flight.arrivalTime || '',
+                                            confirmationNumber: flight.confirmationNumber || '',
+                                            status: flight.status || 'confirmed'
+                                          });
+                                          setShowFlightModal(true);
+                                        }}
+                                        className="h-8 w-8 p-0"
+                                      >
+                                        <Edit className="w-4 h-4" />
+                                      </Button>
+                                    </div>
                                     <p className="font-medium">{flight.date}</p>
                                     <p className="text-sm text-gray-500">{flight.time}</p>
                                     <Badge variant={flight.status === 'booked' ? 'default' : 'secondary'}>
@@ -4639,6 +4669,29 @@ const FamApp = () => {
                                       </div>
                                     </div>
                                     <div className="text-right">
+                                      <div className="flex items-center justify-end space-x-2 mb-2">
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm" 
+                                          onClick={() => {
+                                            setEditingAccommodationIndex(index);
+                                            setAccommodationFormData({
+                                              type: accommodation.type || 'hotel',
+                                              name: accommodation.name || '',
+                                              address: accommodation.address || '',
+                                              checkIn: accommodation.checkIn || '',
+                                              checkOut: accommodation.checkOut || '',
+                                              details: accommodation.roomType || accommodation.details || '',
+                                              status: accommodation.status || 'confirmed',
+                                              confirmationNumber: accommodation.confirmationNumber || ''
+                                            });
+                                            setShowHotelModal(true);
+                                          }}
+                                          className="h-8 w-8 p-0"
+                                        >
+                                          <Edit className="w-4 h-4" />
+                                        </Button>
+                                      </div>
                                       {accommodation.roomType && (
                                         <p className="font-medium">{accommodation.roomType}</p>
                                       )}
@@ -5540,8 +5593,21 @@ const FamApp = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold">Add Flight</h2>
-                <Button variant="ghost" size="sm" onClick={() => setShowFlightModal(false)}>
+                <h2 className="text-xl font-bold">{editingFlightIndex !== null ? 'Edit Flight' : 'Add Flight'}</h2>
+                <Button variant="ghost" size="sm" onClick={() => {
+                  setShowFlightModal(false);
+                  setEditingFlightIndex(null);
+                  setFlightFormData({
+                    airline: '',
+                    flightNumber: '',
+                    departure: '',
+                    arrival: '',
+                    departureTime: '',
+                    arrivalTime: '',
+                    confirmationNumber: '',
+                    status: 'confirmed'
+                  });
+                }}>
                   <X className="w-5 h-5" />
                 </Button>
               </div>
@@ -5629,30 +5695,65 @@ const FamApp = () => {
               </div>
 
               <div className="sticky bottom-0 bg-white border-t px-6 py-4 flex justify-end space-x-3">
-                <Button variant="outline" onClick={() => setShowFlightModal(false)}>
+                <Button variant="outline" onClick={() => {
+                  setShowFlightModal(false);
+                  setEditingFlightIndex(null);
+                  setFlightFormData({
+                    airline: '',
+                    flightNumber: '',
+                    departure: '',
+                    arrival: '',
+                    departureTime: '',
+                    arrivalTime: '',
+                    confirmationNumber: '',
+                    status: 'confirmed'
+                  });
+                }}>
                   Cancel
                 </Button>
                 <Button onClick={() => {
-                  // Create flight object from form data
-                  const newFlight = {
-                    id: Date.now().toString(),
-                    ...flightFormData,
-                    createdAt: new Date().toISOString()
-                  };
-                  
-                  // Add to trip data
-                  const updatedTripData = {
-                    ...tripData,
-                    flights: [...(tripData.flights || []), newFlight]
-                  };
-                  
-                  setTripData(updatedTripData);
-                  
-                  // Update user trips
-                  const updatedTrips = userTrips.map(trip => 
-                    trip.id === tripData.id ? updatedTripData : trip
-                  );
-                  setUserTrips(updatedTrips);
+                  if (editingFlightIndex !== null) {
+                    // Edit mode - update existing flight
+                    const updatedFlights = [...(tripData.flights || [])];
+                    updatedFlights[editingFlightIndex] = {
+                      ...updatedFlights[editingFlightIndex],
+                      ...flightFormData,
+                      updatedAt: new Date().toISOString()
+                    };
+                    
+                    const updatedTripData = {
+                      ...tripData,
+                      flights: updatedFlights
+                    };
+                    
+                    setTripData(updatedTripData);
+                    
+                    const updatedTrips = userTrips.map(trip => 
+                      trip.id === tripData.id ? updatedTripData : trip
+                    );
+                    setUserTrips(updatedTrips);
+                    
+                    setEditingFlightIndex(null);
+                  } else {
+                    // Add mode - create new flight
+                    const newFlight = {
+                      id: Date.now().toString(),
+                      ...flightFormData,
+                      createdAt: new Date().toISOString()
+                    };
+                    
+                    const updatedTripData = {
+                      ...tripData,
+                      flights: [...(tripData.flights || []), newFlight]
+                    };
+                    
+                    setTripData(updatedTripData);
+                    
+                    const updatedTrips = userTrips.map(trip => 
+                      trip.id === tripData.id ? updatedTripData : trip
+                    );
+                    setUserTrips(updatedTrips);
+                  }
                   
                   // Reset form and close modal
                   setFlightFormData({
@@ -5667,7 +5768,7 @@ const FamApp = () => {
                   });
                   setShowFlightModal(false);
                 }}>
-                  Add Flight
+                  {editingFlightIndex !== null ? 'Save Changes' : 'Add Flight'}
                 </Button>
               </div>
             </div>
