@@ -4693,7 +4693,7 @@ const FamApp = () => {
                                   </div>
                                 </div>
                               );
-                            })
+                            })}
 
                             <div className="flex gap-2">
                               {(!tripData.flights || tripData.flights.length === 0) && (
@@ -5041,7 +5041,7 @@ const FamApp = () => {
                                   </div>
                                 </div>
                               );
-                            })
+                            })}
                             <Button variant="outline" onClick={() => setShowTransportModal(true)}>
                               <Plus className="w-4 h-4 mr-2" />
                               Add More Transportation
