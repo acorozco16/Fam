@@ -3116,6 +3116,8 @@ const FamApp = () => {
     checkOut: '',
     details: '',
     roomQuantity: '1',
+    roomAssignment: '',
+    assignedMembers: [] as string[],
     status: 'confirmed',
     confirmationNumber: ''
   });
@@ -4203,6 +4205,23 @@ const FamApp = () => {
                       </div>
                     ))}
                   </div>
+                  
+                  {/* Add Traveler Button */}
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => {
+                        // Navigate to wizard to add family members
+                        setCurrentView('wizard');
+                        setCurrentStep(1); // Family setup step
+                      }}
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Add Traveler
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -4778,6 +4797,8 @@ const FamApp = () => {
                                         checkOut: accommodation.checkOut || '',
                                         details: accommodation.roomType || accommodation.details || '',
                                         roomQuantity: accommodation.roomQuantity || '1',
+                                        roomAssignment: accommodation.roomAssignment || '',
+                                        assignedMembers: accommodation.assignedMembers || [],
                                         status: accommodation.status || 'confirmed',
                                         confirmationNumber: accommodation.confirmationNumber || ''
                                       });
@@ -4816,6 +4837,49 @@ const FamApp = () => {
                                           <p className="text-sm text-gray-600 mb-1">
                                             <strong>Address:</strong> {accommodation.address}
                                           </p>
+                                        )}
+                                        
+                                        {/* Room Assignment */}
+                                        {accommodation.roomAssignment && (
+                                          <p className="text-sm text-gray-600 mb-1">
+                                            <strong>Room:</strong> {accommodation.roomAssignment}
+                                          </p>
+                                        )}
+                                        
+                                        {/* Assigned Family Members */}
+                                        {accommodation.assignedMembers && accommodation.assignedMembers.length > 0 && (
+                                          <div className="mt-2">
+                                            <p className="text-sm text-gray-600 mb-2">
+                                              <strong>Staying here:</strong>
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                              {accommodation.assignedMembers.map((memberId: string) => {
+                                                // Parse member ID to get type and index
+                                                const [memberType, memberIndex] = memberId.split('-');
+                                                let member = null;
+                                                let bgColor = '';
+                                                
+                                                if (memberType === 'adult' && tripData.adults) {
+                                                  member = tripData.adults[parseInt(memberIndex)];
+                                                  bgColor = 'bg-blue-100 text-blue-700';
+                                                } else if (memberType === 'kid' && tripData.kids) {
+                                                  member = tripData.kids[parseInt(memberIndex)];
+                                                  bgColor = 'bg-pink-100 text-pink-700';
+                                                }
+                                                
+                                                if (!member) return null;
+                                                
+                                                return (
+                                                  <div key={memberId} className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${bgColor}`}>
+                                                    <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                                                      <span className="text-xs font-medium">{member.name?.[0] || (memberType === 'adult' ? 'A' : 'K')}</span>
+                                                    </div>
+                                                    <span>{member.name || (memberType === 'adult' ? 'Adult' : 'Kid')}</span>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
                                         )}
                                         
                                         {/* Check-in/out dates */}
@@ -6099,6 +6163,67 @@ const FamApp = () => {
                 </div>
 
                 <div>
+                  <Label htmlFor="accommodation-room-assignment">Room Assignment (optional)</Label>
+                  <Input 
+                    id="accommodation-room-assignment" 
+                    placeholder="e.g., Room 101, Suite A, Floor 3" 
+                    value={accommodationFormData.roomAssignment || ''}
+                    onChange={(e) => setAccommodationFormData(prev => ({...prev, roomAssignment: e.target.value}))}
+                  />
+                </div>
+
+                <div>
+                  <Label>Who's Staying Here?</Label>
+                  <div className="space-y-2 mt-2">
+                    {/* Adults */}
+                    {tripData.adults && tripData.adults.map((adult, idx) => (
+                      <div key={`adult-${idx}`} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={accommodationFormData.assignedMembers?.includes(`adult-${idx}`) || false}
+                          onCheckedChange={(checked) => {
+                            const currentAssigned = accommodationFormData.assignedMembers || [];
+                            const memberId = `adult-${idx}`;
+                            const updatedAssigned = checked
+                              ? [...currentAssigned, memberId]
+                              : currentAssigned.filter(id => id !== memberId);
+                            setAccommodationFormData(prev => ({...prev, assignedMembers: updatedAssigned}));
+                          }}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-blue-700">{adult.name?.[0] || 'A'}</span>
+                          </div>
+                          <span className="text-sm">{adult.name || 'Adult'}</span>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Kids */}
+                    {tripData.kids && tripData.kids.map((kid, idx) => (
+                      <div key={`kid-${idx}`} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={accommodationFormData.assignedMembers?.includes(`kid-${idx}`) || false}
+                          onCheckedChange={(checked) => {
+                            const currentAssigned = accommodationFormData.assignedMembers || [];
+                            const memberId = `kid-${idx}`;
+                            const updatedAssigned = checked
+                              ? [...currentAssigned, memberId]
+                              : currentAssigned.filter(id => id !== memberId);
+                            setAccommodationFormData(prev => ({...prev, assignedMembers: updatedAssigned}));
+                          }}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-pink-100 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-pink-700">{kid.name?.[0] || 'K'}</span>
+                          </div>
+                          <span className="text-sm">{kid.name || 'Kid'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
                   <Label htmlFor="accommodation-confirmation">Confirmation Number (optional)</Label>
                   <Input id="accommodation-confirmation" placeholder="e.g., HTL456, ABC123" />
                 </div>
@@ -6114,6 +6239,8 @@ const FamApp = () => {
                     checkOut: '',
                     details: '',
                     roomQuantity: '1',
+                    roomAssignment: '',
+                    assignedMembers: [],
                     status: 'confirmed',
                     confirmationNumber: ''
                   });
@@ -6123,26 +6250,48 @@ const FamApp = () => {
                   Cancel
                 </Button>
                 <Button onClick={() => {
-                  // Create accommodation object from form data
-                  const newAccommodation = {
-                    id: Date.now().toString(),
-                    ...accommodationFormData,
-                    createdAt: new Date().toISOString()
-                  };
-                  
-                  // Add to trip data
-                  const updatedTripData = {
-                    ...tripData,
-                    accommodations: [...(tripData.accommodations || []), newAccommodation]
-                  };
-                  
-                  setTripData(updatedTripData);
-                  
-                  // Update user trips
-                  const updatedTrips = userTrips.map(trip => 
-                    trip.id === tripData.id ? updatedTripData : trip
-                  );
-                  setUserTrips(updatedTrips);
+                  if (editingAccommodationIndex !== null) {
+                    // Editing existing accommodation
+                    const updatedAccommodations = [...(tripData.accommodations || [])];
+                    updatedAccommodations[editingAccommodationIndex] = {
+                      ...updatedAccommodations[editingAccommodationIndex],
+                      ...accommodationFormData,
+                      updatedAt: new Date().toISOString()
+                    };
+                    
+                    const updatedTripData = {
+                      ...tripData,
+                      accommodations: updatedAccommodations
+                    };
+                    
+                    setTripData(updatedTripData);
+                    
+                    // Update user trips
+                    const updatedTrips = userTrips.map(trip => 
+                      trip.id === tripData.id ? updatedTripData : trip
+                    );
+                    setUserTrips(updatedTrips);
+                  } else {
+                    // Adding new accommodation
+                    const newAccommodation = {
+                      id: Date.now().toString(),
+                      ...accommodationFormData,
+                      createdAt: new Date().toISOString()
+                    };
+                    
+                    const updatedTripData = {
+                      ...tripData,
+                      accommodations: [...(tripData.accommodations || []), newAccommodation]
+                    };
+                    
+                    setTripData(updatedTripData);
+                    
+                    // Update user trips
+                    const updatedTrips = userTrips.map(trip => 
+                      trip.id === tripData.id ? updatedTripData : trip
+                    );
+                    setUserTrips(updatedTrips);
+                  }
                   
                   // Reset form and close modal
                   setAccommodationFormData({
@@ -6153,13 +6302,15 @@ const FamApp = () => {
                     checkOut: '',
                     details: '',
                     roomQuantity: '1',
+                    roomAssignment: '',
+                    assignedMembers: [],
                     status: 'confirmed',
                     confirmationNumber: ''
                   });
                   setEditingAccommodationIndex(null);
                   setShowHotelModal(false);
                 }}>
-                  Add Accommodation
+                  {editingAccommodationIndex !== null ? 'Save Changes' : 'Add Accommodation'}
                 </Button>
               </div>
             </div>

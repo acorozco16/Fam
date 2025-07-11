@@ -18,9 +18,11 @@ Tasks are ordered for optimal execution flow - complete one, move to the next. T
 - Redesign travel cards with rich data display ✅ DONE
 
 ### **Complete Travel Functionality (In Order):**
-- Add transportation edit buttons and functionality
-- Update accommodation modal for edit mode support  
-- Update transportation modal for edit mode support
+- Add transportation edit buttons and functionality ✅ DONE
+- Update accommodation modal for edit mode support ✅ DONE
+- Update transportation modal for edit mode support ✅ DONE
+- Add room assignment functionality to accommodations (who stays where)
+- Add "Add Traveler" functionality to trip collaborators
 - Add delete functionality for travel items
 - Test all travel CRUD operations end-to-end
 
