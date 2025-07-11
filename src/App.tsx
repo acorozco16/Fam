@@ -4485,55 +4485,78 @@ const FamApp = () => {
                           <div className="space-y-4">
                             {/* Show flights if any */}
                             {tripData.flights?.map((flight: any, index: number) => (
-                              <div key={`flight-${index}`} className="border rounded-lg p-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-4">
-                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                      <Plane className="w-5 h-5 text-blue-600" />
+                              <div key={`flight-${index}`} className="border rounded-lg p-4 relative">
+                                {/* Edit button in top right corner */}
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => {
+                                    setEditingFlightIndex(index);
+                                    setFlightFormData({
+                                      airline: flight.airline || '',
+                                      flightNumber: flight.flightNumber || '',
+                                      departure: flight.departure || flight.from || '',
+                                      arrival: flight.arrival || flight.to || '',
+                                      departureTime: flight.departureTime || (flight.date + 'T' + (flight.time || '')),
+                                      arrivalTime: flight.arrivalTime || '',
+                                      confirmationNumber: flight.confirmationNumber || '',
+                                      status: flight.status || 'confirmed'
+                                    });
+                                    setShowFlightModal(true);
+                                  }}
+                                  className="absolute top-3 right-3 h-8 w-8 p-0 hover:bg-gray-100"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                
+                                {/* Main flight info */}
+                                <div className="pr-12">
+                                  <div className="flex items-start space-x-4">
+                                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                      <Plane className="w-6 h-6 text-blue-600" />
                                     </div>
-                                    <div>
-                                      <h4 className="font-medium">{flight.type}</h4>
-                                      <p className="text-sm text-gray-500">
-                                        {flight.from} → {flight.to}
-                                      </p>
+                                    <div className="flex-1">
+                                      {/* Flight route and airline */}
+                                      <div className="flex items-center space-x-2 mb-1">
+                                        <h4 className="font-semibold text-lg">{flight.departure || flight.from} → {flight.arrival || flight.to}</h4>
+                                        <Badge variant={flight.status === 'booked' || flight.status === 'confirmed' ? 'default' : 'secondary'}>
+                                          {flight.status || 'planned'}
+                                        </Badge>
+                                      </div>
+                                      
+                                      {/* Airline and flight number */}
+                                      {(flight.airline || flight.flightNumber) && (
+                                        <p className="text-sm text-gray-600 mb-1">
+                                          {flight.airline && <span className="font-medium">{flight.airline}</span>}
+                                          {flight.airline && flight.flightNumber && <span> • </span>}
+                                          {flight.flightNumber && <span>Flight {flight.flightNumber}</span>}
+                                        </p>
+                                      )}
+                                      
+                                      {/* Date and time */}
+                                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                        {flight.departureTime && (
+                                          <span>
+                                            <strong>Departure:</strong> {new Date(flight.departureTime).toLocaleDateString()} at {new Date(flight.departureTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                          </span>
+                                        )}
+                                        {!flight.departureTime && flight.date && (
+                                          <span>
+                                            <strong>Date:</strong> {flight.date} {flight.time && `at ${flight.time}`}
+                                          </span>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Confirmation number */}
+                                      {flight.confirmationNumber && (
+                                        <div className="mt-2 text-sm">
+                                          <span className="text-gray-600">Confirmation: </span>
+                                          <span className="font-medium text-gray-900">{flight.confirmationNumber}</span>
+                                        </div>
+                                      )}
                                     </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="flex items-center space-x-2 mb-2">
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        onClick={() => {
-                                          setEditingFlightIndex(index);
-                                          setFlightFormData({
-                                            airline: flight.airline || '',
-                                            flightNumber: flight.flightNumber || '',
-                                            departure: flight.from || '',
-                                            arrival: flight.to || '',
-                                            departureTime: flight.date + 'T' + (flight.time || ''),
-                                            arrivalTime: flight.arrivalTime || '',
-                                            confirmationNumber: flight.confirmationNumber || '',
-                                            status: flight.status || 'confirmed'
-                                          });
-                                          setShowFlightModal(true);
-                                        }}
-                                        className="h-8 w-8 p-0"
-                                      >
-                                        <Edit className="w-4 h-4" />
-                                      </Button>
-                                    </div>
-                                    <p className="font-medium">{flight.date}</p>
-                                    <p className="text-sm text-gray-500">{flight.time}</p>
-                                    <Badge variant={flight.status === 'booked' ? 'default' : 'secondary'}>
-                                      {flight.status}
-                                    </Badge>
                                   </div>
                                 </div>
-                                {flight.confirmationNumber && (
-                                  <div className="mt-3 text-sm text-gray-600">
-                                    <span className="font-medium">Confirmation:</span> {flight.confirmationNumber}
-                                  </div>
-                                )}
                               </div>
                             ))}
 
@@ -4649,70 +4672,84 @@ const FamApp = () => {
                               const type = accommodation.type || 'hotel'; // Default to hotel for backward compatibility
                               
                               return (
-                                <div key={index} className="border rounded-lg p-4">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-4">
-                                      <div className={`w-10 h-10 ${getAccommodationBg(type)} rounded-full flex items-center justify-center`}>
+                                <div key={index} className="border rounded-lg p-4 relative">
+                                  {/* Edit button in top right corner */}
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => {
+                                      setEditingAccommodationIndex(index);
+                                      setAccommodationFormData({
+                                        type: accommodation.type || 'hotel',
+                                        name: accommodation.name || '',
+                                        address: accommodation.address || '',
+                                        checkIn: accommodation.checkIn || '',
+                                        checkOut: accommodation.checkOut || '',
+                                        details: accommodation.roomType || accommodation.details || '',
+                                        status: accommodation.status || 'confirmed',
+                                        confirmationNumber: accommodation.confirmationNumber || ''
+                                      });
+                                      setShowHotelModal(true);
+                                    }}
+                                    className="absolute top-3 right-3 h-8 w-8 p-0 hover:bg-gray-100"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  
+                                  {/* Main accommodation info */}
+                                  <div className="pr-12">
+                                    <div className="flex items-start space-x-4">
+                                      <div className={`w-12 h-12 ${getAccommodationBg(type)} rounded-full flex items-center justify-center flex-shrink-0`}>
                                         {getAccommodationIcon(type)}
                                       </div>
-                                      <div>
-                                        <h4 className="font-medium">{accommodation.name}</h4>
-                                        <p className="text-sm text-gray-500">{getTypeLabel(type)}</p>
+                                      <div className="flex-1">
+                                        {/* Accommodation name and type */}
+                                        <div className="flex items-center space-x-2 mb-1">
+                                          <h4 className="font-semibold text-lg">{accommodation.name}</h4>
+                                          <Badge variant={accommodation.status === 'confirmed' || accommodation.status === 'booked' ? 'default' : 'secondary'}>
+                                            {accommodation.status || 'planned'}
+                                          </Badge>
+                                        </div>
+                                        
+                                        {/* Type and details */}
+                                        <p className="text-sm text-gray-600 mb-1">
+                                          <span className="font-medium">{getTypeLabel(type)}</span>
+                                          {accommodation.details && <span> • {accommodation.details}</span>}
+                                          {accommodation.roomType && <span> • {accommodation.roomType}</span>}
+                                        </p>
+                                        
+                                        {/* Address */}
                                         {accommodation.address && (
-                                          <p className="text-sm text-gray-500">{accommodation.address}</p>
-                                        )}
-                                        {accommodation.checkIn && accommodation.checkOut && (
-                                          <p className="text-sm text-gray-500">
-                                            {accommodation.checkIn} - {accommodation.checkOut}
+                                          <p className="text-sm text-gray-600 mb-1">
+                                            <strong>Address:</strong> {accommodation.address}
                                           </p>
                                         )}
+                                        
+                                        {/* Check-in/out dates */}
+                                        {accommodation.checkIn && accommodation.checkOut && (
+                                          <p className="text-sm text-gray-600 mb-1">
+                                            <strong>Stay:</strong> {new Date(accommodation.checkIn).toLocaleDateString()} - {new Date(accommodation.checkOut).toLocaleDateString()}
+                                            {accommodation.nights && <span> ({accommodation.nights} nights)</span>}
+                                          </p>
+                                        )}
+                                        
+                                        {/* Confirmation number */}
+                                        {accommodation.confirmationNumber && (
+                                          <div className="mt-2 text-sm">
+                                            <span className="text-gray-600">Confirmation: </span>
+                                            <span className="font-medium text-gray-900">{accommodation.confirmationNumber}</span>
+                                          </div>
+                                        )}
+                                        
+                                        {/* Notes */}
+                                        {accommodation.notes && (
+                                          <div className="mt-2 text-sm text-gray-600">
+                                            <strong>Notes:</strong> {accommodation.notes}
+                                          </div>
+                                        )}
                                       </div>
-                                    </div>
-                                    <div className="text-right">
-                                      <div className="flex items-center justify-end space-x-2 mb-2">
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm" 
-                                          onClick={() => {
-                                            setEditingAccommodationIndex(index);
-                                            setAccommodationFormData({
-                                              type: accommodation.type || 'hotel',
-                                              name: accommodation.name || '',
-                                              address: accommodation.address || '',
-                                              checkIn: accommodation.checkIn || '',
-                                              checkOut: accommodation.checkOut || '',
-                                              details: accommodation.roomType || accommodation.details || '',
-                                              status: accommodation.status || 'confirmed',
-                                              confirmationNumber: accommodation.confirmationNumber || ''
-                                            });
-                                            setShowHotelModal(true);
-                                          }}
-                                          className="h-8 w-8 p-0"
-                                        >
-                                          <Edit className="w-4 h-4" />
-                                        </Button>
-                                      </div>
-                                      {accommodation.roomType && (
-                                        <p className="font-medium">{accommodation.roomType}</p>
-                                      )}
-                                      {accommodation.nights && (
-                                        <p className="text-sm text-gray-500">{accommodation.nights} nights</p>
-                                      )}
-                                      <Badge variant={accommodation.status === 'confirmed' ? 'default' : 'secondary'}>
-                                        {accommodation.status || 'planned'}
-                                      </Badge>
                                     </div>
                                   </div>
-                                  {accommodation.confirmationNumber && (
-                                    <div className="mt-3 text-sm text-gray-600">
-                                      <span className="font-medium">Confirmation:</span> {accommodation.confirmationNumber}
-                                    </div>
-                                  )}
-                                  {accommodation.notes && (
-                                    <div className="mt-2 text-sm text-gray-600">
-                                      <span className="font-medium">Notes:</span> {accommodation.notes}
-                                    </div>
-                                  )}
                                 </div>
                               );
                             })}
