@@ -3898,7 +3898,6 @@ const FamApp = () => {
   }
 
   if (currentView === 'trip-details') {
-    console.log('Trip details view, showAddTravelerModal state:', showAddTravelerModal);
     const tripReadinessItems = calculateTripReadinessData(tripData);
     const completedCount = tripReadinessItems.filter(item => item.status === 'complete').length;
     const totalCount = tripReadinessItems.length;
@@ -4225,7 +4224,6 @@ const FamApp = () => {
                       size="sm" 
                       className="w-full"
                       onClick={() => {
-                        console.log('Add Traveler button clicked');
                         setShowAddTravelerModal(true);
                       }}
                     >
@@ -6995,10 +6993,8 @@ const FamApp = () => {
       </div>
       
       {/* Add Traveler Modal */}
-      {showAddTravelerModal && (() => {
-        console.log('Modal is rendering!');
-        return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" style={{backgroundColor: 'rgba(0,0,0,0.8)'}} onClick={() => console.log('Modal overlay clicked')}>
+      {showAddTravelerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold">Add Traveler</h2>
@@ -7030,7 +7026,12 @@ const FamApp = () => {
                 if (availableProfiles.length > 0) {
                   return (
                     <div className="mb-8">
-                      <h3 className="text-lg font-medium mb-4">Add Existing Family Members</h3>
+                      <h3 className="text-lg font-medium mb-4">
+                        {availableProfiles.length === 1 
+                          ? 'Add Family Member to Trip' 
+                          : `Add Family Members to Trip (${availableProfiles.length} available)`
+                        }
+                      </h3>
                       <div className="space-y-3">
                         {availableProfiles.map((profile) => (
                           <div key={profile.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
@@ -7075,6 +7076,9 @@ const FamApp = () => {
                                 
                                 // Save to localStorage
                                 localStorage.setItem('famapp-user-trips', JSON.stringify(updatedTrips));
+                                
+                                // Auto-close modal after adding existing person
+                                setShowAddTravelerModal(false);
                               }}
                             >
                               Add to Trip
@@ -7090,7 +7094,23 @@ const FamApp = () => {
               
               {/* Create New Family Member */}
               <div>
-                <h3 className="text-lg font-medium mb-4">Create New Family Member</h3>
+                {(() => {
+                  // Get available profiles count for context-aware heading
+                  const availableProfiles = familyProfiles.filter(profile => {
+                    const isAdult = profile.type === 'adult';
+                    const currentMembers = isAdult ? (tripData.adults || []) : (tripData.kids || []);
+                    return !currentMembers.some(member => member.name === profile.name);
+                  });
+                  
+                  const hasAvailableProfiles = availableProfiles.length > 0;
+                  
+                  return (
+                    <h3 className="text-lg font-medium mb-4">
+                      {hasAvailableProfiles ? 'Or Create New Family Member' : 'Create New Family Member'}
+                    </h3>
+                  );
+                })()}
+                
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -7231,8 +7251,7 @@ const FamApp = () => {
             </div>
           </div>
         </div>
-        );
-      })()}
+      )}
       </>
     );
   }
