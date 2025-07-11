@@ -2715,7 +2715,14 @@ const Dashboard: React.FC<{
                   <p className="text-gray-600">
                     {familyProfiles.length} family member{familyProfiles.length !== 1 ? 's' : ''}
                   </p>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setEditingProfile(null);
+                      setShowEditProfile(true);
+                    }}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Family Member
                   </Button>
@@ -6633,7 +6640,14 @@ const FamApp = () => {
                       <p className="text-gray-600">
                         {familyProfiles.length} family member{familyProfiles.length !== 1 ? 's' : ''}
                       </p>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setEditingProfile(null);
+                          setShowEditProfile(true);
+                        }}
+                      >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Family Member
                       </Button>
@@ -7180,7 +7194,7 @@ const FamApp = () => {
                         <SelectTrigger>
                           <SelectValue placeholder="Select relationship" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[10000]">
                           {newTravelerForm.type === 'adult' ? (
                             <>
                               <SelectItem value="Mom">Mom</SelectItem>
