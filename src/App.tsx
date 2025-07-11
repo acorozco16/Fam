@@ -3898,6 +3898,7 @@ const FamApp = () => {
   }
 
   if (currentView === 'trip-details') {
+    console.log('Trip details view, showAddTravelerModal state:', showAddTravelerModal);
     const tripReadinessItems = calculateTripReadinessData(tripData);
     const completedCount = tripReadinessItems.filter(item => item.status === 'complete').length;
     const totalCount = tripReadinessItems.length;
@@ -4223,6 +4224,7 @@ const FamApp = () => {
                       size="sm" 
                       className="w-full"
                       onClick={() => {
+                        console.log('Add Traveler button clicked');
                         setShowAddTravelerModal(true);
                       }}
                     >
