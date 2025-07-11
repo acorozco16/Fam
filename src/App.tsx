@@ -3088,6 +3088,40 @@ const FamApp = () => {
   const [showTransportModal, setShowTransportModal] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [showReadinessEditMode, setShowReadinessEditMode] = useState(false);
+  
+  // Modal form data state
+  const [flightFormData, setFlightFormData] = useState({
+    airline: '',
+    flightNumber: '',
+    departure: '',
+    arrival: '',
+    departureTime: '',
+    arrivalTime: '',
+    confirmationNumber: '',
+    status: 'confirmed'
+  });
+  
+  const [accommodationFormData, setAccommodationFormData] = useState({
+    type: 'hotel',
+    name: '',
+    address: '',
+    checkIn: '',
+    checkOut: '',
+    details: '',
+    status: 'confirmed',
+    confirmationNumber: ''
+  });
+  
+  const [transportFormData, setTransportFormData] = useState({
+    type: 'driving',
+    details: '',
+    departure: '',
+    arrival: '',
+    date: '',
+    time: '',
+    confirmationNumber: '',
+    status: 'confirmed'
+  });
   const addressInputRef = useRef<HTMLInputElement>(null);
   const [newActivity, setNewActivity] = useState({
     name: '',
@@ -5515,7 +5549,7 @@ const FamApp = () => {
               <div className="p-6 space-y-4">
                 <div>
                   <Label htmlFor="flight-type">Flight Type</Label>
-                  <Select onValueChange={(value) => console.log('Flight type:', value)}>
+                  <Select onValueChange={(value) => setFlightFormData(prev => ({...prev, type: value}))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select flight type" />
                     </SelectTrigger>
@@ -5531,28 +5565,52 @@ const FamApp = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="flight-from">From</Label>
-                    <Input id="flight-from" placeholder="Departure airport" />
+                    <Input 
+                      id="flight-from" 
+                      placeholder="Departure airport" 
+                      value={flightFormData.departure}
+                      onChange={(e) => setFlightFormData(prev => ({...prev, departure: e.target.value}))}
+                    />
                   </div>
                   <div>
                     <Label htmlFor="flight-to">To</Label>
-                    <Input id="flight-to" placeholder="Arrival airport" />
+                    <Input 
+                      id="flight-to" 
+                      placeholder="Arrival airport" 
+                      value={flightFormData.arrival}
+                      onChange={(e) => setFlightFormData(prev => ({...prev, arrival: e.target.value}))}
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="flight-date">Date</Label>
-                    <Input id="flight-date" type="date" />
+                    <Input 
+                      id="flight-date" 
+                      type="date" 
+                      value={flightFormData.departureTime.split('T')[0] || ''}
+                      onChange={(e) => setFlightFormData(prev => ({...prev, departureTime: e.target.value}))}
+                    />
                   </div>
                   <div>
                     <Label htmlFor="flight-time">Time</Label>
-                    <Input id="flight-time" type="time" />
+                    <Input 
+                      id="flight-time" 
+                      type="time" 
+                      value={flightFormData.departureTime.split('T')[1]?.substring(0,5) || ''}
+                      onChange={(e) => {
+                        const date = flightFormData.departureTime.split('T')[0] || '';
+                        const datetime = date + 'T' + e.target.value;
+                        setFlightFormData(prev => ({...prev, departureTime: datetime}));
+                      }}
+                    />
                   </div>
                 </div>
 
                 <div>
                   <Label htmlFor="flight-status">Status</Label>
-                  <Select onValueChange={(value) => console.log('Flight status:', value)}>
+                  <Select onValueChange={(value) => setFlightFormData(prev => ({...prev, status: value}))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -5575,7 +5633,38 @@ const FamApp = () => {
                   Cancel
                 </Button>
                 <Button onClick={() => {
-                  // For now, just close the modal - we'll implement save logic
+                  // Create flight object from form data
+                  const newFlight = {
+                    id: Date.now().toString(),
+                    ...flightFormData,
+                    createdAt: new Date().toISOString()
+                  };
+                  
+                  // Add to trip data
+                  const updatedTripData = {
+                    ...tripData,
+                    flights: [...(tripData.flights || []), newFlight]
+                  };
+                  
+                  setTripData(updatedTripData);
+                  
+                  // Update user trips
+                  const updatedTrips = userTrips.map(trip => 
+                    trip.id === tripData.id ? updatedTripData : trip
+                  );
+                  setUserTrips(updatedTrips);
+                  
+                  // Reset form and close modal
+                  setFlightFormData({
+                    airline: '',
+                    flightNumber: '',
+                    departure: '',
+                    arrival: '',
+                    departureTime: '',
+                    arrivalTime: '',
+                    confirmationNumber: '',
+                    status: 'confirmed'
+                  });
                   setShowFlightModal(false);
                 }}>
                   Add Flight
@@ -5615,22 +5704,42 @@ const FamApp = () => {
 
                 <div>
                   <Label htmlFor="accommodation-name">Name</Label>
-                  <Input id="accommodation-name" placeholder="e.g., Hotel Barcelona Center, Sarah's House" />
+                  <Input 
+                    id="accommodation-name" 
+                    placeholder="e.g., Hotel Barcelona Center, Sarah's House" 
+                    value={accommodationFormData.name}
+                    onChange={(e) => setAccommodationFormData(prev => ({...prev, name: e.target.value}))}
+                  />
                 </div>
 
                 <div>
                   <Label htmlFor="accommodation-address">Address</Label>
-                  <Input id="accommodation-address" placeholder="Full address or area" />
+                  <Input 
+                    id="accommodation-address" 
+                    placeholder="Full address or area" 
+                    value={accommodationFormData.address}
+                    onChange={(e) => setAccommodationFormData(prev => ({...prev, address: e.target.value}))}
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="check-in">Check-in Date</Label>
-                    <Input id="check-in" type="date" />
+                    <Input 
+                      id="check-in" 
+                      type="date" 
+                      value={accommodationFormData.checkIn}
+                      onChange={(e) => setAccommodationFormData(prev => ({...prev, checkIn: e.target.value}))}
+                    />
                   </div>
                   <div>
                     <Label htmlFor="check-out">Check-out Date</Label>
-                    <Input id="check-out" type="date" />
+                    <Input 
+                      id="check-out" 
+                      type="date" 
+                      value={accommodationFormData.checkOut}
+                      onChange={(e) => setAccommodationFormData(prev => ({...prev, checkOut: e.target.value}))}
+                    />
                   </div>
                 </div>
 
@@ -5678,7 +5787,38 @@ const FamApp = () => {
                   Cancel
                 </Button>
                 <Button onClick={() => {
-                  // For now, just close the modal - we'll implement save logic
+                  // Create accommodation object from form data
+                  const newAccommodation = {
+                    id: Date.now().toString(),
+                    ...accommodationFormData,
+                    createdAt: new Date().toISOString()
+                  };
+                  
+                  // Add to trip data
+                  const updatedTripData = {
+                    ...tripData,
+                    accommodations: [...(tripData.accommodations || []), newAccommodation]
+                  };
+                  
+                  setTripData(updatedTripData);
+                  
+                  // Update user trips
+                  const updatedTrips = userTrips.map(trip => 
+                    trip.id === tripData.id ? updatedTripData : trip
+                  );
+                  setUserTrips(updatedTrips);
+                  
+                  // Reset form and close modal
+                  setAccommodationFormData({
+                    type: 'hotel',
+                    name: '',
+                    address: '',
+                    checkIn: '',
+                    checkOut: '',
+                    details: '',
+                    status: 'confirmed',
+                    confirmationNumber: ''
+                  });
                   setShowHotelModal(false);
                 }}>
                   Add Accommodation
@@ -5754,7 +5894,38 @@ const FamApp = () => {
                   Cancel
                 </Button>
                 <Button onClick={() => {
-                  // For now, just close the modal - we'll implement save logic
+                  // Create transportation object from form data
+                  const newTransportation = {
+                    id: Date.now().toString(),
+                    ...transportFormData,
+                    createdAt: new Date().toISOString()
+                  };
+                  
+                  // Add to trip data
+                  const updatedTripData = {
+                    ...tripData,
+                    transportation: [...(tripData.transportation || []), newTransportation]
+                  };
+                  
+                  setTripData(updatedTripData);
+                  
+                  // Update user trips
+                  const updatedTrips = userTrips.map(trip => 
+                    trip.id === tripData.id ? updatedTripData : trip
+                  );
+                  setUserTrips(updatedTrips);
+                  
+                  // Reset form and close modal
+                  setTransportFormData({
+                    type: 'driving',
+                    details: '',
+                    departure: '',
+                    arrival: '',
+                    date: '',
+                    time: '',
+                    confirmationNumber: '',
+                    status: 'confirmed'
+                  });
                   setShowTransportModal(false);
                 }}>
                   Add Transportation
