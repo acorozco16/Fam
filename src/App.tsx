@@ -4643,6 +4643,7 @@ const FamApp = () => {
                                         arrival: transport.arrival || '',
                                         date: transport.date || transport.dates || '',
                                         time: transport.time || '',
+                                        assignedMembers: transport.assignedMembers || [],
                                         confirmationNumber: transport.confirmationNumber || '',
                                         status: transport.status || 'confirmed'
                                       });
@@ -6135,7 +6136,7 @@ const FamApp = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold">Add Accommodation</h2>
+                <h2 className="text-xl font-bold">{editingAccommodationIndex !== null ? 'Edit Accommodation' : 'Add Accommodation'}</h2>
                 <Button variant="ghost" size="sm" onClick={() => setShowHotelModal(false)}>
                   <X className="w-5 h-5" />
                 </Button>
@@ -6144,7 +6145,7 @@ const FamApp = () => {
               <div className="p-6 space-y-4">
                 <div>
                   <Label htmlFor="accommodation-type">Accommodation Type</Label>
-                  <Select onValueChange={(value) => console.log('Accommodation type:', value)}>
+                  <Select value={accommodationFormData.type} onValueChange={(value) => setAccommodationFormData(prev => ({...prev, type: value}))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select accommodation type" />
                     </SelectTrigger>
@@ -6213,7 +6214,7 @@ const FamApp = () => {
 
                 <div>
                   <Label htmlFor="accommodation-details">Details</Label>
-                  <Select onValueChange={(value) => console.log('Accommodation details:', value)}>
+                  <Select value={accommodationFormData.details} onValueChange={(value) => setAccommodationFormData(prev => ({...prev, details: value}))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select details" />
                     </SelectTrigger>
@@ -6232,7 +6233,7 @@ const FamApp = () => {
 
                 <div>
                   <Label htmlFor="accommodation-status">Status</Label>
-                  <Select onValueChange={(value) => console.log('Accommodation status:', value)}>
+                  <Select value={accommodationFormData.status} onValueChange={(value) => setAccommodationFormData(prev => ({...prev, status: value}))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -6307,7 +6308,12 @@ const FamApp = () => {
 
                 <div>
                   <Label htmlFor="accommodation-confirmation">Confirmation Number (optional)</Label>
-                  <Input id="accommodation-confirmation" placeholder="e.g., HTL456, ABC123" />
+                  <Input 
+                    id="accommodation-confirmation" 
+                    placeholder="e.g., HTL456, ABC123" 
+                    value={accommodationFormData.confirmationNumber}
+                    onChange={(e) => setAccommodationFormData(prev => ({...prev, confirmationNumber: e.target.value}))}
+                  />
                 </div>
               </div>
 
@@ -6413,7 +6419,7 @@ const FamApp = () => {
               <div className="p-6 space-y-4">
                 <div>
                   <Label htmlFor="transport-type">Transportation Type</Label>
-                  <Select onValueChange={(value) => console.log('Transport type:', value)}>
+                  <Select value={transportFormData.type} onValueChange={(value) => setTransportFormData(prev => ({...prev, type: value}))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select transportation" />
                     </SelectTrigger>
@@ -6432,21 +6438,32 @@ const FamApp = () => {
 
                 <div>
                   <Label htmlFor="transport-details">Details</Label>
-                  <Input id="transport-details" placeholder="e.g., Compact car from Hertz" />
+                  <Input 
+                    id="transport-details" 
+                    placeholder="e.g., Compact car from Hertz" 
+                    value={transportFormData.details}
+                    onChange={(e) => setTransportFormData(prev => ({...prev, details: e.target.value}))}
+                  />
                 </div>
 
                 <div>
                   <Label htmlFor="transport-dates">Dates</Label>
-                  <Input id="transport-dates" placeholder="e.g., Mar 15-22, 2025" />
+                  <Input 
+                    id="transport-dates" 
+                    placeholder="e.g., Mar 15-22, 2025" 
+                    value={transportFormData.date}
+                    onChange={(e) => setTransportFormData(prev => ({...prev, date: e.target.value}))}
+                  />
                 </div>
 
                 <div>
                   <Label htmlFor="transport-status">Status</Label>
-                  <Select onValueChange={(value) => console.log('Transport status:', value)}>
+                  <Select value={transportFormData.status} onValueChange={(value) => setTransportFormData(prev => ({...prev, status: value}))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
                       <SelectItem value="booked">Booked</SelectItem>
                       <SelectItem value="planned">Planned</SelectItem>
                       <SelectItem value="researching">Researching</SelectItem>
@@ -6507,7 +6524,12 @@ const FamApp = () => {
 
                 <div>
                   <Label htmlFor="transport-confirmation">Confirmation/Reference (optional)</Label>
-                  <Input id="transport-confirmation" placeholder="e.g., CAR789" />
+                  <Input 
+                    id="transport-confirmation" 
+                    placeholder="e.g., CAR789" 
+                    value={transportFormData.confirmationNumber}
+                    onChange={(e) => setTransportFormData(prev => ({...prev, confirmationNumber: e.target.value}))}
+                  />
                 </div>
               </div>
 
