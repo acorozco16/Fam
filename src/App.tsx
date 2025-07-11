@@ -4694,7 +4694,7 @@ const FamApp = () => {
                                 </div>
                               );
                             })}
-
+                            
                             <div className="flex gap-2">
                               {(!tripData.flights || tripData.flights.length === 0) && (
                                 <Button variant="outline" onClick={() => setShowFlightModal(true)}>
