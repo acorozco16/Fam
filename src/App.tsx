@@ -7090,8 +7090,10 @@ const FamApp = () => {
     </div>
     
     {/* Add Traveler Modal */}
-    {showAddTravelerModal && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    {showAddTravelerModal && (() => {
+      console.log('Modal is rendering!');
+      return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4" style={{backgroundColor: 'rgba(0,0,0,0.8)'}} onClick={() => console.log('Modal overlay clicked')}>
         <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
             <h2 className="text-xl font-bold">Add Traveler</h2>
@@ -7324,7 +7326,8 @@ const FamApp = () => {
           </div>
         </div>
       </div>
-    )}
+      );
+    })()}
     </>
   );
 };
