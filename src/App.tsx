@@ -5661,7 +5661,7 @@ const FamApp = () => {
                       <Label htmlFor="activity-name">Activity Name *</Label>
                       <Input
                         id="activity-name"
-                        placeholder="e.g., Sagrada Familia Visit"
+                        placeholder="e.g., Santiago Bernabéu Stadium Tour"
                         value={newActivity.name}
                         onChange={(e) => setNewActivity(prev => ({...prev, name: e.target.value}))}
                         className={activityValidationErrors.name ? 'border-red-500' : ''}
@@ -5746,7 +5746,7 @@ const FamApp = () => {
                       <Label htmlFor="activity-location">Location/Venue</Label>
                       <Input
                         id="activity-location"
-                        placeholder="e.g., Gothic Quarter"
+                        placeholder="e.g., Santiago Bernabéu Stadium"
                         value={newActivity.location}
                         onChange={(e) => setNewActivity(prev => ({...prev, location: e.target.value}))}
                       />
