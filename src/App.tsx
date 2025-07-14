@@ -4597,28 +4597,47 @@ const FamApp = () => {
                             {/* Show flights if any */}
                             {tripData.flights?.map((flight: any, index: number) => (
                               <div key={`flight-${index}`} className="border rounded-lg p-4 relative">
-                                {/* Edit button in top right corner */}
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => {
-                                    setEditingFlightIndex(index);
-                                    setFlightFormData({
-                                      airline: flight.airline || '',
-                                      flightNumber: flight.flightNumber || '',
-                                      departure: flight.departure || flight.from || '',
-                                      arrival: flight.arrival || flight.to || '',
-                                      departureTime: flight.departureTime || (flight.date + 'T' + (flight.time || '')),
-                                      arrivalTime: flight.arrivalTime || '',
-                                      confirmationNumber: flight.confirmationNumber || '',
-                                      status: flight.status || 'confirmed'
-                                    });
-                                    setShowFlightModal(true);
-                                  }}
-                                  className="absolute top-3 right-3 h-8 w-8 p-0 hover:bg-gray-100"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
+                                {/* Edit and Delete buttons in top right corner */}
+                                <div className="absolute top-3 right-3 flex space-x-1">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => {
+                                      setEditingFlightIndex(index);
+                                      setFlightFormData({
+                                        airline: flight.airline || '',
+                                        flightNumber: flight.flightNumber || '',
+                                        departure: flight.departure || flight.from || '',
+                                        arrival: flight.arrival || flight.to || '',
+                                        departureTime: flight.departureTime || (flight.date + 'T' + (flight.time || '')),
+                                        arrivalTime: flight.arrivalTime || '',
+                                        confirmationNumber: flight.confirmationNumber || '',
+                                        status: flight.status || 'confirmed'
+                                      });
+                                      setShowFlightModal(true);
+                                    }}
+                                    className="h-8 w-8 p-0 hover:bg-gray-100"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => {
+                                      const updatedFlights = (tripData.flights || []).filter((f: any, i: number) => i !== index);
+                                      const updatedTripData = { ...tripData, flights: updatedFlights };
+                                      setTripData(updatedTripData);
+                                      
+                                      const updatedTrips = userTrips.map(trip => 
+                                        trip.id === tripData.id ? updatedTripData : trip
+                                      );
+                                      setUserTrips(updatedTrips);
+                                    }}
+                                    className="h-8 w-8 p-0 hover:bg-gray-100"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
                                 
                                 {/* Main flight info */}
                                 <div className="pr-12">
