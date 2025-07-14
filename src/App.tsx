@@ -2928,16 +2928,36 @@ const Dashboard: React.FC<{
                         <>
                           <SelectItem value="Mom">Mom</SelectItem>
                           <SelectItem value="Dad">Dad</SelectItem>
-                          <SelectItem value="Grandma">Grandma</SelectItem>
-                          <SelectItem value="Grandpa">Grandpa</SelectItem>
                           <SelectItem value="Parent">Parent</SelectItem>
                           <SelectItem value="Guardian">Guardian</SelectItem>
+                          <SelectItem value="Grandma">Grandma</SelectItem>
+                          <SelectItem value="Grandpa">Grandpa</SelectItem>
+                          <SelectItem value="Aunt">Aunt</SelectItem>
+                          <SelectItem value="Uncle">Uncle</SelectItem>
+                          <SelectItem value="Sister">Sister</SelectItem>
+                          <SelectItem value="Brother">Brother</SelectItem>
+                          <SelectItem value="Cousin">Cousin</SelectItem>
+                          <SelectItem value="Friend">Friend</SelectItem>
+                          <SelectItem value="Family Friend">Family Friend</SelectItem>
+                          <SelectItem value="Godparent">Godparent</SelectItem>
+                          <SelectItem value="Stepparent">Stepparent</SelectItem>
+                          <SelectItem value="Partner">Partner</SelectItem>
+                          <SelectItem value="Spouse">Spouse</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
                         </>
                       ) : (
                         <>
                           <SelectItem value="Son">Son</SelectItem>
                           <SelectItem value="Daughter">Daughter</SelectItem>
                           <SelectItem value="Child">Child</SelectItem>
+                          <SelectItem value="Stepchild">Stepchild</SelectItem>
+                          <SelectItem value="Grandchild">Grandchild</SelectItem>
+                          <SelectItem value="Nephew">Nephew</SelectItem>
+                          <SelectItem value="Niece">Niece</SelectItem>
+                          <SelectItem value="Cousin">Cousin</SelectItem>
+                          <SelectItem value="Godchild">Godchild</SelectItem>
+                          <SelectItem value="Family Friend's Child">Family Friend's Child</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
                         </>
                       )}
                     </SelectContent>
@@ -3714,16 +3734,36 @@ const FamApp = () => {
                             <>
                               <SelectItem value="Mom">Mom</SelectItem>
                               <SelectItem value="Dad">Dad</SelectItem>
-                              <SelectItem value="Grandma">Grandma</SelectItem>
-                              <SelectItem value="Grandpa">Grandpa</SelectItem>
                               <SelectItem value="Parent">Parent</SelectItem>
                               <SelectItem value="Guardian">Guardian</SelectItem>
+                              <SelectItem value="Grandma">Grandma</SelectItem>
+                              <SelectItem value="Grandpa">Grandpa</SelectItem>
+                              <SelectItem value="Aunt">Aunt</SelectItem>
+                              <SelectItem value="Uncle">Uncle</SelectItem>
+                              <SelectItem value="Sister">Sister</SelectItem>
+                              <SelectItem value="Brother">Brother</SelectItem>
+                              <SelectItem value="Cousin">Cousin</SelectItem>
+                              <SelectItem value="Friend">Friend</SelectItem>
+                              <SelectItem value="Family Friend">Family Friend</SelectItem>
+                              <SelectItem value="Godparent">Godparent</SelectItem>
+                              <SelectItem value="Stepparent">Stepparent</SelectItem>
+                              <SelectItem value="Partner">Partner</SelectItem>
+                              <SelectItem value="Spouse">Spouse</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
                             </>
                           ) : (
                             <>
                               <SelectItem value="Son">Son</SelectItem>
                               <SelectItem value="Daughter">Daughter</SelectItem>
                               <SelectItem value="Child">Child</SelectItem>
+                              <SelectItem value="Stepchild">Stepchild</SelectItem>
+                              <SelectItem value="Grandchild">Grandchild</SelectItem>
+                              <SelectItem value="Nephew">Nephew</SelectItem>
+                              <SelectItem value="Niece">Niece</SelectItem>
+                              <SelectItem value="Cousin">Cousin</SelectItem>
+                              <SelectItem value="Godchild">Godchild</SelectItem>
+                              <SelectItem value="Family Friend's Child">Family Friend's Child</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
                             </>
                           )}
                         </SelectContent>
