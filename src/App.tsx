@@ -2719,7 +2719,26 @@ const Dashboard: React.FC<{
                     variant="outline" 
                     size="sm"
                     onClick={() => {
-                      setEditingProfile(null);
+                      setEditingProfile({
+                        id: '',
+                        name: '',
+                        type: 'adult',
+                        relationship: '',
+                        email: '',
+                        dateOfBirth: '',
+                        age: '',
+                        interests: '',
+                        specialNeeds: '',
+                        healthInfo: '',
+                        dietaryInfo: '',
+                        energyLevel: [],
+                        activityPreferences: [],
+                        sleepSchedule: '',
+                        bestTimes: '',
+                        specialConsiderations: '',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                      });
                       setShowEditProfile(true);
                     }}
                   >
@@ -6644,7 +6663,26 @@ const FamApp = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => {
-                          setEditingProfile(null);
+                          setEditingProfile({
+                            id: '',
+                            name: '',
+                            type: 'adult',
+                            relationship: '',
+                            email: '',
+                            dateOfBirth: '',
+                            age: '',
+                            interests: '',
+                            specialNeeds: '',
+                            healthInfo: '',
+                            dietaryInfo: '',
+                            energyLevel: [],
+                            activityPreferences: [],
+                            sleepSchedule: '',
+                            bestTimes: '',
+                            specialConsiderations: '',
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                          });
                           setShowEditProfile(true);
                         }}
                       >
@@ -6768,11 +6806,11 @@ const FamApp = () => {
         )}
         
         {/* Edit Profile Modal for Trip Details */}
-        {showEditProfile && editingProfile && (
+        {showEditProfile && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold">Edit {editingProfile.name}'s Profile</h2>
+                <h2 className="text-xl font-bold">{editingProfile?.id ? `Edit ${editingProfile.name}'s Profile` : 'Add New Family Member'}</h2>
                 <Button variant="ghost" size="sm" onClick={() => {
                   setShowEditProfile(false);
                   setEditingProfile(null);
