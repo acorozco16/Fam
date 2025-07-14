@@ -4696,29 +4696,48 @@ const FamApp = () => {
                               
                               return (
                                 <div key={`primary-transport-${originalIndex}`} className="border rounded-lg p-4 relative">
-                                  {/* Edit button in top right corner */}
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    onClick={() => {
-                                      setEditingTransportationIndex(actualIndex);
-                                      setTransportFormData({
-                                        type: transport.type || 'driving',
-                                        details: transport.details || '',
-                                        departure: transport.departure || '',
-                                        arrival: transport.arrival || '',
-                                        date: transport.date || transport.dates || '',
-                                        time: transport.time || '',
-                                        assignedMembers: transport.assignedMembers || [],
-                                        confirmationNumber: transport.confirmationNumber || '',
-                                        status: transport.status || 'confirmed'
-                                      });
-                                      setShowTransportModal(true);
-                                    }}
-                                    className="absolute top-3 right-3 h-8 w-8 p-0 hover:bg-gray-100"
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
+                                  {/* Edit and Delete buttons in top right corner */}
+                                  <div className="absolute top-3 right-3 flex space-x-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => {
+                                        setEditingTransportationIndex(actualIndex);
+                                        setTransportFormData({
+                                          type: transport.type || 'driving',
+                                          details: transport.details || '',
+                                          departure: transport.departure || '',
+                                          arrival: transport.arrival || '',
+                                          date: transport.date || transport.dates || '',
+                                          time: transport.time || '',
+                                          assignedMembers: transport.assignedMembers || [],
+                                          confirmationNumber: transport.confirmationNumber || '',
+                                          status: transport.status || 'confirmed'
+                                        });
+                                        setShowTransportModal(true);
+                                      }}
+                                      className="h-8 w-8 p-0 hover:bg-gray-100"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => {
+                                        const updatedTransportation = tripData.transportation?.filter((t: any, index: number) => index !== actualIndex) || [];
+                                        const updatedTripData = { ...tripData, transportation: updatedTransportation };
+                                        setTripData(updatedTripData);
+                                        
+                                        const updatedTrips = userTrips.map(trip => 
+                                          trip.id === tripData.id ? updatedTripData : trip
+                                        );
+                                        setUserTrips(updatedTrips);
+                                      }}
+                                      className="h-8 w-8 p-0 hover:bg-gray-100"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
                                   
                                   {/* Main transportation info */}
                                   <div className="pr-12">
@@ -4895,31 +4914,50 @@ const FamApp = () => {
                               
                               return (
                                 <div key={index} className="border rounded-lg p-4 relative">
-                                  {/* Edit button in top right corner */}
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    onClick={() => {
-                                      setEditingAccommodationIndex(index);
-                                      setAccommodationFormData({
-                                        type: accommodation.type || 'hotel',
-                                        name: accommodation.name || '',
-                                        address: accommodation.address || '',
-                                        checkIn: accommodation.checkIn || '',
-                                        checkOut: accommodation.checkOut || '',
-                                        details: accommodation.roomType || accommodation.details || '',
-                                        roomQuantity: accommodation.roomQuantity || '1',
-                                        roomAssignment: accommodation.roomAssignment || '',
-                                        assignedMembers: accommodation.assignedMembers || [],
-                                        status: accommodation.status || 'confirmed',
-                                        confirmationNumber: accommodation.confirmationNumber || ''
-                                      });
-                                      setShowHotelModal(true);
-                                    }}
-                                    className="absolute top-3 right-3 h-8 w-8 p-0 hover:bg-gray-100"
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
+                                  {/* Edit and Delete buttons in top right corner */}
+                                  <div className="absolute top-3 right-3 flex space-x-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => {
+                                        setEditingAccommodationIndex(index);
+                                        setAccommodationFormData({
+                                          type: accommodation.type || 'hotel',
+                                          name: accommodation.name || '',
+                                          address: accommodation.address || '',
+                                          checkIn: accommodation.checkIn || '',
+                                          checkOut: accommodation.checkOut || '',
+                                          details: accommodation.roomType || accommodation.details || '',
+                                          roomQuantity: accommodation.roomQuantity || '1',
+                                          roomAssignment: accommodation.roomAssignment || '',
+                                          assignedMembers: accommodation.assignedMembers || [],
+                                          status: accommodation.status || 'confirmed',
+                                          confirmationNumber: accommodation.confirmationNumber || ''
+                                        });
+                                        setShowHotelModal(true);
+                                      }}
+                                      className="h-8 w-8 p-0 hover:bg-gray-100"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => {
+                                        const updatedAccommodations = (tripData.accommodations || tripData.hotels || []).filter((a: any, i: number) => i !== index);
+                                        const updatedTripData = { ...tripData, accommodations: updatedAccommodations };
+                                        setTripData(updatedTripData);
+                                        
+                                        const updatedTrips = userTrips.map(trip => 
+                                          trip.id === tripData.id ? updatedTripData : trip
+                                        );
+                                        setUserTrips(updatedTrips);
+                                      }}
+                                      className="h-8 w-8 p-0 hover:bg-gray-100"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
                                   
                                   {/* Main accommodation info */}
                                   <div className="pr-12">
@@ -5081,29 +5119,48 @@ const FamApp = () => {
                               
                               return (
                                 <div key={index} className="border rounded-lg p-4 relative">
-                                  {/* Edit button in top right corner */}
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    onClick={() => {
-                                      setEditingTransportationIndex(index);
-                                      setTransportFormData({
-                                        type: transport.type || 'driving',
-                                        details: transport.details || '',
-                                        departure: transport.departure || '',
-                                        arrival: transport.arrival || '',
-                                        date: transport.date || transport.dates || '',
-                                        time: transport.time || '',
-                                        assignedMembers: transport.assignedMembers || [],
-                                        confirmationNumber: transport.confirmationNumber || '',
-                                        status: transport.status || 'confirmed'
-                                      });
-                                      setShowTransportModal(true);
-                                    }}
-                                    className="absolute top-3 right-3 h-8 w-8 p-0 hover:bg-gray-100"
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
+                                  {/* Edit and Delete buttons in top right corner */}
+                                  <div className="absolute top-3 right-3 flex space-x-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => {
+                                        setEditingTransportationIndex(index);
+                                        setTransportFormData({
+                                          type: transport.type || 'driving',
+                                          details: transport.details || '',
+                                          departure: transport.departure || '',
+                                          arrival: transport.arrival || '',
+                                          date: transport.date || transport.dates || '',
+                                          time: transport.time || '',
+                                          assignedMembers: transport.assignedMembers || [],
+                                          confirmationNumber: transport.confirmationNumber || '',
+                                          status: transport.status || 'confirmed'
+                                        });
+                                        setShowTransportModal(true);
+                                      }}
+                                      className="h-8 w-8 p-0 hover:bg-gray-100"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => {
+                                        const updatedTransportation = tripData.transportation?.filter((t: any, i: number) => i !== index) || [];
+                                        const updatedTripData = { ...tripData, transportation: updatedTransportation };
+                                        setTripData(updatedTripData);
+                                        
+                                        const updatedTrips = userTrips.map(trip => 
+                                          trip.id === tripData.id ? updatedTripData : trip
+                                        );
+                                        setUserTrips(updatedTrips);
+                                      }}
+                                      className="h-8 w-8 p-0 hover:bg-gray-100"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
                                   
                                   {/* Main transportation info */}
                                   <div className="pr-12">
