@@ -6824,7 +6824,7 @@ const FamApp = () => {
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Basic Information</h3>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="profile-name-trip">Name *</Label>
                       <Input
@@ -6832,6 +6832,21 @@ const FamApp = () => {
                         value={editingProfile.name}
                         onChange={(e) => setEditingProfile(prev => prev ? {...prev, name: e.target.value} : null)}
                       />
+                    </div>
+                    <div>
+                      <Label htmlFor="profile-type-trip">Type</Label>
+                      <Select 
+                        value={editingProfile.type} 
+                        onValueChange={(value) => setEditingProfile(prev => prev ? {...prev, type: value as 'adult' | 'child'} : null)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="adult">Adult</SelectItem>
+                          <SelectItem value="child">Child</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="profile-dob-trip">Date of Birth</Label>
