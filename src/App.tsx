@@ -4344,20 +4344,89 @@ const FamApp = () => {
                           }
                         }
                         
-                        // Group activities by date
-                        const activitiesByDate = (tripData.activities || [])
-                          .reduce((groups, activity) => {
-                            const date = activity.date;
-                            if (!groups[date]) {
-                              groups[date] = [];
-                            }
-                            groups[date].push(activity);
-                            return groups;
-                          }, {} as Record<string, any[]>);
+                        // Group all itinerary items by date (activities, flights, transportation, accommodations)
+                        const itineraryItemsByDate = {} as Record<string, any[]>;
                         
-                        // Sort activities within each date by time
-                        Object.keys(activitiesByDate).forEach(date => {
-                          activitiesByDate[date].sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
+                        // Add activities
+                        (tripData.activities || []).forEach(activity => {
+                          const date = activity.date;
+                          if (!itineraryItemsByDate[date]) {
+                            itineraryItemsByDate[date] = [];
+                          }
+                          itineraryItemsByDate[date].push({
+                            ...activity,
+                            itemType: 'activity',
+                            time: activity.time || '00:00'
+                          });
+                        });
+                        
+                        // Add flights
+                        (tripData.flights || []).forEach(flight => {
+                          const date = flight.date || flight.departureTime?.split('T')[0];
+                          if (date) {
+                            if (!itineraryItemsByDate[date]) {
+                              itineraryItemsByDate[date] = [];
+                            }
+                            const time = flight.departureTime?.split('T')[1]?.substring(0, 5) || flight.time || '00:00';
+                            itineraryItemsByDate[date].push({
+                              ...flight,
+                              itemType: 'flight',
+                              time: time,
+                              name: `${flight.departure || flight.from} → ${flight.arrival || flight.to}`,
+                              location: `Flight ${flight.flightNumber || ''}`
+                            });
+                          }
+                        });
+                        
+                        // Add transportation
+                        (tripData.transportation || []).forEach(transport => {
+                          const date = transport.date;
+                          if (date) {
+                            if (!itineraryItemsByDate[date]) {
+                              itineraryItemsByDate[date] = [];
+                            }
+                            itineraryItemsByDate[date].push({
+                              ...transport,
+                              itemType: 'transportation',
+                              time: transport.time || '00:00',
+                              name: transport.details || transport.type || 'Transportation'
+                            });
+                          }
+                        });
+                        
+                        // Add accommodations (check-in dates)
+                        (tripData.accommodations || tripData.hotels || []).forEach(accommodation => {
+                          const checkInDate = accommodation.checkIn;
+                          if (checkInDate) {
+                            if (!itineraryItemsByDate[checkInDate]) {
+                              itineraryItemsByDate[checkInDate] = [];
+                            }
+                            itineraryItemsByDate[checkInDate].push({
+                              ...accommodation,
+                              itemType: 'accommodation',
+                              time: '15:00', // Default check-in time
+                              name: `Check-in: ${accommodation.name || 'Accommodation'}`
+                            });
+                          }
+                          
+                          // Also add check-out dates
+                          const checkOutDate = accommodation.checkOut;
+                          if (checkOutDate && checkOutDate !== checkInDate) {
+                            if (!itineraryItemsByDate[checkOutDate]) {
+                              itineraryItemsByDate[checkOutDate] = [];
+                            }
+                            itineraryItemsByDate[checkOutDate].push({
+                              ...accommodation,
+                              itemType: 'accommodation',
+                              time: '11:00', // Default check-out time
+                              name: `Check-out: ${accommodation.name || 'Accommodation'}`
+                            });
+                          }
+                        });
+                        
+                        // Sort items within each date by time
+                        Object.keys(itineraryItemsByDate).forEach(date => {
+                          itineraryItemsByDate[date].sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
                         });
                         
                         const toggleDay = (date: string) => {
@@ -4377,7 +4446,8 @@ const FamApp = () => {
                         return (
                           <div className="space-y-4">
                             {allTripDates.map((date, index) => {
-                              const activities = activitiesByDate[date] || [];
+                              const itineraryItems = itineraryItemsByDate[date] || [];
+                              const activities = itineraryItems.filter(item => item.itemType === 'activity');
                               const dayNumber = index + 1;
                               const formatDate = new Date(date).toLocaleDateString('en-US', { 
                                 month: 'numeric', 
@@ -4386,7 +4456,7 @@ const FamApp = () => {
                               const dayName = new Date(date).toLocaleDateString('en-US', { 
                                 weekday: 'long' 
                               });
-                              const isCollapsed = collapsedDays[date] ?? (activities.length === 0);
+                              const isCollapsed = collapsedDays[date] ?? (itineraryItems.length === 0);
                               
                               return (
                                 <div key={date} className="border rounded-lg overflow-hidden">
@@ -4402,16 +4472,16 @@ const FamApp = () => {
                                         </h3>
                                         <p className="text-sm text-gray-600">{dayName}</p>
                                       </div>
-                                      {activities.length > 0 && (
+                                      {itineraryItems.length > 0 && (
                                         <Badge variant="secondary">
-                                          {activities.length} {activities.length === 1 ? 'activity' : 'activities'}
+                                          {itineraryItems.length} {itineraryItems.length === 1 ? 'item' : 'items'}
                                         </Badge>
                                       )}
                                     </div>
                                     
                                     <div className="flex items-center space-x-2">
-                                      {activities.length === 0 && (
-                                        <span className="text-sm text-gray-400 mr-2">No activities yet</span>
+                                      {itineraryItems.length === 0 && (
+                                        <span className="text-sm text-gray-400 mr-2">No items yet</span>
                                       )}
                                       <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${!isCollapsed ? 'rotate-90' : ''}`} />
                                     </div>
@@ -4420,10 +4490,10 @@ const FamApp = () => {
                                   {/* Expandable Content */}
                                   {!isCollapsed && (
                                     <div className="p-4 bg-white border-t">
-                                      {activities.length === 0 ? (
+                                      {itineraryItems.length === 0 ? (
                                         <div className="text-center py-8">
                                           <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                                          <p className="text-gray-500 mb-3">No activities planned for this day</p>
+                                          <p className="text-gray-500 mb-3">No items planned for this day</p>
                                           <Button 
                                             size="sm" 
                                             variant="outline"
@@ -4439,18 +4509,16 @@ const FamApp = () => {
                                         </div>
                                       ) : (
                                         <div className="space-y-3">
-                                    {activities
-                                      .sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'))
-                                      .map((activity) => (
-                            <div key={activity.id} className="border rounded-lg p-4">
+                                    {itineraryItems.map((item) => (
+                            <div key={item.id || `${item.itemType}-${item.name}`} className="border rounded-lg p-4">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-3 mb-2">
-                                    <h3 className="font-medium text-lg">{activity.name}</h3>
-                                    {activity.priority === 'high' && (
+                                    <h3 className="font-medium text-lg">{item.name}</h3>
+                                    {item.priority === 'high' && (
                                       <Badge variant="destructive">Must do</Badge>
                                     )}
-                                    {activity.bookingRequired && (
+                                    {item.bookingRequired && (
                                       <Badge variant="outline">Booking required</Badge>
                                     )}
                                   </div>
