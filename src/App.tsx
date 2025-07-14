@@ -4381,6 +4381,7 @@ const FamApp = () => {
                         // Add transportation
                         (tripData.transportation || []).forEach(transport => {
                           const date = transport.date;
+                          console.log('Transportation item:', transport, 'Date:', date);
                           if (date) {
                             if (!itineraryItemsByDate[date]) {
                               itineraryItemsByDate[date] = [];
@@ -4428,6 +4429,8 @@ const FamApp = () => {
                         Object.keys(itineraryItemsByDate).forEach(date => {
                           itineraryItemsByDate[date].sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
                         });
+                        
+                        console.log('Final itineraryItemsByDate:', itineraryItemsByDate);
                         
                         const toggleDay = (date: string) => {
                           setCollapsedDays(prev => ({ ...prev, [date]: !prev[date] }));
@@ -4526,43 +4529,43 @@ const FamApp = () => {
                                   <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
                                     <div className="flex items-center">
                                       <Calendar className="w-4 h-4 mr-1" />
-                                      {new Date(activity.date).toLocaleDateString()}
-                                      {activity.time && ` at ${activity.time}`}
+                                      {new Date(date).toLocaleDateString()}
+                                      {item.time && ` at ${item.time}`}
                                     </div>
-                                    {activity.duration && (
+                                    {item.duration && (
                                       <div className="flex items-center">
                                         <Clock className="w-4 h-4 mr-1" />
-                                        {activity.duration}
+                                        {item.duration}
                                       </div>
                                     )}
-                                    {activity.location && (
+                                    {item.location && (
                                       <div className="flex items-center">
                                         <MapPin className="w-4 h-4 mr-1" />
-                                        {activity.location}
+                                        {item.location}
                                       </div>
                                     )}
-                                    {activity.cost && (
+                                    {item.cost && (
                                       <div className="flex items-center">
                                         <DollarSign className="w-4 h-4 mr-1" />
-                                        {activity.cost} {activity.costType === 'per-person' ? 'per person' : activity.costType === 'total' ? 'total' : ''}
+                                        {item.cost} {item.costType === 'per-person' ? 'per person' : item.costType === 'total' ? 'total' : ''}
                                       </div>
                                     )}
                                   </div>
                                   
-                                  {activity.familyNotes && (
+                                  {item.familyNotes && (
                                     <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
                                       <div className="flex items-start">
                                         <Users className="w-4 h-4 text-blue-500 mr-2 mt-0.5" />
-                                        <p className="text-sm text-blue-700"><strong>Family Notes:</strong> {activity.familyNotes}</p>
+                                        <p className="text-sm text-blue-700"><strong>Family Notes:</strong> {item.familyNotes}</p>
                                       </div>
                                     </div>
                                   )}
                                   
-                                  {activity.participants && activity.participants.length > 0 && (
+                                  {item.participants && item.participants.length > 0 && (
                                     <div className="flex items-center space-x-2">
                                       <span className="text-sm text-gray-500">Participants:</span>
                                       <div className="flex space-x-1">
-                                        {activity.participants.map((participantId, idx) => {
+                                        {item.participants.map((participantId, idx) => {
                                           const [type, index] = participantId.split('-');
                                           const member = type === 'adult' 
                                             ? tripData.adults?.[parseInt(index)]
@@ -4586,9 +4589,13 @@ const FamApp = () => {
                                     variant="ghost" 
                                     size="sm"
                                     onClick={() => {
-                                      setEditingActivity(activity);
-                                      setShowAddActivityModal(true);
+                                      // Only allow editing for activities, not other item types
+                                      if (item.itemType === 'activity') {
+                                        setEditingActivity(item);
+                                        setShowAddActivityModal(true);
+                                      }
                                     }}
+                                    disabled={item.itemType !== 'activity'}
                                   >
                                     <Edit className="w-4 h-4" />
                                   </Button>
@@ -4596,9 +4603,24 @@ const FamApp = () => {
                                     variant="ghost" 
                                     size="sm"
                                     onClick={() => {
-                                      // Delete activity
-                                      const updatedActivities = tripData.activities?.filter(a => a.id !== activity.id) || [];
-                                      const updatedTripData = { ...tripData, activities: updatedActivities };
+                                      // Handle deletion based on item type
+                                      let updatedTripData = { ...tripData };
+                                      
+                                      if (item.itemType === 'activity') {
+                                        const updatedActivities = tripData.activities?.filter(a => a.id !== item.id) || [];
+                                        updatedTripData = { ...tripData, activities: updatedActivities };
+                                      } else if (item.itemType === 'flight') {
+                                        const updatedFlights = tripData.flights?.filter(f => f.id !== item.id) || [];
+                                        updatedTripData = { ...tripData, flights: updatedFlights };
+                                      } else if (item.itemType === 'transportation') {
+                                        const updatedTransportation = tripData.transportation?.filter(t => t.id !== item.id) || [];
+                                        updatedTripData = { ...tripData, transportation: updatedTransportation };
+                                      } else if (item.itemType === 'accommodation') {
+                                        // For accommodations, we need to be careful as check-in/check-out are treated as separate items
+                                        const updatedAccommodations = (tripData.accommodations || tripData.hotels || []).filter(h => h.id !== item.id);
+                                        updatedTripData = { ...tripData, accommodations: updatedAccommodations, hotels: updatedAccommodations };
+                                      }
+                                      
                                       setTripData(updatedTripData);
                                       
                                       // Update userTrips and localStorage
@@ -4607,6 +4629,7 @@ const FamApp = () => {
                                       );
                                       setUserTrips(updatedTrips);
                                     }}
+                                    disabled={item.itemType === 'accommodation'} // Disable for accommodations as they're managed elsewhere
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
