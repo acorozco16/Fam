@@ -7055,16 +7055,27 @@ const FamApp = () => {
                   <Button
                     onClick={() => {
                       if (editingProfile) {
-                        // Update the profile in the array
-                        const updatedProfiles = familyProfiles.map(profile => 
-                          profile.id === editingProfile.id 
-                            ? { ...editingProfile, updatedAt: new Date().toISOString() }
-                            : profile
-                        );
-                        setFamilyProfiles(updatedProfiles);
-                        
-                        // Save to localStorage
-                        localStorage.setItem('famapp-family-profiles', JSON.stringify(updatedProfiles));
+                        if (editingProfile.id) {
+                          // Edit existing profile
+                          const updatedProfiles = familyProfiles.map(profile => 
+                            profile.id === editingProfile.id 
+                              ? { ...editingProfile, updatedAt: new Date().toISOString() }
+                              : profile
+                          );
+                          setFamilyProfiles(updatedProfiles);
+                          localStorage.setItem('famapp-family-profiles', JSON.stringify(updatedProfiles));
+                        } else {
+                          // Create new profile
+                          const newProfile = {
+                            ...editingProfile,
+                            id: Date.now().toString(),
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                          };
+                          const updatedProfiles = [...familyProfiles, newProfile];
+                          setFamilyProfiles(updatedProfiles);
+                          localStorage.setItem('famapp-family-profiles', JSON.stringify(updatedProfiles));
+                        }
                         
                         // Close modal
                         setShowEditProfile(false);
@@ -7072,7 +7083,7 @@ const FamApp = () => {
                       }
                     }}
                   >
-                    Save Changes
+                    {editingProfile?.id ? 'Save Changes' : 'Create Family Member'}
                   </Button>
                 </div>
               </div>
