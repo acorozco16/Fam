@@ -3159,7 +3159,8 @@ const FamApp = () => {
     departureTime: '',
     arrivalTime: '',
     confirmationNumber: '',
-    status: 'confirmed'
+    status: 'confirmed',
+    assignedMembers: [] as string[]
   });
   
   const [accommodationFormData, setAccommodationFormData] = useState({
@@ -4381,7 +4382,6 @@ const FamApp = () => {
                         // Add transportation
                         (tripData.transportation || []).forEach(transport => {
                           const date = transport.date;
-                          console.log('Transportation item:', transport, 'Date:', date);
                           if (date) {
                             if (!itineraryItemsByDate[date]) {
                               itineraryItemsByDate[date] = [];
@@ -4430,8 +4430,7 @@ const FamApp = () => {
                           itineraryItemsByDate[date].sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
                         });
                         
-                        console.log('Final itineraryItemsByDate:', itineraryItemsByDate);
-                        
+                                                
                         const toggleDay = (date: string) => {
                           setCollapsedDays(prev => ({ ...prev, [date]: !prev[date] }));
                         };
@@ -4512,130 +4511,126 @@ const FamApp = () => {
                                         </div>
                                       ) : (
                                         <div className="space-y-3">
-                                    {itineraryItems.map((item) => (
-                            <div key={item.id || `${item.itemType}-${item.name}`} className="border rounded-lg p-4">
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-3 mb-2">
-                                    <h3 className="font-medium text-lg">{item.name}</h3>
-                                    {item.priority === 'high' && (
-                                      <Badge variant="destructive">Must do</Badge>
-                                    )}
-                                    {item.bookingRequired && (
-                                      <Badge variant="outline">Booking required</Badge>
-                                    )}
-                                  </div>
-                                  
-                                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
-                                    <div className="flex items-center">
-                                      <Calendar className="w-4 h-4 mr-1" />
-                                      {new Date(date).toLocaleDateString()}
-                                      {item.time && ` at ${item.time}`}
-                                    </div>
-                                    {item.duration && (
-                                      <div className="flex items-center">
-                                        <Clock className="w-4 h-4 mr-1" />
-                                        {item.duration}
-                                      </div>
-                                    )}
-                                    {item.location && (
-                                      <div className="flex items-center">
-                                        <MapPin className="w-4 h-4 mr-1" />
-                                        {item.location}
-                                      </div>
-                                    )}
-                                    {item.cost && (
-                                      <div className="flex items-center">
-                                        <DollarSign className="w-4 h-4 mr-1" />
-                                        {item.cost} {item.costType === 'per-person' ? 'per person' : item.costType === 'total' ? 'total' : ''}
-                                      </div>
-                                    )}
-                                  </div>
-                                  
-                                  {item.familyNotes && (
-                                    <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
-                                      <div className="flex items-start">
-                                        <Users className="w-4 h-4 text-blue-500 mr-2 mt-0.5" />
-                                        <p className="text-sm text-blue-700"><strong>Family Notes:</strong> {item.familyNotes}</p>
-                                      </div>
-                                    </div>
-                                  )}
-                                  
-                                  {item.participants && item.participants.length > 0 && (
-                                    <div className="flex items-center space-x-2">
-                                      <span className="text-sm text-gray-500">Participants:</span>
-                                      <div className="flex space-x-1">
-                                        {item.participants.map((participantId, idx) => {
-                                          const [type, index] = participantId.split('-');
-                                          const member = type === 'adult' 
-                                            ? tripData.adults?.[parseInt(index)]
-                                            : tripData.kids?.[parseInt(index)];
-                                          
-                                          return member ? (
-                                            <div key={idx} className={`w-6 h-6 ${type === 'adult' ? 'bg-blue-100' : 'bg-pink-100'} rounded-full flex items-center justify-center`}>
-                                              <span className={`text-xs font-medium ${type === 'adult' ? 'text-blue-700' : 'text-pink-700'}`}>
-                                                {member.name?.[0] || (type === 'adult' ? 'A' : 'K')}
-                                              </span>
+                                          {itineraryItems.map((item) => (
+                                            <div key={item.id || `${item.itemType}-${item.name}`} className="border rounded-lg p-4">
+                                              <div className="flex items-start justify-between">
+                                                <div className="flex-1">
+                                                  <div className="flex items-center space-x-3 mb-2">
+                                                    <h3 className="font-medium text-lg">{item.name}</h3>
+                                                    {item.priority === 'high' && (
+                                                      <Badge variant="destructive">Must do</Badge>
+                                                    )}
+                                                    {item.bookingRequired && (
+                                                      <Badge variant="outline">Booking required</Badge>
+                                                    )}
+                                                  </div>
+                                                  
+                                                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
+                                                    <div className="flex items-center">
+                                                      <Calendar className="w-4 h-4 mr-1" />
+                                                      {new Date(date).toLocaleDateString()}
+                                                      {item.time && ` at ${item.time}`}
+                                                    </div>
+                                                    {item.duration && (
+                                                      <div className="flex items-center">
+                                                        <Clock className="w-4 h-4 mr-1" />
+                                                        {item.duration}
+                                                      </div>
+                                                    )}
+                                                    {item.location && (
+                                                      <div className="flex items-center">
+                                                        <MapPin className="w-4 h-4 mr-1" />
+                                                        {item.location}
+                                                      </div>
+                                                    )}
+                                                    {item.cost && (
+                                                      <div className="flex items-center">
+                                                        <DollarSign className="w-4 h-4 mr-1" />
+                                                        {item.cost} {item.costType === 'per-person' ? 'per person' : item.costType === 'total' ? 'total' : ''}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                  
+                                                  {item.familyNotes && (
+                                                    <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
+                                                      <div className="flex items-start">
+                                                        <Users className="w-4 h-4 text-blue-500 mr-2 mt-0.5" />
+                                                        <p className="text-sm text-blue-700"><strong>Family Notes:</strong> {item.familyNotes}</p>
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                  
+                                                  {item.participants && item.participants.length > 0 && (
+                                                    <div className="flex items-center space-x-2">
+                                                      <span className="text-sm text-gray-500">Participants:</span>
+                                                      <div className="flex space-x-1">
+                                                        {item.participants.map((participantId, idx) => {
+                                                          const [type, index] = participantId.split('-');
+                                                          const member = type === 'adult' 
+                                                            ? tripData.adults?.[parseInt(index)]
+                                                            : tripData.kids?.[parseInt(index)];
+                                                          
+                                                          return member ? (
+                                                            <div key={idx} className={`w-6 h-6 ${type === 'adult' ? 'bg-blue-100' : 'bg-pink-100'} rounded-full flex items-center justify-center`}>
+                                                              <span className={`text-xs font-medium ${type === 'adult' ? 'text-blue-700' : 'text-pink-700'}`}>
+                                                                {member.name?.[0] || (type === 'adult' ? 'A' : 'K')}
+                                                              </span>
+                                                            </div>
+                                                          ) : null;
+                                                        })}
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                                
+                                                <div className="flex items-center space-x-2">
+                                                  <Button 
+                                                    variant="ghost" 
+                                                    size="sm"
+                                                    onClick={() => {
+                                                      if (item.itemType === 'activity') {
+                                                        setEditingActivity(item);
+                                                        setShowAddActivityModal(true);
+                                                      }
+                                                    }}
+                                                    disabled={item.itemType !== 'activity'}
+                                                  >
+                                                    <Edit className="w-4 h-4" />
+                                                  </Button>
+                                                  <Button 
+                                                    variant="ghost" 
+                                                    size="sm"
+                                                    onClick={() => {
+                                                      let updatedTripData = { ...tripData };
+                                                      
+                                                      if (item.itemType === 'activity') {
+                                                        const updatedActivities = tripData.activities?.filter(a => a.id !== item.id) || [];
+                                                        updatedTripData = { ...tripData, activities: updatedActivities };
+                                                      } else if (item.itemType === 'flight') {
+                                                        const updatedFlights = tripData.flights?.filter(f => f.id !== item.id) || [];
+                                                        updatedTripData = { ...tripData, flights: updatedFlights };
+                                                      } else if (item.itemType === 'transportation') {
+                                                        const updatedTransportation = tripData.transportation?.filter(t => t.id !== item.id) || [];
+                                                        updatedTripData = { ...tripData, transportation: updatedTransportation };
+                                                      } else if (item.itemType === 'accommodation') {
+                                                        const updatedAccommodations = (tripData.accommodations || tripData.hotels || []).filter(h => h.id !== item.id);
+                                                        updatedTripData = { ...tripData, accommodations: updatedAccommodations, hotels: updatedAccommodations };
+                                                      }
+                                                      
+                                                      setTripData(updatedTripData);
+                                                      
+                                                      const updatedTrips = userTrips.map(trip => 
+                                                        trip.id === tripData.id ? updatedTripData : trip
+                                                      );
+                                                      setUserTrips(updatedTrips);
+                                                    }}
+                                                    disabled={item.itemType === 'accommodation'}
+                                                  >
+                                                    <Trash2 className="w-4 h-4" />
+                                                  </Button>
+                                                </div>
+                                              </div>
                                             </div>
-                                          ) : null;
-                                        })}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                <div className="flex items-center space-x-2">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => {
-                                      // Only allow editing for activities, not other item types
-                                      if (item.itemType === 'activity') {
-                                        setEditingActivity(item);
-                                        setShowAddActivityModal(true);
-                                      }
-                                    }}
-                                    disabled={item.itemType !== 'activity'}
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => {
-                                      // Handle deletion based on item type
-                                      let updatedTripData = { ...tripData };
-                                      
-                                      if (item.itemType === 'activity') {
-                                        const updatedActivities = tripData.activities?.filter(a => a.id !== item.id) || [];
-                                        updatedTripData = { ...tripData, activities: updatedActivities };
-                                      } else if (item.itemType === 'flight') {
-                                        const updatedFlights = tripData.flights?.filter(f => f.id !== item.id) || [];
-                                        updatedTripData = { ...tripData, flights: updatedFlights };
-                                      } else if (item.itemType === 'transportation') {
-                                        const updatedTransportation = tripData.transportation?.filter(t => t.id !== item.id) || [];
-                                        updatedTripData = { ...tripData, transportation: updatedTransportation };
-                                      } else if (item.itemType === 'accommodation') {
-                                        // For accommodations, we need to be careful as check-in/check-out are treated as separate items
-                                        const updatedAccommodations = (tripData.accommodations || tripData.hotels || []).filter(h => h.id !== item.id);
-                                        updatedTripData = { ...tripData, accommodations: updatedAccommodations, hotels: updatedAccommodations };
-                                      }
-                                      
-                                      setTripData(updatedTripData);
-                                      
-                                      // Update userTrips and localStorage
-                                      const updatedTrips = userTrips.map(trip => 
-                                        trip.id === tripData.id ? updatedTripData : trip
-                                      );
-                                      setUserTrips(updatedTrips);
-                                    }}
-                                    disabled={item.itemType === 'accommodation'} // Disable for accommodations as they're managed elsewhere
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
                                           ))}
                                         </div>
                                       )}
@@ -4673,9 +4668,12 @@ const FamApp = () => {
                               Add flights, or if you're driving/taking the train, add that transportation instead
                             </p>
                             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                              <Button onClick={() => setShowFlightModal(true)}>
+                              <Button onClick={() => {
+                                console.log('Main Add Flight button clicked');
+                                setShowFlightModal(true);
+                              }}>
                                 <Plane className="w-4 h-4 mr-2" />
-                                Add Flight
+                                Add Flight (MAIN)
                               </Button>
                               <Button variant="outline" onClick={() => setShowTransportModal(true)}>
                                 <Car className="w-4 h-4 mr-2" />
@@ -4773,6 +4771,42 @@ const FamApp = () => {
                                         <div className="mt-2 text-sm">
                                           <span className="text-gray-600">Confirmation: </span>
                                           <span className="font-medium text-gray-900">{flight.confirmationNumber}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {/* Assigned Family Members */}
+                                      {flight.assignedMembers && flight.assignedMembers.length > 0 && (
+                                        <div className="mt-2">
+                                          <p className="text-sm text-gray-600 mb-2">
+                                            <strong>Using this flight:</strong>
+                                          </p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {flight.assignedMembers.map((memberId: string) => {
+                                              // Parse member ID to get type and index
+                                              const [memberType, memberIndex] = memberId.split('-');
+                                              let member = null;
+                                              let bgColor = '';
+                                              
+                                              if (memberType === 'adult' && tripData.adults) {
+                                                member = tripData.adults[parseInt(memberIndex)];
+                                                bgColor = 'bg-blue-100 text-blue-700';
+                                              } else if (memberType === 'kid' && tripData.kids) {
+                                                member = tripData.kids[parseInt(memberIndex)];
+                                                bgColor = 'bg-pink-100 text-pink-700';
+                                              }
+                                              
+                                              if (!member) return null;
+                                              
+                                              return (
+                                                <div key={memberId} className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${bgColor}`}>
+                                                  <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                                                    <span className="text-xs font-medium">{member.name?.[0] || (memberType === 'adult' ? 'A' : 'K')}</span>
+                                                  </div>
+                                                  <span className="font-medium">{member.name || (memberType === 'adult' ? 'Adult' : 'Kid')}</span>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
                                         </div>
                                       )}
                                     </div>
@@ -6180,7 +6214,7 @@ const FamApp = () => {
         {/* Flight Modal */}
         {showFlightModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
                 <h2 className="text-xl font-bold">{editingFlightIndex !== null ? 'Edit Flight' : 'Add Flight'}</h2>
                 <Button variant="ghost" size="sm" onClick={() => {
@@ -6194,7 +6228,8 @@ const FamApp = () => {
                     departureTime: '',
                     arrivalTime: '',
                     confirmationNumber: '',
-                    status: 'confirmed'
+                    status: 'confirmed',
+                    assignedMembers: []
                   });
                 }}>
                   <X className="w-5 h-5" />
@@ -6215,6 +6250,27 @@ const FamApp = () => {
                       <SelectItem value="connecting">Connecting Flight</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="airline">Airline</Label>
+                    <Input 
+                      id="airline" 
+                      placeholder="e.g., American Airlines" 
+                      value={flightFormData.airline}
+                      onChange={(e) => setFlightFormData(prev => ({...prev, airline: e.target.value}))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="flight-number">Flight Number</Label>
+                    <Input 
+                      id="flight-number" 
+                      placeholder="e.g., AA123" 
+                      value={flightFormData.flightNumber}
+                      onChange={(e) => setFlightFormData(prev => ({...prev, flightNumber: e.target.value}))}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -6278,8 +6334,71 @@ const FamApp = () => {
                 </div>
 
                 <div>
+                  <Label>Who's Taking This Flight?</Label>
+                  <div className="space-y-2 mt-2">
+                    {/* Adults */}
+                    {tripData.adults && tripData.adults.length > 0 ? tripData.adults.map((adult, idx) => (
+                      <div key={`adult-${idx}`} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={flightFormData.assignedMembers?.includes(`adult-${idx}`) || false}
+                          onCheckedChange={(checked) => {
+                            const currentAssigned = flightFormData.assignedMembers || [];
+                            const memberId = `adult-${idx}`;
+                            const updatedAssigned = checked
+                              ? [...currentAssigned, memberId]
+                              : currentAssigned.filter(id => id !== memberId);
+                            setFlightFormData(prev => ({...prev, assignedMembers: updatedAssigned}));
+                          }}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-blue-700">{adult.name?.[0] || 'A'}</span>
+                          </div>
+                          <span className="text-sm">{adult.name || 'Adult'}</span>
+                        </div>
+                      </div>
+                    )) : null}
+                    
+                    {/* Kids */}
+                    {tripData.kids && tripData.kids.length > 0 ? tripData.kids.map((kid, idx) => (
+                      <div key={`kid-${idx}`} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={flightFormData.assignedMembers?.includes(`kid-${idx}`) || false}
+                          onCheckedChange={(checked) => {
+                            const currentAssigned = flightFormData.assignedMembers || [];
+                            const memberId = `kid-${idx}`;
+                            const updatedAssigned = checked
+                              ? [...currentAssigned, memberId]
+                              : currentAssigned.filter(id => id !== memberId);
+                            setFlightFormData(prev => ({...prev, assignedMembers: updatedAssigned}));
+                          }}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-pink-100 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-pink-700">{kid.name?.[0] || 'K'}</span>
+                          </div>
+                          <span className="text-sm">{kid.name || 'Kid'}</span>
+                        </div>
+                      </div>
+                    )) : null}
+                    
+                    {/* Show message if no family members */}
+                    {(!tripData.adults || tripData.adults.length === 0) && (!tripData.kids || tripData.kids.length === 0) && (
+                      <div className="text-sm text-gray-500 italic">
+                        No family members added yet. Add family members in the trip setup to assign them to flights.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
                   <Label htmlFor="confirmation-number">Confirmation Number (optional)</Label>
-                  <Input id="confirmation-number" placeholder="e.g., ABC123" />
+                  <Input 
+                    id="confirmation-number" 
+                    placeholder="e.g., ABC123" 
+                    value={flightFormData.confirmationNumber}
+                    onChange={(e) => setFlightFormData(prev => ({...prev, confirmationNumber: e.target.value}))}
+                  />
                 </div>
               </div>
 
@@ -6295,7 +6414,8 @@ const FamApp = () => {
                     departureTime: '',
                     arrivalTime: '',
                     confirmationNumber: '',
-                    status: 'confirmed'
+                    status: 'confirmed',
+                    assignedMembers: []
                   });
                 }}>
                   Cancel
@@ -6353,7 +6473,8 @@ const FamApp = () => {
                     departureTime: '',
                     arrivalTime: '',
                     confirmationNumber: '',
-                    status: 'confirmed'
+                    status: 'confirmed',
+                    assignedMembers: []
                   });
                   setShowFlightModal(false);
                 }}>
@@ -6680,10 +6801,10 @@ const FamApp = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="transport-dates">Dates</Label>
+                  <Label htmlFor="transport-dates">Date</Label>
                   <Input 
                     id="transport-dates" 
-                    placeholder="e.g., Mar 15-22, 2025" 
+                    type="date"
                     value={transportFormData.date}
                     onChange={(e) => setTransportFormData(prev => ({...prev, date: e.target.value}))}
                   />
@@ -7402,7 +7523,7 @@ const FamApp = () => {
                                 setUserTrips(updatedTrips);
                                 
                                 // Save to localStorage
-                                localStorage.setItem('famapp-user-trips', JSON.stringify(updatedTrips));
+                                localStorage.setItem('famapp-trips', JSON.stringify(updatedTrips));
                                 
                                 // Auto-close modal after adding existing person
                                 setShowAddTravelerModal(false);
@@ -7575,7 +7696,7 @@ const FamApp = () => {
                         trip.id === tripData.id ? updatedTripData : trip
                       );
                       setUserTrips(updatedTrips);
-                      localStorage.setItem('famapp-user-trips', JSON.stringify(updatedTrips));
+                      localStorage.setItem('famapp-trips', JSON.stringify(updatedTrips));
                       
                       // Reset form and close modal
                       setNewTravelerForm({
