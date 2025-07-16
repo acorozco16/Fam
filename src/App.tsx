@@ -4101,27 +4101,28 @@ const FamApp = () => {
                           onClick={() => !showReadinessEditMode && handleSidebarItemClick(item)}
                         >
                           {showReadinessEditMode && !(item as any).isCustom && (
-                            <div className="mt-0.5">
-                              <Checkbox
-                                checked={!tripData.hiddenReadinessItems?.includes(item.id)}
-                                onCheckedChange={(checked) => {
-                                  const hiddenItems = tripData.hiddenReadinessItems || [];
-                                  const updatedHiddenItems = checked
-                                    ? hiddenItems.filter(id => id !== item.id)
-                                    : [...hiddenItems, item.id];
-                                  
-                                  const updatedTripData = {
-                                    ...tripData,
-                                    hiddenReadinessItems: updatedHiddenItems
-                                  };
-                                  setTripData(updatedTripData);
-                                  const updatedTrips = userTrips.map(trip => 
-                                    trip.id === tripData.id ? updatedTripData : trip
-                                  );
-                                  setUserTrips(updatedTrips);
-                                }}
-                              />
-                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const hiddenItems = tripData.hiddenReadinessItems || [];
+                                const updatedHiddenItems = [...hiddenItems, item.id];
+                                
+                                const updatedTripData = {
+                                  ...tripData,
+                                  hiddenReadinessItems: updatedHiddenItems
+                                };
+                                setTripData(updatedTripData);
+                                const updatedTrips = userTrips.map(trip => 
+                                  trip.id === tripData.id ? updatedTripData : trip
+                                );
+                                setUserTrips(updatedTrips);
+                              }}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
                           )}
                           <div className="mt-0.5">
                             {item.status === 'complete' ? (
