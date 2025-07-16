@@ -3118,6 +3118,11 @@ const FamApp = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [tripData, setTripData] = useState<TripData>({});
   const [currentView, setCurrentView] = useState<'landing' | 'signup' | 'dashboard' | 'createTripFlow' | 'wizard' | 'trip-details'>('landing');
+  
+  // DEBUG: Add visible indicator of current view
+  useEffect(() => {
+    console.log('🔍 Current view changed to:', currentView);
+  }, [currentView]);
   const [userData, setUserData] = useState<{ 
     name: string; 
     email: string; 
@@ -3969,6 +3974,27 @@ const FamApp = () => {
         isGoogleUser={userData?.isGoogleUser}
         onStartWizard={handleStartWizard} 
       />
+    );
+  }
+
+  // DEBUG: Visual indicator of current view
+  if (true) {
+    return (
+      <div style={{
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        backgroundColor: 'purple', 
+        color: 'white', 
+        padding: '10px', 
+        textAlign: 'center', 
+        fontSize: '18px', 
+        fontWeight: 'bold',
+        zIndex: 9999
+      }}>
+        🟣 CURRENT VIEW: {currentView} | TRIP: {tripData?.city || 'No trip'} 🟣
+      </div>
     );
   }
 

@@ -74,39 +74,11 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
   if (shouldUseMobile) {
     console.log('✅ Using mobile layout - activeTab:', activeTab);
     return (
-      <MobileLayout 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab}
-        badges={badges}
-      >
-        {activeTab === 'overview' && (
-          <MobileOverview trip={trip} onQuickAction={handleQuickAction} />
-        )}
-        
-        {activeTab === 'itinerary' && (
-          <div className="p-4">
-            <h2 className="text-xl font-bold mb-4">Itinerary</h2>
-            {/* TODO: Add MobileItinerary component */}
-            <p className="text-gray-600">Itinerary tab coming soon...</p>
-          </div>
-        )}
-        
-        {activeTab === 'travel' && (
-          <div className="p-4">
-            <h2 className="text-xl font-bold mb-4">Travel</h2>
-            {/* TODO: Add MobileTravel component */}
-            <p className="text-gray-600">Travel tab coming soon...</p>
-          </div>
-        )}
-        
-        {activeTab === 'packing' && (
-          <div className="p-4">
-            <h2 className="text-xl font-bold mb-4">Packing</h2>
-            {/* TODO: Add MobilePacking component */}
-            <p className="text-gray-600">Packing tab coming soon...</p>
-          </div>
-        )}
-      </MobileLayout>
+      <div style={{backgroundColor: 'red', color: 'white', padding: '20px', textAlign: 'center', fontSize: '20px', fontWeight: 'bold'}}>
+        🔴 RESPONSIVE TRIP DETAILS - MOBILE MODE 🔴
+        <br />
+        Trip: {trip?.tripName || trip?.city || 'Unknown'}
+      </div>
     );
   }
 
