@@ -5706,45 +5706,7 @@ const FamApp = () => {
                                           
                                           const isGeneratedItem = itemIndex < filteredGeneratedItems.length;
                                           
-                                          if (isGeneratedItem) {
-                                            // For generated items, add to hidden items list
-                                            const hiddenItems = tripData.hiddenPackingItems || {};
-                                            const updatedHiddenItems = {
-                                              ...hiddenItems,
-                                              [listIndex]: [...(hiddenItems[listIndex] || []), item]
-                                            };
-                                            
-                                            const updatedTripData = {
-                                              ...tripData,
-                                              hiddenPackingItems: updatedHiddenItems
-                                            };
-                                            setTripData(updatedTripData);
-                                            const updatedTrips = userTrips.map(trip => 
-                                              trip.id === tripData.id ? updatedTripData : trip
-                                            );
-                                            setUserTrips(updatedTrips);
-                                          } else {
-                                            // For custom items, remove from customPackingItems
-                                            const customItems = tripData.customPackingItems?.[listIndex] || [];
-                                            const customItemIndex = itemIndex - filteredGeneratedItems.length;
-                                            const updatedCustomItems = [...customItems];
-                                            updatedCustomItems.splice(customItemIndex, 1);
-                                            
-                                            const updatedTripData = {
-                                              ...tripData,
-                                              customPackingItems: {
-                                                ...tripData.customPackingItems,
-                                                [listIndex]: updatedCustomItems
-                                              }
-                                            };
-                                            setTripData(updatedTripData);
-                                            const updatedTrips = userTrips.map(trip => 
-                                              trip.id === tripData.id ? updatedTripData : trip
-                                            );
-                                            setUserTrips(updatedTrips);
-                                          }
-                                          
-                                          // Update packing lists state for checkbox tracking
+                                          // Update packing lists state for checkbox tracking first
                                           const currentPackingLists = tripData.packingLists || {};
                                           const updatedPackingLists = { ...currentPackingLists };
                                           
@@ -5764,13 +5726,39 @@ const FamApp = () => {
                                               items: listItems
                                             };
                                           }
+
+                                          let finalTripData;
                                           
-                                          const finalTripData = {
-                                            ...tripData,
-                                            packingLists: updatedPackingLists,
-                                            ...(tripData.hiddenPackingItems && { hiddenPackingItems: tripData.hiddenPackingItems }),
-                                            ...(tripData.customPackingItems && { customPackingItems: tripData.customPackingItems })
-                                          };
+                                          if (isGeneratedItem) {
+                                            // For generated items, add to hidden items list
+                                            const hiddenItems = tripData.hiddenPackingItems || {};
+                                            const updatedHiddenItems = {
+                                              ...hiddenItems,
+                                              [listIndex]: [...(hiddenItems[listIndex] || []), item]
+                                            };
+                                            
+                                            finalTripData = {
+                                              ...tripData,
+                                              hiddenPackingItems: updatedHiddenItems,
+                                              packingLists: updatedPackingLists
+                                            };
+                                          } else {
+                                            // For custom items, remove from customPackingItems
+                                            const customItems = tripData.customPackingItems?.[listIndex] || [];
+                                            const customItemIndex = itemIndex - filteredGeneratedItems.length;
+                                            const updatedCustomItems = [...customItems];
+                                            updatedCustomItems.splice(customItemIndex, 1);
+                                            
+                                            finalTripData = {
+                                              ...tripData,
+                                              customPackingItems: {
+                                                ...tripData.customPackingItems,
+                                                [listIndex]: updatedCustomItems
+                                              },
+                                              packingLists: updatedPackingLists
+                                            };
+                                          }
+                                          
                                           setTripData(finalTripData);
                                           const updatedTrips = userTrips.map(trip => 
                                             trip.id === tripData.id ? finalTripData : trip
