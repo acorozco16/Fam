@@ -156,18 +156,27 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
   return (
     <div className="bg-gray-50 min-h-screen max-w-full overflow-x-hidden">
       {/* Clean Trip Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="bg-white border-b border-gray-200 px-4 py-4">
+        <h1 className="text-lg font-bold text-gray-900 mb-2 truncate">{trip.tripName}</h1>
         <div className="flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-gray-900 truncate">{trip.tripName}</h1>
-            <div className="flex items-center gap-4 mt-1">
-              <p className="text-sm text-gray-600 flex items-center gap-1">
-                <MapPin className="w-3 h-3 flex-shrink-0" />
-                <span>{trip.destination}</span>
-              </p>
-              <div className="text-sm text-blue-600 font-semibold">
-                {daysUntilTrip} days left
-              </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <MapPin className="w-4 h-4 text-gray-400" />
+            <span className="truncate">{trip.destination}</span>
+            <span className="text-gray-300">•</span>
+            <span className="font-medium">{trip.travelers?.length || 3} travelers</span>
+          </div>
+          <div className="flex flex-col items-end text-right">
+            <div className="text-sm font-semibold text-blue-600">
+              {daysUntilTrip} days to go
+            </div>
+            <div className="text-xs text-gray-500">
+              {new Date(trip.startDate).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric' 
+              })} - {new Date(trip.endDate).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric' 
+              })}
             </div>
           </div>
         </div>
