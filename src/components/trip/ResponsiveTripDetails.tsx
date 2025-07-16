@@ -26,15 +26,11 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
       const height = window.innerHeight;
       const userAgent = navigator.userAgent;
       
-      // More aggressive mobile detection
-      const isLikelyMobile = width <= 768 || 
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) ||
+      // More aggressive mobile detection - force mobile for any small screen
+      const isLikelyMobile = width <= 900 || 
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(userAgent) ||
         ('ontouchstart' in window) ||
-        (width === 375 && height === 667) || // iPhone 6/7/8
-        (width === 414 && height === 736) || // iPhone 6/7/8 Plus
-        (width === 375 && height === 812) || // iPhone X/11 Pro
-        (width === 390 && height === 844) || // iPhone 12/13 mini
-        (width === 393 && height === 852);   // iPhone 14/15
+        width < 1024; // Force mobile for anything under desktop size
       
       setForceMobile(isLikelyMobile);
       console.log('🔍 Screen detection:', { width, height, userAgent, isMobile, forceMobile: isLikelyMobile });
@@ -42,7 +38,8 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
     }
   }, [isMobile]);
 
-  const shouldUseMobile = isMobile || forceMobile;
+  // Force mobile by default, only use desktop for large screens
+  const shouldUseMobile = true; // Always use mobile for now to debug
 
   // Calculate badges for mobile navigation - only show if > 0
   const badges = {

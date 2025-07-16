@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { 
   AlertTriangle, Clock, CheckCircle, Zap, 
   Calendar, MapPin, Users, Phone, FileText, 
-  Heart, Shield, Baby, Plane
+  Heart, Shield, Baby, Plane, ArrowLeft
 } from 'lucide-react';
 
 interface TripData {
@@ -25,9 +25,10 @@ interface TripData {
 interface MobileOverviewProps {
   trip: TripData;
   onQuickAction: (action: string) => void;
+  onBack?: () => void;
 }
 
-export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAction }) => {
+export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAction, onBack }) => {
   // Calculate trip stats
   const daysUntilTrip = Math.ceil((new Date(trip.startDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   const isUpcoming = daysUntilTrip > 0;
@@ -157,8 +158,12 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
   
   return (
     <div className="bg-gray-50 min-h-screen max-w-full overflow-x-hidden">
-      {/* Clean Trip Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4">
+      {/* DEBUG: Mobile Layout Indicator */}
+      <div className="bg-red-500 text-white text-center py-2 font-bold">
+        🔴 MOBILE LAYOUT IS ACTIVE 🔴
+      </div>
+      {/* Mobile Trip Header */}
+      <div className="bg-white border-b border-gray-200 px-4 py-4 pt-safe">
         <h1 className="text-lg font-bold text-gray-900 mb-2 truncate">{trip.tripName}</h1>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-gray-600">
