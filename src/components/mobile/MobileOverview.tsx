@@ -155,19 +155,20 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
 
   return (
     <div className="bg-gray-50 min-h-screen max-w-full overflow-x-hidden">
-      {/* Compact Trip Header */}
-      <div className="bg-white border-b border-gray-200 p-4">
+      {/* Clean Trip Header */}
+      <div className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-gray-900 truncate">{trip.tripName}</h1>
-            <p className="text-sm text-gray-600 flex items-center gap-1 truncate">
-              <MapPin className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">{trip.destination}</span>
-            </p>
-          </div>
-          <div className="text-right ml-4">
-            <div className="text-2xl font-bold text-blue-600">{daysUntilTrip}</div>
-            <div className="text-xs text-gray-500">days left</div>
+            <h1 className="text-xl font-bold text-gray-900 truncate">{trip.tripName}</h1>
+            <div className="flex items-center gap-4 mt-1">
+              <p className="text-sm text-gray-600 flex items-center gap-1">
+                <MapPin className="w-3 h-3 flex-shrink-0" />
+                <span>{trip.destination}</span>
+              </p>
+              <div className="text-sm text-blue-600 font-semibold">
+                {daysUntilTrip} days left
+              </div>
+            </div>
           </div>
         </div>
       </div>
