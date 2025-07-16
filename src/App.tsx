@@ -5646,13 +5646,17 @@ const FamApp = () => {
                                         className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-gray-400 hover:text-red-500"
                                         onClick={() => {
                                           // Determine if this is a generated item or custom item
-                                          const generatedItems = listIndex === 0 ? essentialItems : 
+                                          const originalGeneratedItems = listIndex === 0 ? essentialItems : 
                                                                listIndex === 1 ? clothingItems :
                                                                listIndex === 2 ? healthItems :
                                                                listIndex === 3 && hasKids ? kidsItems :
                                                                listIndex === (hasKids ? 4 : 3) ? activityItems : [];
                                           
-                                          const isGeneratedItem = itemIndex < generatedItems.length;
+                                          const filteredGeneratedItems = originalGeneratedItems.filter(item => 
+                                            !(tripData.hiddenPackingItems?.[listIndex] || []).includes(item)
+                                          );
+                                          
+                                          const isGeneratedItem = itemIndex < filteredGeneratedItems.length;
                                           
                                           if (isGeneratedItem) {
                                             // For generated items, add to hidden items list
@@ -5674,7 +5678,7 @@ const FamApp = () => {
                                           } else {
                                             // For custom items, remove from customPackingItems
                                             const customItems = tripData.customPackingItems?.[listIndex] || [];
-                                            const customItemIndex = itemIndex - generatedItems.length;
+                                            const customItemIndex = itemIndex - filteredGeneratedItems.length;
                                             const updatedCustomItems = [...customItems];
                                             updatedCustomItems.splice(customItemIndex, 1);
                                             
@@ -5743,21 +5747,15 @@ const FamApp = () => {
                                           const input = e.target as HTMLInputElement;
                                           const newItem = input.value.trim();
                                           if (newItem) {
-                                            // Add to the list
-                                            const newItems = [...list.items, newItem];
-                                            
-                                            // Update the smart packing lists
-                                            const updatedLists = [...packingLists];
-                                            updatedLists[listIndex] = {
-                                              ...updatedLists[listIndex],
-                                              items: newItems
-                                            };
+                                            // Add only to custom items, not the entire list
+                                            const currentCustomItems = tripData.customPackingItems?.[listIndex] || [];
+                                            const updatedCustomItems = [...currentCustomItems, newItem];
                                             
                                             const updatedTripData = {
                                               ...tripData,
                                               customPackingItems: {
                                                 ...tripData.customPackingItems,
-                                                [listIndex]: newItems
+                                                [listIndex]: updatedCustomItems
                                               }
                                             };
                                             setTripData(updatedTripData);
@@ -5777,21 +5775,15 @@ const FamApp = () => {
                                         const input = e.currentTarget.previousElementSibling as HTMLInputElement;
                                         const newItem = input.value.trim();
                                         if (newItem) {
-                                          // Add to the list
-                                          const newItems = [...list.items, newItem];
-                                          
-                                          // Update the smart packing lists
-                                          const updatedLists = [...packingLists];
-                                          updatedLists[listIndex] = {
-                                            ...updatedLists[listIndex],
-                                            items: newItems
-                                          };
+                                          // Add only to custom items, not the entire list
+                                          const currentCustomItems = tripData.customPackingItems?.[listIndex] || [];
+                                          const updatedCustomItems = [...currentCustomItems, newItem];
                                           
                                           const updatedTripData = {
                                             ...tripData,
                                             customPackingItems: {
                                               ...tripData.customPackingItems,
-                                              [listIndex]: newItems
+                                              [listIndex]: updatedCustomItems
                                             }
                                           };
                                           setTripData(updatedTripData);
