@@ -37,7 +37,8 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
         (width === 393 && height === 852);   // iPhone 14/15
       
       setForceMobile(isLikelyMobile);
-      console.log('Screen detection:', { width, height, userAgent, isMobile, forceMobile: isLikelyMobile });
+      console.log('🔍 Screen detection:', { width, height, userAgent, isMobile, forceMobile: isLikelyMobile });
+      console.log('📱 Will use mobile layout:', isLikelyMobile || isMobile);
     }
   }, [isMobile]);
 
@@ -74,6 +75,7 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
 
   // Mobile layout
   if (shouldUseMobile) {
+    console.log('✅ Using mobile layout - activeTab:', activeTab);
     return (
       <MobileLayout 
         activeTab={activeTab} 

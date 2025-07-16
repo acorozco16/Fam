@@ -153,6 +153,8 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
     );
   };
 
+  console.log('🎯 MobileOverview rendering for trip:', trip.tripName);
+  
   return (
     <div className="bg-gray-50 min-h-screen max-w-full overflow-x-hidden">
       {/* Clean Trip Header */}
