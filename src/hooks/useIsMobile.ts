@@ -1,14 +1,22 @@
 import { useState, useEffect } from 'react';
 
 export const useIsMobile = (breakpoint: number = 768): boolean => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    // Initialize with current screen size if window is available
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < breakpoint;
+    }
+    return false;
+  });
 
   useEffect(() => {
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < breakpoint);
+      const mobile = window.innerWidth < breakpoint;
+      setIsMobile(mobile);
+      console.log('Mobile detection:', mobile, 'Window width:', window.innerWidth);
     };
 
-    // Check on mount
+    // Check immediately
     checkIsMobile();
 
     // Add event listener

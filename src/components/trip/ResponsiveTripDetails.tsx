@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { MobileLayout } from '../mobile/MobileLayout';
 import { MobileOverview } from '../mobile/MobileOverview';
@@ -14,15 +14,41 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
   onBack, 
   children 
 }) => {
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(768);
   const [activeTab, setActiveTab] = useState<'overview' | 'itinerary' | 'travel' | 'packing'>('overview');
+  
+  // Force mobile detection for common mobile screen sizes
+  const [forceMobile, setForceMobile] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const userAgent = navigator.userAgent;
+      
+      // More aggressive mobile detection
+      const isLikelyMobile = width <= 768 || 
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) ||
+        ('ontouchstart' in window) ||
+        (width === 375 && height === 667) || // iPhone 6/7/8
+        (width === 414 && height === 736) || // iPhone 6/7/8 Plus
+        (width === 375 && height === 812) || // iPhone X/11 Pro
+        (width === 390 && height === 844) || // iPhone 12/13 mini
+        (width === 393 && height === 852);   // iPhone 14/15
+      
+      setForceMobile(isLikelyMobile);
+      console.log('Screen detection:', { width, height, userAgent, isMobile, forceMobile: isLikelyMobile });
+    }
+  }, [isMobile]);
 
-  // Calculate badges for mobile navigation
+  const shouldUseMobile = isMobile || forceMobile;
+
+  // Calculate badges for mobile navigation - only show if > 0
   const badges = {
-    overview: 0, // Could be number of urgent items
-    itinerary: trip.activities?.filter((a: any) => !a.completed).length || 0,
-    travel: trip.flights?.filter((f: any) => !f.confirmationNumber).length || 0,
-    packing: trip.packingItems?.filter((i: any) => !i.packed).length || 0
+    overview: undefined, // Don't show badge for overview
+    itinerary: undefined, // We'll calculate this from actual data later
+    travel: undefined, // We'll calculate this from actual data later  
+    packing: undefined // We'll calculate this from actual data later
   };
 
   const handleQuickAction = (action: string) => {
@@ -47,7 +73,7 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
   };
 
   // Mobile layout
-  if (isMobile) {
+  if (shouldUseMobile) {
     return (
       <MobileLayout 
         activeTab={activeTab} 
