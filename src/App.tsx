@@ -29,27 +29,136 @@ import {
   Settings, ChevronRight, Target, Edit, ChevronDown
 } from 'lucide-react';
 
-// Import types and components
-import { 
-  FamilyMember, 
-  Activity, 
-  TripCollaboration, 
-  EnhancedTrip, 
-  TripData, 
-  ActivityItem, 
-  Reminder,
-  FlightFormData,
-  AccommodationFormData,
-  TransportFormData,
-  NewTravelerForm,
-  WizardStep,
-  TripStatus,
-  ActivityStatus,
-  ReadinessItem
-} from './types';
-import { Dashboard } from './components/dashboard/Dashboard';
-import { TripWizard } from './components/wizard/TripWizard';
+// Types
+interface FamilyMember {
+  id: string;
+  name: string;
+  type: 'adult' | 'child';
+  age?: string;
+  email?: string;
+  interests?: string;
+  specialNeeds?: string;
+  inviteStatus?: string;
+  isConnection?: boolean;
+  avatar?: string;
+  role?: 'parent' | 'child' | 'collaborator';
+  status?: 'online' | 'offline';
+  lastActive?: string;
+  // New profile fields
+  healthInfo?: string;
+  dietaryInfo?: string;
+  parentId?: string; // For linking children to parents
+  relationship?: string; // Mom, Dad, Son, Daughter, etc.
+  createdAt?: string;
+  updatedAt?: string;
+  dateOfBirth?: string;
+  energyLevel?: string[];
+  activityPreferences?: string[];
+  sleepSchedule?: string;
+  bestTimes?: string;
+  specialConsiderations?: string;
+}
 
+interface Activity {
+  id: string;
+  name: string;
+  date: string;
+  time?: string;
+  duration?: string;
+  location?: string;
+  status: 'Booked' | 'Planned' | 'Suggested';
+  cost?: string;
+  familyRating?: number;
+  aiInsight?: string;
+  participants?: string[];
+  bookingRequired?: boolean;
+  category?: string;
+}
+
+interface TripCollaboration {
+  activeCollaborators: number;
+  pendingInvites: number;
+  contributors: FamilyMember[];
+}
+
+interface EnhancedTrip {
+  id?: string;
+  city?: string;
+  country?: string;
+  startDate?: string;
+  endDate?: string;
+  adults?: FamilyMember[];
+  kids?: FamilyMember[];
+  travelStyle?: string;
+  concerns?: string[];
+  budgetLevel?: string;
+  bookings?: any;
+  activities?: Activity[];
+  additionalNotes?: string;
+  activeCollaborators: number;
+  pendingTasks: number;
+  budget: { spent: number; total: number };
+  highlights: string[];
+  collaboration: TripCollaboration;
+  daysUntil: number;
+  progress: number;
+  status: 'Planning' | 'Early Planning' | 'Ready' | 'In Progress' | 'Completed';
+  completed: string[];
+  nextSteps: string[];
+  smartInsight: string;
+}
+
+interface TripData {
+  id?: string;
+  city?: string;
+  country?: string;
+  startDate?: string;
+  endDate?: string;
+  adults?: FamilyMember[];
+  kids?: FamilyMember[];
+  travelStyle?: string;
+  concerns?: string[];
+  budgetLevel?: string;
+  bookings?: any;
+  activities?: Activity[];
+  additionalNotes?: string;
+  accommodations?: any[];
+  hotels?: any[]; // Keep for backward compatibility
+  customPackingItems?: { [listIndex: number]: string[] };
+  packingLists?: { [listIndex: number]: { items: { [itemIndex: number]: { checked: boolean } } } };
+  hiddenPackingItems?: { [listIndex: number]: string[] };
+  customReadinessItems?: Array<{
+    id: string;
+    title: string;
+    subtitle: string;
+    category: string;
+    status: 'complete' | 'incomplete';
+    urgent?: boolean;
+    isCustom: boolean;
+  }>;
+  hiddenReadinessItems?: string[];
+}
+
+interface ActivityItem {
+  id: string;
+  type: string;
+  user: string;
+  action: string;
+  detail: string;
+  time: string;
+  tripId: string;
+  icon: any;
+  color: string;
+}
+
+interface Reminder {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  priority: 'high' | 'medium' | 'low';
+  assignee: string;
+}
 
 // Helper functions - Defined outside components
 const calculateDaysUntil = (startDate?: string): number => {
@@ -234,8 +343,1174 @@ const calculateTripReadinessData = (trip: any) => {
 };
 
 // Step Components - Defined outside main component
+const DestinationStep: React.FC<{ 
+  tripData: TripData; 
+  setTripData: React.Dispatch<React.SetStateAction<TripData>>;
+  validationErrors: Record<string, string>;
+}> = ({ tripData, setTripData, validationErrors }) => {
+  return (
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <MapPin className="w-5 h-5 text-blue-600 mr-2" />
+          Where are you heading?
+        </CardTitle>
+        <CardDescription>Tell us your destination and travel dates</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="city">City *</Label>
+            <Input 
+              id="city"
+              placeholder="e.g., Madrid, Paris"
+              value={tripData.city || ''}
+              onChange={(e) => setTripData(prev => ({...prev, city: e.target.value}))}
+              className={validationErrors.city ? 'border-red-500' : ''}
+            />
+            {validationErrors.city && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.city}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="country">Country *</Label>
+            <Input 
+              id="country"
+              placeholder="e.g., Spain, France"
+              value={tripData.country || ''}
+              onChange={(e) => setTripData(prev => ({...prev, country: e.target.value}))}
+              className={validationErrors.country ? 'border-red-500' : ''}
+            />
+            {validationErrors.country && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.country}</p>
+            )}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="startDate">Start Date *</Label>
+            <Input 
+              id="startDate"
+              type="date"
+              value={tripData.startDate || ''}
+              onChange={(e) => setTripData(prev => ({...prev, startDate: e.target.value}))}
+              className={validationErrors.startDate ? 'border-red-500' : ''}
+            />
+            {validationErrors.startDate && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.startDate}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="endDate">End Date *</Label>
+            <Input 
+              id="endDate"
+              type="date"
+              value={tripData.endDate || ''}
+              onChange={(e) => setTripData(prev => ({...prev, endDate: e.target.value}))}
+              className={validationErrors.endDate ? 'border-red-500' : ''}
+            />
+            {validationErrors.endDate && (
+              <p className="text-sm text-red-500 mt-1">{validationErrors.endDate}</p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
-// Old wizard components removed - now using TripWizard component
+const FamilyProfilesStep: React.FC<{ 
+  tripData: TripData; 
+  setTripData: React.Dispatch<React.SetStateAction<TripData>>;
+  validationErrors: Record<string, string>;
+}> = ({ tripData, setTripData, validationErrors }) => {
+  const [adults, setAdults] = useState<FamilyMember[]>(tripData.adults || []);
+  const [kids, setKids] = useState<FamilyMember[]>(tripData.kids || []);
+
+  const familyRoles = {
+    adult: ['Mom', 'Dad', 'Grandma', 'Grandpa', 'Aunt', 'Uncle', 'Guardian', 'Other'],
+    child: ['Son', 'Daughter', 'Grandson', 'Granddaughter', 'Niece', 'Nephew', 'Other']
+  };
+
+  const addFamilyMember = (type: 'adult' | 'child') => {
+    const newMember: FamilyMember = {
+      id: Date.now().toString(),
+      name: '',
+      type,
+      age: type === 'child' ? '' : undefined
+    };
+    
+    if (type === 'adult') {
+      setAdults([...adults, newMember]);
+    } else {
+      setKids([...kids, newMember]);
+    }
+  };
+
+  const removeFamilyMember = (id: string, type: 'adult' | 'child') => {
+    if (type === 'adult') {
+      setAdults(adults.filter(a => a.id !== id));
+    } else {
+      setKids(kids.filter(k => k.id !== id));
+    }
+  };
+
+  // Update tripData when moving to next step
+  const updateFamilyData = () => {
+    setTripData(prev => ({...prev, adults, kids}));
+  };
+
+  // Call this before navigating away
+  React.useEffect(() => {
+    return () => {
+      setTripData(prev => ({...prev, adults, kids}));
+    };
+  }, [adults, kids]);
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-6">
+        <p className="text-sm text-gray-500 italic">
+          Just the basics for now - I'll ask for more details later to give better recommendations
+        </p>
+      </div>
+      
+      <Tabs defaultValue="adults" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="adults">Adults ({adults.length})</TabsTrigger>
+          <TabsTrigger value="children">Children ({kids.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="adults" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Adult Travelers</h3>
+            <Button onClick={() => addFamilyMember('adult')} variant="outline" size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Adult
+            </Button>
+          </div>
+          
+          {adults.length === 0 && (
+            <Card className="border-dashed">
+              <CardContent className="pt-6 text-center text-gray-500">
+                <Users className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p>No adults added yet. Click "Add Adult" to get started.</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {adults.length === 0 && validationErrors.adults && (
+            <p className="text-sm text-red-500 mt-1">{validationErrors.adults}</p>
+          )}
+
+          {adults.map((adult, index) => (
+            <Card key={adult.id} className="relative">
+              <Button
+                onClick={() => removeFamilyMember(adult.id, 'adult')}
+                variant="ghost"
+                size="sm"
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-600"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Name <span className="text-red-500">*</span></Label>
+                    <Input 
+                      value={adult.name}
+                      onChange={(e) => {
+                        const updated = adults.map(a => a.id === adult.id ? {...a, name: e.target.value} : a);
+                        setAdults(updated);
+                      }}
+                      placeholder="e.g., Sarah"
+                      className={validationErrors[`adult-${index}-name`] ? 'border-red-500' : ''}
+                      required
+                    />
+                    {validationErrors[`adult-${index}-name`] && (
+                      <p className="text-sm text-red-500 mt-1">{validationErrors[`adult-${index}-name`]}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Relationship (optional)</Label>
+                    <Select
+                      value={adult.inviteStatus}
+                      onValueChange={(value) => {
+                        const updated = adults.map(a => a.id === adult.id ? {...a, inviteStatus: value} : a);
+                        setAdults(updated);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {familyRoles.adult.map(role => (
+                          <SelectItem key={role} value={role}>{role}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="children" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Children</h3>
+            <Button onClick={() => addFamilyMember('child')} variant="outline" size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Child
+            </Button>
+          </div>
+          
+          {kids.length === 0 && (
+            <Card className="border-dashed">
+              <CardContent className="pt-6 text-center text-gray-500">
+                <Baby className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <p>No children in your group? No problem!</p>
+                <p className="text-sm">Click "Add Child" if you're traveling with kids.</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {kids.map((kid, index) => (
+            <Card key={kid.id} className="relative">
+              <Button
+                onClick={() => removeFamilyMember(kid.id, 'child')}
+                variant="ghost"
+                size="sm"
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-600"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label>Name <span className="text-red-500">*</span></Label>
+                    <Input 
+                      value={kid.name}
+                      onChange={(e) => {
+                        const updated = kids.map(k => k.id === kid.id ? {...k, name: e.target.value} : k);
+                        setKids(updated);
+                      }}
+                      placeholder="e.g., Emma"
+                      className={validationErrors[`kid-${index}-name`] ? 'border-red-500' : ''}
+                      required
+                    />
+                    {validationErrors[`kid-${index}-name`] && (
+                      <p className="text-sm text-red-500 mt-1">{validationErrors[`kid-${index}-name`]}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Age <span className="text-red-500">*</span></Label>
+                    <Input 
+                      value={kid.age || ''}
+                      onChange={(e) => {
+                        const updated = kids.map(k => k.id === kid.id ? {...k, age: e.target.value} : k);
+                        setKids(updated);
+                      }}
+                      placeholder="e.g., 7"
+                      className={validationErrors[`kid-${index}-age`] ? 'border-red-500' : ''}
+                      type="number"
+                      min="0"
+                      max="17"
+                      required
+                    />
+                    {validationErrors[`kid-${index}-age`] && (
+                      <p className="text-sm text-red-500 mt-1">{validationErrors[`kid-${index}-age`]}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Relationship (optional)</Label>
+                    <Select
+                      value={kid.inviteStatus}
+                      onValueChange={(value) => {
+                        const updated = kids.map(k => k.id === kid.id ? {...k, inviteStatus: value} : k);
+                        setKids(updated);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {familyRoles.child.map(role => (
+                          <SelectItem key={role} value={role}>{role}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+const TravelStyleStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<React.SetStateAction<TripData>> }> = ({ tripData, setTripData }) => {
+  const travelStyles = [
+    {
+      id: 'adventure',
+      name: 'Adventure Seekers',
+      subtitle: 'Go-go-go families',
+      description: 'You want to see it all and do it all. Your kids love trying new things and you don\'t mind a packed schedule.',
+      icon: Compass,
+      color: 'green',
+      features: [
+        'Hiking trails that work for all ages',
+        'Water activities and outdoor adventures', 
+        'Active exploration over lounging',
+        'Energy-burning activities for restless kids'
+      ],
+      perfect_for: 'Families with active kids who get bored easily',
+      ai_example: '"Perfect hiking trail - paved path for strollers, playground at the end for the kids"'
+    },
+    {
+      id: 'culture',
+      name: 'Culture Enthusiasts', 
+      subtitle: 'Learning vacation mode',
+      description: 'Museums, history, local experiences. You want your kids to learn something AND have fun doing it.',
+      icon: Heart,
+      color: 'purple',
+      features: [
+        'Interactive museums with kid sections',
+        'Historical sites with family audio guides',
+        'Local cooking classes and cultural workshops',
+        'Educational activities disguised as fun'
+      ],
+      perfect_for: 'Families who love learning together',
+      ai_example: '"This museum has a hands-on kids area where Emma can touch real artifacts"'
+    },
+    {
+      id: 'relaxed',
+      name: 'Relaxed Explorers',
+      subtitle: 'Vacation = actual relaxation', 
+      description: 'You want to see cool stuff but also need time to breathe. Especially important with little ones and grandparents.',
+      icon: Clock,
+      color: 'blue',
+      features: [
+        'Flexible schedule with built-in rest time',
+        'Easy-going pace between activities',
+        'Backup plans for tired/cranky moments',
+        'Plenty of downtime for naps and recharging'
+      ],
+      perfect_for: 'Multi-generational trips or families with young kids',
+      ai_example: '"I scheduled 2 hours between activities so grandpa can rest and the baby can nap"'
+    },
+    {
+      id: 'comfort',
+      name: 'Comfort & Convenience',
+      subtitle: 'Make it easy on everyone',
+      description: 'Life is complicated enough. You want amazing experiences without the logistics headaches.',
+      icon: Zap,
+      color: 'indigo',
+      features: [
+        'Skip-the-line tickets and VIP access',
+        'Private transportation and easy transfers',
+        'Hotels with all the family amenities',
+        'Stress-free experiences, premium comfort'
+      ],
+      perfect_for: 'Families who value smooth, hassle-free experiences',
+      ai_example: '"Private car will pick you up at the hotel - no figuring out public transit with luggage"'
+    }
+  ];
+
+  const getColorClasses = (color: string, isSelected: boolean) => {
+    const colors = {
+      green: isSelected 
+        ? 'border-green-500 bg-green-50 shadow-lg' 
+        : 'border-gray-200 hover:border-green-300 hover:shadow-md',
+      purple: isSelected 
+        ? 'border-purple-500 bg-purple-50 shadow-lg' 
+        : 'border-gray-200 hover:border-purple-300 hover:shadow-md',
+      blue: isSelected 
+        ? 'border-blue-500 bg-blue-50 shadow-lg' 
+        : 'border-gray-200 hover:border-blue-300 hover:shadow-md',
+      indigo: isSelected 
+        ? 'border-indigo-500 bg-indigo-50 shadow-lg' 
+        : 'border-gray-200 hover:border-indigo-300 hover:shadow-md'
+    };
+    return colors[color as keyof typeof colors];
+  };
+
+  const getIconColorClasses = (color: string) => {
+    const colors = {
+      green: 'text-green-600',
+      purple: 'text-purple-600', 
+      blue: 'text-blue-600',
+      indigo: 'text-indigo-600'
+    };
+    return colors[color as keyof typeof colors];
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="grid md:grid-cols-2 gap-6">
+        {travelStyles.map((style) => {
+          const IconComponent = style.icon;
+          const isSelected = tripData.travelStyle === style.id;
+          
+          return (
+            <Card
+              key={style.id}
+              className={`cursor-pointer transition-all duration-200 ${getColorClasses(style.color, isSelected)}`}
+              onClick={() => setTripData(prev => ({...prev, travelStyle: style.id}))}
+            >
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <IconComponent className={`w-7 h-7 ${getIconColorClasses(style.color)}`} />
+                  {isSelected && (
+                    <Badge className="bg-blue-600 text-white">
+                      That's us!
+                    </Badge>
+                  )}
+                </div>
+                <CardTitle className="text-xl mb-1">{style.name}</CardTitle>
+                <div className="text-sm font-medium text-gray-700 mb-2">
+                  {style.subtitle}
+                </div>
+                <CardDescription className="text-base leading-relaxed">
+                  {style.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-sm mb-2 text-gray-800">What this means for your trip:</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    {style.features.slice(0, 3).map((feature, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs font-medium text-gray-700 mb-1">Perfect for:</p>
+                  <p className="text-xs text-gray-600">{style.perfect_for}</p>
+                </div>
+
+                {isSelected && (
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-xs font-medium text-blue-800 mb-1">AI suggestion example:</p>
+                    <p className="text-xs text-blue-700 italic">{style.ai_example}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {tripData.travelStyle && (
+        <div className="text-center">
+          <Card className="max-w-2xl mx-auto border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-center mb-4">
+                {(() => {
+                  const selected = travelStyles.find(s => s.id === tripData.travelStyle);
+                  const IconComponent = selected?.icon;
+                  return IconComponent ? (
+                    <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                      <IconComponent className="w-6 h-6 text-green-600" />
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-green-900">
+                Got it! You're {travelStyles.find(s => s.id === tripData.travelStyle)?.name}
+              </h3>
+              <p className="text-green-800 mb-4">
+                I'll focus on recommendations that match your {tripData.travelStyle} style. 
+                No suggesting 5-mile hikes for relaxed families or all-day museum marathons for adventure seekers!
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ConcernsStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<React.SetStateAction<TripData>> }> = ({ tripData, setTripData }) => {
+  const [selectedConcerns, setSelectedConcerns] = useState<string[]>(tripData.concerns || []);
+  const [additionalNotes, setAdditionalNotes] = useState(tripData.additionalNotes || '');
+
+  const concernCategories = [
+    {
+      id: 'safety',
+      title: 'Safety & Security',
+      subtitle: 'Extra peace of mind features',
+      description: 'Special security considerations beyond our standard safety practices.',
+      icon: Shield,
+      color: 'red',
+      concerns: [
+        {
+          id: 'emergency-access',
+          label: 'Priority for nearby medical facilities',
+          detail: 'Hospitals and urgent care within quick reach - especially important with kids or elderly'
+        },
+        {
+          id: 'secure-transport',
+          label: 'Secure transportation options',
+          detail: 'Trusted drivers, official taxi services, well-lit pickup areas'
+        }
+      ],
+      ai_example: '"I found activities near the medical district with a children\'s hospital 5 minutes away"'
+    },
+    {
+      id: 'health',
+      title: 'Health & Dietary',
+      subtitle: 'Everyone needs to eat and feel good',
+      description: 'Food allergies, medical needs, and dietary restrictions can make or break a family trip.',
+      icon: Heart,
+      color: 'green',
+      concerns: [
+        {
+          id: 'food-allergies',
+          label: 'Food allergies and dietary restrictions',
+          detail: 'Nut-free, gluten-free, vegetarian, halal, kosher options'
+        },
+        {
+          id: 'medical-needs',
+          label: 'Special medical needs',
+          detail: 'Pharmacy access, medical equipment, medication storage'
+        },
+        {
+          id: 'kid-friendly-food',
+          label: 'Kid-friendly food options',
+          detail: 'Places that actually have food your kids will eat'
+        }
+      ],
+      ai_example: '"This restaurant has a dedicated gluten-free menu and the staff is trained on allergies"'
+    },
+    {
+      id: 'comfort',
+      title: 'Comfort & Convenience',
+      subtitle: 'Making life easier for everyone',
+      description: 'Sleep schedules, nap times, and comfort needs - the little things that make a big difference.',
+      icon: Clock,
+      color: 'blue',
+      concerns: [
+        {
+          id: 'sleep-schedules',
+          label: 'Protecting sleep and nap schedules',
+          detail: 'Quiet rooms, blackout curtains, respect for bedtime routines'
+        },
+        {
+          id: 'accessibility',
+          label: 'Wheelchair and stroller accessibility',
+          detail: 'Ramps, elevators, wide paths for mobility needs'
+        },
+        {
+          id: 'family-bathrooms',
+          label: 'Family-friendly bathrooms',
+          detail: 'Changing tables, family restrooms, easy access'
+        }
+      ],
+      ai_example: '"I scheduled afternoon activities around naptime and found hotels with blackout curtains"'
+    },
+    {
+      id: 'activities',
+      title: 'Age-Appropriate Activities',
+      subtitle: 'Something fun for everyone',
+      description: 'Finding activities that work for toddlers AND grandparents? That\'s the real challenge.',
+      icon: Utensils,
+      color: 'orange',
+      concerns: [
+        {
+          id: 'multi-generational',
+          label: 'Activities that work for all ages',
+          detail: 'From toddlers to grandparents - everyone stays engaged'
+        },
+        {
+          id: 'weather-backup',
+          label: 'Indoor backup plans',
+          detail: 'Rain happens - need activities that work in any weather'
+        },
+        {
+          id: 'attention-spans',
+          label: 'Respect for different attention spans',
+          detail: 'Some family members need breaks more than others'
+        }
+      ],
+      ai_example: '"The zoo has both outdoor animals and an indoor aquarium - perfect if it rains"'
+    },
+    {
+      id: 'transportation',
+      title: 'Easy Transportation',
+      subtitle: 'Getting around without the hassle',
+      description: 'Moving a whole family is hard enough without dealing with complicated transportation.',
+      icon: Car,
+      color: 'purple',
+      concerns: [
+        {
+          id: 'public-transit',
+          label: 'Family-friendly public transportation',
+          detail: 'Elevators, space for strollers, not too complicated'
+        },
+        {
+          id: 'walkable-distances',
+          label: 'Reasonable walking distances',
+          detail: 'Activities close together - grandparents and little legs in mind'
+        },
+        {
+          id: 'luggage-friendly',
+          label: 'Easy luggage management',
+          detail: 'Minimal transfers, porter services, accessible storage'
+        }
+      ],
+      ai_example: '"All your activities are within a 3-block radius - perfect for walking with the stroller"'
+    }
+  ];
+
+  const toggleConcern = (concernId: string) => {
+    const newSelected = selectedConcerns.includes(concernId)
+      ? selectedConcerns.filter(id => id !== concernId)
+      : [...selectedConcerns, concernId];
+    
+    setSelectedConcerns(newSelected);
+    setTripData(prev => ({...prev, concerns: newSelected}));
+  };
+
+  const handleNotesChange = (value: string) => {
+    setAdditionalNotes(value);
+    setTripData(prev => ({...prev, additionalNotes: value}));
+  };
+
+  const getColorClasses = (color: string, isSelected: boolean) => {
+    const colors = {
+      red: isSelected ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-red-200',
+      green: isSelected ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-green-200',
+      blue: isSelected ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:border-blue-200',
+      orange: isSelected ? 'border-orange-300 bg-orange-50' : 'border-gray-200 hover:border-orange-200',
+      purple: isSelected ? 'border-purple-300 bg-purple-50' : 'border-gray-200 hover:border-purple-200'
+    };
+    return colors[color as keyof typeof colors];
+  };
+
+  const getIconColorClasses = (color: string) => {
+    const colors = {
+      red: 'text-red-600',
+      green: 'text-green-600',
+      blue: 'text-blue-600',
+      orange: 'text-orange-600',
+      purple: 'text-purple-600'
+    };
+    return colors[color as keyof typeof colors];
+  };
+
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="space-y-6">
+        {concernCategories.map((category) => {
+          const IconComponent = category.icon;
+          const categorySelected = category.concerns.some(concern => 
+            selectedConcerns.includes(concern.id)
+          );
+          
+          return (
+            <Card key={category.id} className={categorySelected ? 'border-blue-200 bg-blue-50/30' : ''}>
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4">
+                    <div className={`p-3 rounded-full bg-gray-100 ${categorySelected ? 'bg-blue-100' : ''}`}>
+                      <IconComponent className={`w-6 h-6 ${getIconColorClasses(category.color)}`} />
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-xl mb-1">{category.title}</CardTitle>
+                      <div className="text-sm font-medium text-gray-700 mb-2">
+                        {category.subtitle}
+                      </div>
+                      <CardDescription className="text-base">
+                        {category.description}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  {categorySelected && (
+                    <Badge className="bg-blue-100 text-blue-700">
+                      {category.concerns.filter(c => selectedConcerns.includes(c.id)).length} selected
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-1 gap-3">
+                  {category.concerns.map((concern) => {
+                    const isSelected = selectedConcerns.includes(concern.id);
+                    
+                    return (
+                      <div
+                        key={concern.id}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
+                        onClick={() => toggleConcern(concern.id)}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <Checkbox
+                            checked={isSelected}
+                            className="mt-1"
+                            onCheckedChange={() => {}} // Prevent double-triggering
+                          />
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900 mb-1">{concern.label}</h4>
+                            <p className="text-sm text-gray-600">{concern.detail}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Health details message */}
+                {categorySelected && category.id === 'health' && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-start">
+                      <Sparkles className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-blue-800 mb-1">What happens next:</p>
+                        <p className="text-xs text-blue-700">
+                          After you complete the wizard, I'll ask for specific health details to give you better restaurant and activity recommendations. You can add details for each family member then.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {categorySelected && category.id !== 'health' && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-start">
+                      <Sparkles className="w-4 h-4 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-blue-800 mb-1">AI suggestion example:</p>
+                        <p className="text-xs text-blue-700 italic">{category.ai_example}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+
+      {/* Additional Notes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Anything else I should know?</CardTitle>
+          <CardDescription>
+            Special circumstances, quirks, or anything that would help me suggest better options
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Label htmlFor="additional-notes" className="sr-only">Additional notes</Label>
+          <Textarea
+            id="additional-notes"
+            placeholder="e.g., 'Emma gets car sick on winding roads,' 'Grandpa needs to sit down every 30 minutes,' 'We're celebrating our anniversary so one romantic dinner would be nice'..."
+            value={additionalNotes}
+            onChange={(e) => handleNotesChange(e.target.value)}
+            rows={4}
+            className="w-full"
+          />
+        </CardContent>
+      </Card>
+
+      {/* Summary */}
+      {selectedConcerns.length > 0 && (
+        <Card className="bg-gradient-to-r from-green-50 to-blue-50">
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-3 text-green-900">Perfect! I'll keep these priorities in mind:</h3>
+            <div className="flex flex-wrap gap-2">
+              {selectedConcerns.map((concernId) => {
+                const concern = concernCategories
+                  .flatMap(cat => cat.concerns)
+                  .find(c => c.id === concernId);
+                return concern ? (
+                  <Badge key={concernId} className="bg-green-100 text-green-700">
+                    {concern.label}
+                  </Badge>
+                ) : null;
+              })}
+            </div>
+            <p className="text-sm text-green-800 mt-3">
+              I'll prioritize suggestions that address these concerns and avoid recommendations that don't fit your family's needs.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+const BudgetStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<React.SetStateAction<TripData>> }> = ({ tripData, setTripData }) => {
+  const budgetLevels = [
+    {
+      id: 'budget-friendly',
+      title: 'Budget-Friendly',
+      subtitle: 'Smart spending, great experiences',
+      icon: DollarSign,
+      color: 'green',
+      description: 'You want amazing family memories without breaking the bank. Focus on value and finding the best deals.',
+      whatThisMeans: [
+        'Public transportation and budget accommodations',
+        'Free activities and local markets',
+        'Self-catered meals and picnic lunches'
+      ],
+      perfectFor: 'Families who love adventure on a budget',
+      aiExample: '"I found free museum days and a beautiful park with playground - total cost under $50 for the whole day"'
+    },
+    {
+      id: 'mid-range',
+      title: 'Mid-Range Comfort',
+      subtitle: 'Balance of comfort and value',
+      icon: Heart,
+      color: 'blue',
+      description: 'You\'re willing to spend a bit more for comfort and convenience, but still want good value for money.',
+      whatThisMeans: [
+        'Mix of public transport and taxis when needed',
+        'Mid-range hotels with family amenities',
+        'Combination of dining out and self-catering'
+      ],
+      perfectFor: 'Families who want comfort without overspending',
+      aiExample: '"Hotel has a pool for the kids, walking distance to attractions, and breakfast included - perfect balance"'
+    },
+    {
+      id: 'premium',
+      title: 'Premium Experience',
+      subtitle: 'Comfort and convenience first',
+      icon: Star,
+      color: 'purple',
+      description: 'You value comfort, convenience, and premium experiences. Money is less of a concern than having everything run smoothly.',
+      whatThisMeans: [
+        'Private transfers and premium accommodations',
+        'Skip-the-line access and guided tours',
+        'Fine dining and room service when desired'
+      ],
+      perfectFor: 'Families who prioritize seamless, stress-free travel',
+      aiExample: '"Private guide will meet you at the hotel - no crowds, perfect timing, and the kids loved the personalized attention"'
+    },
+    {
+      id: 'luxury',
+      title: 'Luxury',
+      subtitle: 'The ultimate family experience',
+      icon: Sparkles,
+      color: 'yellow',
+      description: 'Money is no object - you want the absolute best experiences for your family with white-glove service.',
+      whatThisMeans: [
+        'Luxury resorts and exclusive experiences',
+        'Private jets, yachts, and VIP access',
+        'Personal concierge and 24/7 support'
+      ],
+      perfectFor: 'Families who want unforgettable, once-in-a-lifetime experiences',
+      aiExample: '"Private chef will prepare meals in your villa while you enjoy exclusive after-hours access to the museum"'
+    }
+  ];
+
+  const getColorClasses = (color: string, isSelected: boolean) => {
+    const colors = {
+      green: isSelected 
+        ? 'border-green-500 bg-green-50 shadow-lg' 
+        : 'border-gray-200 hover:border-green-300 hover:shadow-md',
+      blue: isSelected 
+        ? 'border-blue-500 bg-blue-50 shadow-lg' 
+        : 'border-gray-200 hover:border-blue-300 hover:shadow-md',
+      purple: isSelected 
+        ? 'border-purple-500 bg-purple-50 shadow-lg' 
+        : 'border-gray-200 hover:border-purple-300 hover:shadow-md',
+      yellow: isSelected 
+        ? 'border-yellow-500 bg-yellow-50 shadow-lg' 
+        : 'border-gray-200 hover:border-yellow-300 hover:shadow-md'
+    };
+    return colors[color as keyof typeof colors];
+  };
+
+  const getIconColorClasses = (color: string) => {
+    const colors = {
+      green: 'text-green-600 bg-green-100',
+      blue: 'text-blue-600 bg-blue-100',
+      purple: 'text-purple-600 bg-purple-100',
+      yellow: 'text-yellow-600 bg-yellow-100'
+    };
+    return colors[color as keyof typeof colors];
+  };
+
+  const handleComfortLevelSelect = (levelId: string) => {
+    setTripData(prev => ({...prev, budgetLevel: levelId}));
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="grid md:grid-cols-2 gap-6">
+        {budgetLevels.map((level) => {
+          const IconComponent = level.icon;
+          const isSelected = tripData.budgetLevel === level.id;
+          
+          return (
+            <Card 
+              key={level.id} 
+              className={`cursor-pointer transition-all duration-200 ${getColorClasses(level.color, isSelected)}`}
+              onClick={() => handleComfortLevelSelect(level.id)}
+            >
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getIconColorClasses(level.color)}`}>
+                      <IconComponent className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl mb-1">{level.title}</CardTitle>
+                      <CardDescription className="text-sm font-medium text-gray-600">
+                        {level.subtitle}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {isSelected && (
+                      <Badge className="bg-blue-100 text-blue-700">
+                        That's us!
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-gray-700">
+                  {level.description}
+                </p>
+                
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">What this means for your trip:</h4>
+                  <ul className="space-y-1">
+                    {level.whatThisMeans.map((item, index) => (
+                      <li key={index} className="text-sm text-gray-700 flex items-start">
+                        <span className="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-sm">
+                    <span className="font-medium text-gray-900">Perfect for:</span>
+                    <br />
+                    <span className="text-gray-700">{level.perfectFor}</span>
+                  </div>
+                </div>
+
+                {level.aiExample && (
+                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                    <div className="text-sm">
+                      <span className="font-medium text-blue-900">AI suggestion example:</span>
+                      <br />
+                      <span className="text-blue-800 italic">{level.aiExample}</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Summary */}
+      {tripData.budgetLevel && (
+        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+          <CardContent className="pt-6">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                <Check className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-green-900">
+                  Perfect! I'll tailor suggestions for {budgetLevels.find(l => l.id === tripData.budgetLevel)?.title}
+                </h3>
+                <p className="text-sm text-green-800 mt-1">
+                  I'll prioritize activities and experiences that match your budget preferences.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+const FamilyDetailsStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<React.SetStateAction<TripData>>; onSkip: () => void; onContinue: () => void }> = ({ tripData, setTripData, onSkip, onContinue }) => {
+  const allMembers = [...(tripData.adults || []), ...(tripData.kids || [])];
+  const [memberDetails, setMemberDetails] = useState<Record<string, { interests?: string; specialNeeds?: string }>>({});
+
+  useEffect(() => {
+    // Initialize member details from existing data
+    const details: Record<string, { interests?: string; specialNeeds?: string }> = {};
+    allMembers.forEach(member => {
+      details[member.id] = {
+        interests: member.interests || '',
+        specialNeeds: member.specialNeeds || ''
+      };
+    });
+    setMemberDetails(details);
+  }, [allMembers.length]); // Re-run only when number of members changes
+
+  const updateMemberDetail = (memberId: string, field: 'interests' | 'specialNeeds', value: string) => {
+    setMemberDetails(prev => ({
+      ...prev,
+      [memberId]: {
+        ...prev[memberId],
+        [field]: value
+      }
+    }));
+  };
+
+  const saveDetails = () => {
+    // Update the actual trip data with the details
+    const updatedAdults = (tripData.adults || []).map(adult => ({
+      ...adult,
+      interests: memberDetails[adult.id]?.interests || adult.interests,
+      specialNeeds: memberDetails[adult.id]?.specialNeeds || adult.specialNeeds
+    }));
+
+    const updatedKids = (tripData.kids || []).map(kid => ({
+      ...kid,
+      interests: memberDetails[kid.id]?.interests || kid.interests,
+      specialNeeds: memberDetails[kid.id]?.specialNeeds || kid.specialNeeds
+    }));
+
+    setTripData(prev => ({
+      ...prev,
+      adults: updatedAdults,
+      kids: updatedKids
+    }));
+  };
+
+  const handleContinue = () => {
+    saveDetails();
+    onContinue(); // Continue to next step
+  };
+
+  const handleSkip = () => {
+    // Don't save details, just move to next step
+    onSkip();
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold mb-2">Want Smarter Suggestions?</h2>
+        <p className="text-gray-600">Tell me more about your family for personalized recommendations</p>
+        <Badge variant="outline" className="mt-2">
+          <Sparkles className="w-3 h-3 mr-1" />
+          Optional but helpful
+        </Badge>
+      </div>
+
+      <div className="space-y-4">
+        {allMembers.map((member) => {
+          const isKid = member.type === 'child';
+          const role = member.inviteStatus || (isKid ? 'Child' : 'Adult');
+          
+          return (
+            <Card key={member.id}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    {isKid ? <Baby className="w-5 h-5 text-blue-600" /> : <User className="w-5 h-5 text-blue-600" />}
+                    <CardTitle className="text-lg">{member.name}</CardTitle>
+                    {member.age && <Badge variant="secondary">{member.age} years</Badge>}
+                    {role !== 'Adult' && role !== 'Child' && <Badge variant="outline">{role}</Badge>}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Interests</Label>
+                  <Input
+                    value={memberDetails[member.id]?.interests || ''}
+                    onChange={(e) => updateMemberDetail(member.id, 'interests', e.target.value)}
+                    placeholder={isKid ? "e.g., dinosaurs, swimming, legos" : "e.g., history, food, photography"}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {isKid ? "What does " + member.name + " love?" : "What excites " + member.name + " when traveling?"}
+                  </p>
+                </div>
+                <div>
+                  <Label>Special Needs or Considerations</Label>
+                  <Input
+                    value={memberDetails[member.id]?.specialNeeds || ''}
+                    onChange={(e) => updateMemberDetail(member.id, 'specialNeeds', e.target.value)}
+                    placeholder="e.g., vegetarian, wheelchair access, nap times"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Dietary restrictions, mobility needs, medical conditions, etc.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="flex justify-between mt-8">
+        <Button
+          variant="ghost"
+          onClick={handleSkip}
+          className="text-gray-600"
+        >
+          Skip for now
+        </Button>
+        <Button onClick={handleContinue}>
+          Save & Continue
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const CompletionStep: React.FC<{ tripData: TripData; onTripComplete: (tripData: TripData) => void }> = ({ tripData, onTripComplete }) => (
+  <div className="max-w-2xl mx-auto text-center space-y-6">
+    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+      <CheckCircle className="w-8 h-8 text-green-600" />
+    </div>
+    <div>
+      <h2 className="text-2xl font-bold mb-2">Your Trip Command Center is Ready!</h2>
+      <p className="text-gray-600">
+        Perfect! I've set up your family profile and I'm ready to help coordinate your {tripData.city} trip.
+      </p>
+    </div>
+    
+    <Card className="bg-gradient-to-r from-green-50 to-blue-50">
+      <CardContent className="pt-6">
+        <h3 className="font-semibold mb-2">What's Next:</h3>
+        <ul className="text-sm space-y-1 text-left">
+          <li>• Start adding your bookings and activities</li>
+          <li>• Get AI suggestions tailored to your family</li>
+          <li>• Share the trip details with everyone</li>
+          <li>• Let me handle the coordination headaches!</li>
+        </ul>
+      </CardContent>
+    </Card>
+    
+    <Button 
+      onClick={() => onTripComplete(tripData)}
+      className="bg-blue-600 hover:bg-blue-700"
+      size="lg"
+    >
+      Open Trip Dashboard
+    </Button>
+  </div>
+);
 
 // Welcome Flow Components
 const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) => (
@@ -879,6 +2154,875 @@ const QuickActions: React.FC = () => {
   );
 };
 
+// Main Hub-Style Dashboard Component
+const Dashboard: React.FC<{ 
+  user: any;
+  trips: any[];
+  onCreateTrip: () => void;
+  onSelectTrip: (tripId: string) => void;
+  familyProfiles: FamilyMember[];
+  showFamilyProfiles: boolean;
+  setShowFamilyProfiles: (show: boolean) => void;
+  editingProfile: FamilyMember | null;
+  setEditingProfile: (profile: FamilyMember | null) => void;
+  showEditProfile: boolean;
+  setShowEditProfile: (show: boolean) => void;
+  setFamilyProfiles: (profiles: FamilyMember[]) => void;
+}> = ({ 
+  user, 
+  trips, 
+  onCreateTrip, 
+  onSelectTrip, 
+  familyProfiles, 
+  showFamilyProfiles, 
+  setShowFamilyProfiles, 
+  editingProfile, 
+  setEditingProfile, 
+  showEditProfile, 
+  setShowEditProfile, 
+  setFamilyProfiles 
+}) => {
+  // Helper function to get family members from trip data
+  const getFamilyMembersFromTrips = (trips: any[]): FamilyMember[] => {
+    const allMembers: FamilyMember[] = [];
+    
+    // Add current user
+    allMembers.push({
+      id: user?.uid || '1',
+      name: user?.name || 'You',
+      role: 'parent',
+      status: 'online',
+      lastActive: 'now',
+      type: 'adult'
+    });
+
+    // Add family members from trip data
+    trips.forEach(trip => {
+      if (trip.adults) {
+        trip.adults.forEach((adult: any, index: number) => {
+          if (adult.name && adult.name !== user?.name) {
+            allMembers.push({
+              id: `adult-${trip.id}-${index}`,
+              name: adult.name,
+              role: 'parent',
+              status: 'offline',
+              lastActive: '1h ago',
+              type: 'adult',
+              age: adult.age,
+              email: adult.email
+            });
+          }
+        });
+      }
+      
+      if (trip.kids) {
+        trip.kids.forEach((kid: any, index: number) => {
+          if (kid.name) {
+            allMembers.push({
+              id: `kid-${trip.id}-${index}`,
+              name: kid.name,
+              role: 'child',
+              status: 'offline',
+              lastActive: '2h ago',
+              type: 'child',
+              age: kid.age
+            });
+          }
+        });
+      }
+    });
+
+    // Remove duplicates based on name
+    return allMembers.filter((member, index, self) => 
+      index === self.findIndex(m => m.name === member.name)
+    );
+  };
+
+
+  // Helper function to generate trip highlights from trip data
+  const generateTripHighlights = (trip: any): string[] => {
+    const highlights: string[] = [];
+    
+    if (trip.travelStyle) {
+      const styleMap: { [key: string]: string } = {
+        'adventure-seekers': 'Adventure-focused',
+        'culture-enthusiasts': 'Cultural experiences',
+        'relaxed-explorers': 'Relaxed pace',
+        'comfort-convenience': 'Comfort-focused'
+      };
+      if (styleMap[trip.travelStyle]) {
+        highlights.push(styleMap[trip.travelStyle]);
+      }
+    }
+    
+    if (trip.budgetLevel) {
+      const budgetMap: { [key: string]: string } = {
+        'budget-friendly': 'Budget-conscious',
+        'mid-range': 'Mid-range comfort',
+        'premium': 'Premium experience',
+        'luxury': 'Luxury travel'
+      };
+      if (budgetMap[trip.budgetLevel]) {
+        highlights.push(budgetMap[trip.budgetLevel]);
+      }
+    }
+    
+    if (trip.concerns && trip.concerns.length > 0) {
+      highlights.push('Health considerations');
+    }
+    
+    const familySize = (trip.adults?.length || 0) + (trip.kids?.length || 0);
+    if (familySize > 4) {
+      highlights.push('Large family group');
+    } else if (trip.kids && trip.kids.length > 0) {
+      highlights.push('Family-friendly');
+    }
+    
+    return highlights;
+  };
+
+  // Helper function to generate smart insights based on family and trip data
+  const generateSmartInsight = (trip: any): string => {
+    const insights: string[] = [];
+    
+    // Family-specific insights
+    if (trip.kids && trip.kids.length > 0) {
+      const youngestAge = Math.min(...trip.kids.map((kid: any) => parseInt(kid.age) || 0));
+      const oldestAge = Math.max(...trip.kids.map((kid: any) => parseInt(kid.age) || 0));
+      
+      if (youngestAge <= 3) {
+        insights.push("Great timing for toddler-friendly morning activities");
+      }
+      if (oldestAge >= 5 && youngestAge >= 3) {
+        insights.push("Perfect age range for interactive museums and cultural sites");
+      }
+      if (trip.kids.length > 2) {
+        insights.push("Consider connecting hotel rooms for large family comfort");
+      }
+    }
+    
+    // Travel style insights
+    if (trip.travelStyle === 'relaxed-explorers') {
+      insights.push("Relaxed pace perfect for family with built-in rest time");
+    } else if (trip.travelStyle === 'adventure-seekers') {
+      insights.push("Active adventures planned - great for energetic family");
+    } else if (trip.travelStyle === 'culture-enthusiasts') {
+      insights.push("Cultural experiences with family-friendly learning opportunities");
+    }
+    
+    // Destination + season insights
+    if (trip.city && trip.startDate) {
+      const month = new Date(trip.startDate).getMonth();
+      if (trip.city.toLowerCase().includes('barcelona') || trip.city.toLowerCase().includes('madrid')) {
+        if (month >= 3 && month <= 5) {
+          insights.push("Spring weather perfect for walking tours and outdoor dining");
+        }
+      }
+    }
+    
+    // Budget insights
+    if (trip.budgetLevel === 'budget-friendly') {
+      insights.push("Budget-friendly options include free museums and local markets");
+    } else if (trip.budgetLevel === 'luxury') {
+      insights.push("Premium experiences will include skip-the-line access and private guides");
+    }
+    
+    return insights[0] || "Family trip planning is on track for a memorable experience";
+  };
+
+  // Helper function to calculate completion tracking based on Trip Readiness
+  const calculateCompletionTracking = (trip: any) => {
+    const readinessItems = calculateTripReadinessData(trip);
+    const completedItems = readinessItems.filter(item => item.status === 'complete');
+    const incompleteItems = readinessItems.filter(item => item.status === 'incomplete');
+    
+    const completed = completedItems.map(item => item.title.replace(' Confirmed', '').replace(' Booked', '').replace(' Secured', ''));
+    const nextSteps = incompleteItems.slice(0, 3).map(item => {
+      if (item.id === 'airfare') return item.title.includes('Flights') ? 'Book flights' : 'Plan transportation';
+      if (item.id === 'hotel') return 'Book accommodations';
+      if (item.id === 'transport') return 'Arrange local transportation';
+      if (item.id === 'insurance') return 'Get travel insurance';
+      if (item.id === 'packing') return 'Complete packing checklist';
+      if (item.id === 'documents') return 'Prepare travel documents';
+      if (item.id === 'health-info') return 'Add health info for all family members';
+      return item.title;
+    });
+    
+    const progressPercentage = Math.round((completedItems.length / readinessItems.length) * 100);
+    
+    return {
+      completed,
+      nextSteps,
+      progress: progressPercentage
+    };
+  };
+
+  // Convert existing trips to enhanced trips with real data
+  const enhancedTrips: EnhancedTrip[] = trips.map(trip => {
+    const familyMembers = getFamilyMembersFromTrips([trip]);
+    const daysUntil = calculateDaysUntil(trip.startDate);
+    const tracking = calculateCompletionTracking(trip);
+    const smartInsight = generateSmartInsight(trip);
+    
+    return {
+      ...trip,
+      activeCollaborators: familyMembers.length,
+      pendingTasks: tracking.nextSteps.length,
+      budget: { spent: 0, total: 0 },
+      highlights: generateTripHighlights(trip),
+      collaboration: {
+        activeCollaborators: familyMembers.length,
+        pendingInvites: 0,
+        contributors: familyMembers
+      },
+      daysUntil,
+      progress: tracking.progress,
+      status: tracking.progress < 30 ? 'Early Planning' : tracking.progress < 70 ? 'Planning' : 'Ready' as any,
+      completed: tracking.completed,
+      nextSteps: tracking.nextSteps,
+      smartInsight
+    };
+  });
+
+  const familyMembers = getFamilyMembersFromTrips(trips);
+  const activities: ActivityItem[] = []; // Start with empty - will be populated as user interacts
+  const reminders: Reminder[] = []; // Start with empty - will be populated as user adds reminders
+
+  const activeTrips = enhancedTrips.filter(trip => trip.status === 'Planning' || trip.status === 'Early Planning' || trip.status === 'Ready');
+  const completedTrips = enhancedTrips.filter(trip => trip.status === 'Completed');
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'planning': return 'bg-blue-100 text-blue-700';
+      case 'active': return 'bg-green-100 text-green-700';
+      case 'completed': return 'bg-gray-100 text-gray-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'planning': return <Clock className="w-4 h-4" />;
+      case 'active': return <Plane className="w-4 h-4" />;
+      case 'completed': return <CheckCircle className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  // New User Dashboard (No Trips)
+  if (trips.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">FamApp</h1>
+                  <p className="text-xs text-blue-700">Family Travel Made Simple</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt={user.name} className="w-8 h-8 rounded-full" />
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium">{user.name?.[0] || 'U'}</span>
+                    </div>
+                  )}
+                  <span className="text-sm font-medium">{user.name}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="py-8 px-6">
+          <div className="max-w-4xl mx-auto space-y-8">
+            {/* Welcome Header */}
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Welcome to FamApp, {user.name}! 👋
+              </h1>
+              <p className="text-lg text-gray-600">
+                Ready to coordinate your first amazing family trip?
+              </p>
+            </div>
+
+            {/* Main CTA */}
+            <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Plus className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Create Your First Trip
+                </h2>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  Let me help you coordinate all the chaos - from grandparents' accessibility needs 
+                  to toddler nap schedules. It takes about 2 minutes to set up.
+                </p>
+                <Button 
+                  size="lg" 
+                  className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-3"
+                  onClick={onCreateTrip}
+                >
+                  Start Planning
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Quick Tips */}
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-6 h-6 text-green-600" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Family Profiles</h3>
+                  <p className="text-sm text-gray-600">
+                    Tell me about your family and I'll suggest activities perfect for everyone's ages and interests.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Smart Suggestions</h3>
+                  <p className="text-sm text-gray-600">
+                    Get AI recommendations that actually consider grandpa's mobility and Emma's nap time.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MapPin className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Easy Sharing</h3>
+                  <p className="text-sm text-gray-600">
+                    Share the final trip details with everyone without them needing to download anything.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Returning User Dashboard (Has Trips)
+  // Show new user state if no trips
+  if (trips.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">FamApp</h1>
+                  <p className="text-xs text-blue-700">Family Travel Made Simple</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowFamilyProfiles(true)}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Family Profiles
+                </Button>
+                <div className="flex items-center space-x-2">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt={user.name} className="w-8 h-8 rounded-full" />
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium">{user.name?.[0]}</span>
+                    </div>
+                  )}
+                  <span className="text-sm font-medium">{user.name}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Welcome Content for New Users */}
+        <div className="py-8 px-6">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                Welcome to FamApp, {user.name}!
+              </h1>
+              <p className="text-xl text-gray-600">
+                Let's plan your first amazing family trip together
+              </p>
+            </div>
+            
+            <Button 
+              onClick={onCreateTrip}
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-3"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Plan Your First Trip
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Three-column hub layout for users with trips
+  return (
+    <>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">FamApp</h1>
+                <p className="text-xs text-blue-700">Family Travel Coordination Hub</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowFamilyProfiles(true)}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Family Profiles
+              </Button>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={onCreateTrip}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Trip
+              </Button>
+              <div className="flex items-center space-x-2">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt={user.name} className="w-8 h-8 rounded-full" />
+                ) : (
+                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium">{user.name?.[0]}</span>
+                  </div>
+                )}
+                <span className="text-sm font-medium">{user.name}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Hub Content */}
+      <div className="py-6 px-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Welcome Header */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">
+              Welcome back, {user.name}!
+            </h1>
+            <p className="text-gray-600">
+              {activeTrips.length > 0 
+                ? `You have ${activeTrips.length} trip${activeTrips.length > 1 ? 's' : ''} in progress`
+                : 'Ready to plan your next family adventure?'
+              }
+            </p>
+          </div>
+
+          {/* Single Column Family-Focused Layout */}
+          <div className="max-w-4xl mx-auto">
+            {/* Trip Portfolio */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Your Trips</h2>
+                <div className="text-sm text-gray-500">{activeTrips.length} active trip{activeTrips.length !== 1 ? 's' : ''}</div>
+              </div>
+
+              {/* Active Trips */}
+              <div className="space-y-4">
+                {activeTrips.map((trip) => (
+                  <FamilyTripCard 
+                    key={trip.id} 
+                    trip={trip} 
+                    onSelectTrip={onSelectTrip} 
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {/* Family Profiles Modal - Dashboard */}
+    {showFamilyProfiles && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Family Profiles</h2>
+            <Button variant="ghost" size="sm" onClick={() => setShowFamilyProfiles(false)}>
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          
+          <div className="p-6">
+            {familyProfiles.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Family Profiles Yet</h3>
+                <p className="text-gray-500 mb-6">Family profiles are automatically created when you plan trips. Start your first trip to get started!</p>
+                <Button onClick={() => {
+                  setShowFamilyProfiles(false);
+                  onCreateTrip();
+                }}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Plan Your First Trip
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <p className="text-gray-600">
+                    {familyProfiles.length} family member{familyProfiles.length !== 1 ? 's' : ''}
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setEditingProfile({
+                        id: '',
+                        name: '',
+                        type: 'adult',
+                        relationship: '',
+                        email: '',
+                        dateOfBirth: '',
+                        age: '',
+                        interests: '',
+                        specialNeeds: '',
+                        healthInfo: '',
+                        dietaryInfo: '',
+                        energyLevel: [],
+                        activityPreferences: [],
+                        sleepSchedule: '',
+                        bestTimes: '',
+                        specialConsiderations: '',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                      });
+                      setShowEditProfile(true);
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Family Member
+                  </Button>
+                </div>
+                
+                {/* Adults Section */}
+                {familyProfiles.some(p => p.type === 'adult') && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Adults</h3>
+                    <div className="grid gap-4">
+                      {familyProfiles
+                        .filter(profile => profile.type === 'adult')
+                        .map(profile => (
+                          <div key={profile.id} className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <span className="text-lg font-medium text-blue-700">
+                                    {profile.name?.[0] || 'A'}
+                                  </span>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-gray-900">{profile.name}</h4>
+                                  <p className="text-sm text-gray-500">{profile.relationship || 'Parent'}</p>
+                                  {profile.healthInfo && (
+                                    <Badge variant="secondary" className="mt-1">
+                                      Health info provided
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    console.log('Adult edit clicked:', profile);
+                                    setEditingProfile(profile);
+                                    setShowEditProfile(true);
+                                  }}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            {profile.interests && (
+                              <div className="mt-3 text-sm text-gray-600">
+                                <strong>Interests:</strong> {profile.interests}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Children Section */}
+                {familyProfiles.some(p => p.type === 'child') && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Children</h3>
+                    <div className="grid gap-4">
+                      {familyProfiles
+                        .filter(profile => profile.type === 'child')
+                        .map(profile => {
+                          const parent = familyProfiles.find(p => p.id === profile.parentId);
+                          return (
+                            <div key={profile.id} className="border rounded-lg p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
+                                    <span className="text-lg font-medium text-pink-700">
+                                      {profile.name?.[0] || 'C'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <h4 className="font-medium text-gray-900">
+                                      {profile.name} {profile.age && `(${profile.age}yr)`}
+                                    </h4>
+                                    <p className="text-sm text-gray-500">
+                                      {profile.relationship || 'Child'} 
+                                      {parent && ` • Managed by ${parent.name}`}
+                                    </p>
+                                    {profile.healthInfo && (
+                                      <Badge variant="secondary" className="mt-1">
+                                        Health info provided
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => {
+                                      console.log('Child edit clicked:', profile);
+                                      setEditingProfile(profile);
+                                      setShowEditProfile(true);
+                                    }}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              {profile.interests && (
+                                <div className="mt-3 text-sm text-gray-600">
+                                  <strong>Interests:</strong> {profile.interests}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+    
+    {/* Edit Profile Modal - Dashboard */}
+    {showEditProfile && editingProfile && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+            <h2 className="text-xl font-bold">Edit {editingProfile.name}'s Profile</h2>
+            <Button variant="ghost" size="sm" onClick={() => {
+              setShowEditProfile(false);
+              setEditingProfile(null);
+            }}>
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          
+          <div className="p-6 space-y-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Basic Information</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="profile-name-dash">Name *</Label>
+                  <Input
+                    id="profile-name-dash"
+                    value={editingProfile.name}
+                    onChange={(e) => setEditingProfile(prev => prev ? {...prev, name: e.target.value} : null)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="profile-dob-dash">Date of Birth</Label>
+                  <Input
+                    id="profile-dob-dash"
+                    type="date"
+                    value={editingProfile.dateOfBirth || ''}
+                    onChange={(e) => setEditingProfile(prev => prev ? {...prev, dateOfBirth: e.target.value} : null)}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {editingProfile.type === 'adult' && (
+                  <div>
+                    <Label htmlFor="profile-email-dash">Email</Label>
+                    <Input
+                      id="profile-email-dash"
+                      type="email"
+                      value={editingProfile.email || ''}
+                      onChange={(e) => setEditingProfile(prev => prev ? {...prev, email: e.target.value} : null)}
+                    />
+                  </div>
+                )}
+                <div>
+                  <Label htmlFor="profile-relationship-dash">Relationship</Label>
+                  <Select 
+                    value={editingProfile.relationship || ''} 
+                    onValueChange={(value) => setEditingProfile(prev => prev ? {...prev, relationship: value} : null)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select relationship" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {editingProfile.type === 'adult' ? (
+                        <>
+                          <SelectItem value="Mom">Mom</SelectItem>
+                          <SelectItem value="Dad">Dad</SelectItem>
+                          <SelectItem value="Parent">Parent</SelectItem>
+                          <SelectItem value="Guardian">Guardian</SelectItem>
+                          <SelectItem value="Grandma">Grandma</SelectItem>
+                          <SelectItem value="Grandpa">Grandpa</SelectItem>
+                          <SelectItem value="Aunt">Aunt</SelectItem>
+                          <SelectItem value="Uncle">Uncle</SelectItem>
+                          <SelectItem value="Sister">Sister</SelectItem>
+                          <SelectItem value="Brother">Brother</SelectItem>
+                          <SelectItem value="Cousin">Cousin</SelectItem>
+                          <SelectItem value="Friend">Friend</SelectItem>
+                          <SelectItem value="Family Friend">Family Friend</SelectItem>
+                          <SelectItem value="Godparent">Godparent</SelectItem>
+                          <SelectItem value="Stepparent">Stepparent</SelectItem>
+                          <SelectItem value="Partner">Partner</SelectItem>
+                          <SelectItem value="Spouse">Spouse</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="Son">Son</SelectItem>
+                          <SelectItem value="Daughter">Daughter</SelectItem>
+                          <SelectItem value="Child">Child</SelectItem>
+                          <SelectItem value="Stepchild">Stepchild</SelectItem>
+                          <SelectItem value="Grandchild">Grandchild</SelectItem>
+                          <SelectItem value="Nephew">Nephew</SelectItem>
+                          <SelectItem value="Niece">Niece</SelectItem>
+                          <SelectItem value="Cousin">Cousin</SelectItem>
+                          <SelectItem value="Godchild">Godchild</SelectItem>
+                          <SelectItem value="Family Friend's Child">Family Friend's Child</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Health & Medical Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Health & Medical Information</h3>
+              <div>
+                <Label htmlFor="health-info-dash">Health Information We Should Know</Label>
+                <Textarea
+                  id="health-info-dash"
+                  rows={4}
+                  placeholder="Tell us about any allergies, medical conditions, or health considerations that might affect travel planning."
+                  value={editingProfile.healthInfo || ''}
+                  onChange={(e) => setEditingProfile(prev => prev ? {...prev, healthInfo: e.target.value} : null)}
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-between pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditProfile(false);
+                  setEditingProfile(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (editingProfile) {
+                    // Update the profile in the array
+                    const updatedProfiles = familyProfiles.map(profile => 
+                      profile.id === editingProfile.id 
+                        ? { ...editingProfile, updatedAt: new Date().toISOString() }
+                        : profile
+                    );
+                    setFamilyProfiles(updatedProfiles);
+                    
+                    // Save to localStorage
+                    localStorage.setItem('famapp-family-profiles', JSON.stringify(updatedProfiles));
+                    
+                    // Close modal
+                    setShowEditProfile(false);
+                    setEditingProfile(null);
+                  }
+                }}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
+  );
+};
 
 const CreateTripFlow: React.FC<{ 
   userName: string; 
@@ -964,6 +3108,7 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
 
 // Main App Component
 const FamApp = () => {
+  const [currentStep, setCurrentStep] = useState(0);
   const [tripData, setTripData] = useState<TripData>({});
   const [currentView, setCurrentView] = useState<'landing' | 'signup' | 'dashboard' | 'createTripFlow' | 'wizard' | 'trip-details'>('landing');
   const [userData, setUserData] = useState<{ 
@@ -992,6 +3137,8 @@ const FamApp = () => {
     relationship: '',
     email: ''
   });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [isValidating, setIsValidating] = useState(false);
   const [activityValidationErrors, setActivityValidationErrors] = useState<Record<string, string>>({});
   const [showFlightModal, setShowFlightModal] = useState(false);
   const [showHotelModal, setShowHotelModal] = useState(false);
@@ -1302,7 +3449,108 @@ const FamApp = () => {
     localStorage.setItem('famapp-trips', JSON.stringify(userTrips));
   }, [userTrips]);
 
-  // Old wizard navigation and validation functions removed - now handled in TripWizard component
+  const steps = [
+    { title: 'Destination' },
+    { title: 'Family' },
+    { title: 'Style' },
+    { title: 'Concerns' },
+    { title: 'Budget' },
+    { title: 'Complete' }
+  ];
+
+  const nextStep = () => {
+    setIsValidating(true);
+    
+    // Clear previous errors
+    clearValidationErrors();
+    
+    // Validate current step
+    if (!isCurrentStepValid()) {
+      setIsValidating(false);
+      return; // Don't proceed if validation fails
+    }
+    
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+    
+    setIsValidating(false);
+  };
+
+  const prevStep = () => {
+    clearValidationErrors(); // Clear errors when going back
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Validation helper functions
+  const validateDestinationStep = (data: TripData): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    
+    if (!data.city?.trim()) {
+      errors.city = 'City is required';
+    }
+    
+    if (!data.country?.trim()) {
+      errors.country = 'Country is required';
+    }
+    
+    if (!data.startDate) {
+      errors.startDate = 'Start date is required';
+    } else {
+      const startDate = new Date(data.startDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (startDate < today) {
+        errors.startDate = 'Start date cannot be in the past';
+      }
+    }
+    
+    if (!data.endDate) {
+      errors.endDate = 'End date is required';
+    } else if (data.startDate && data.endDate) {
+      const startDate = new Date(data.startDate);
+      const endDate = new Date(data.endDate);
+      
+      if (endDate <= startDate) {
+        errors.endDate = 'End date must be after start date';
+      }
+    }
+    
+    return errors;
+  };
+
+  const validateFamilyProfilesStep = (data: TripData): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    
+    // Check if at least one adult exists
+    if (!data.adults || data.adults.length === 0) {
+      errors.adults = 'At least one adult is required';
+    } else {
+      // Validate each adult
+      data.adults.forEach((adult, index) => {
+        if (!adult.name?.trim()) {
+          errors[`adult-${index}-name`] = 'Adult name is required';
+        }
+      });
+    }
+    
+    // Validate children if they exist
+    if (data.kids && data.kids.length > 0) {
+      data.kids.forEach((kid, index) => {
+        if (!kid.name?.trim()) {
+          errors[`kid-${index}-name`] = 'Child name is required';
+        }
+        if (!kid.age || isNaN(Number(kid.age)) || Number(kid.age) < 0 || Number(kid.age) > 17) {
+          errors[`kid-${index}-age`] = 'Valid age (0-17) is required for children';
+        }
+      });
+    }
+    
+    return errors;
+  };
 
   const validateActivityForm = (activity: any): Record<string, string> => {
     const errors: Record<string, string> = {};
@@ -1327,6 +3575,29 @@ const FamApp = () => {
     return errors;
   };
 
+  const clearValidationErrors = () => {
+    setValidationErrors({});
+  };
+
+  // Helper function to check if current step is valid
+  const isCurrentStepValid = (): boolean => {
+    let stepErrors: Record<string, string> = {};
+    
+    switch (currentStep) {
+      case 0:
+        stepErrors = validateDestinationStep(tripData);
+        break;
+      case 1:
+        stepErrors = validateFamilyProfilesStep(tripData);
+        break;
+      default:
+        return true; // Other steps are optional
+    }
+    
+    setValidationErrors(stepErrors);
+    return Object.keys(stepErrors).length === 0;
+  };
+
 
   // Welcome flow navigation
   const handleGetStarted = () => {
@@ -1345,6 +3616,7 @@ const FamApp = () => {
   // Dashboard navigation handlers
   const handleCreateTrip = () => {
     setTripData({}); // Reset trip data for new trip
+    setCurrentStep(0); // Reset to first step
     setCurrentView('wizard');
   };
 
@@ -3279,11 +5551,11 @@ const FamApp = () => {
                     })();
 
                     const packingLists = [
-                      { title: 'Travel Essentials', items: [...essentialItems, ...(tripData.customPackingItems?.[0] || [])], icon: '✈️', color: 'blue' },
-                      { title: 'Clothing & Shoes', items: [...clothingItems, ...(tripData.customPackingItems?.[1] || [])], icon: '👕', color: 'green' },
-                      { title: 'Health & Hygiene', items: [...healthItems, ...(tripData.customPackingItems?.[2] || [])], icon: '🏥', color: 'red' },
-                      ...(hasKids ? [{ title: 'Kids Items', items: [...kidsItems, ...(tripData.customPackingItems?.[3] || [])], icon: '🧸', color: 'pink' }] : []),
-                      ...(activityItems.length > 0 ? [{ title: 'Activity Gear', items: [...activityItems, ...(tripData.customPackingItems?.[hasKids ? 4 : 3] || [])], icon: '🎒', color: 'orange' }] : [])
+                      { title: 'Travel Essentials', items: [...essentialItems.filter(item => !(tripData.hiddenPackingItems?.[0] || []).includes(item)), ...(tripData.customPackingItems?.[0] || [])], icon: '✈️', color: 'blue' },
+                      { title: 'Clothing & Shoes', items: [...clothingItems.filter(item => !(tripData.hiddenPackingItems?.[1] || []).includes(item)), ...(tripData.customPackingItems?.[1] || [])], icon: '👕', color: 'green' },
+                      { title: 'Health & Hygiene', items: [...healthItems.filter(item => !(tripData.hiddenPackingItems?.[2] || []).includes(item)), ...(tripData.customPackingItems?.[2] || [])], icon: '🏥', color: 'red' },
+                      ...(hasKids ? [{ title: 'Kids Items', items: [...kidsItems.filter(item => !(tripData.hiddenPackingItems?.[3] || []).includes(item)), ...(tripData.customPackingItems?.[3] || [])], icon: '🧸', color: 'pink' }] : []),
+                      ...(activityItems.length > 0 ? [{ title: 'Activity Gear', items: [...activityItems.filter(item => !(tripData.hiddenPackingItems?.[hasKids ? 4 : 3] || []).includes(item)), ...(tripData.customPackingItems?.[hasKids ? 4 : 3] || [])], icon: '🎒', color: 'orange' }] : [])
                     ];
 
                     return (
@@ -3373,22 +5645,57 @@ const FamApp = () => {
                                         size="sm" 
                                         className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-gray-400 hover:text-red-500"
                                         onClick={() => {
-                                          // Remove item from the list
-                                          const newItems = [...list.items];
-                                          newItems.splice(itemIndex, 1);
+                                          // Determine if this is a generated item or custom item
+                                          const generatedItems = listIndex === 0 ? essentialItems : 
+                                                               listIndex === 1 ? clothingItems :
+                                                               listIndex === 2 ? healthItems :
+                                                               listIndex === 3 && hasKids ? kidsItems :
+                                                               listIndex === (hasKids ? 4 : 3) ? activityItems : [];
                                           
-                                          // Update the smart packing lists
-                                          const updatedLists = [...packingLists];
-                                          updatedLists[listIndex] = {
-                                            ...updatedLists[listIndex],
-                                            items: newItems
-                                          };
+                                          const isGeneratedItem = itemIndex < generatedItems.length;
                                           
-                                          // Update packing lists state if needed
+                                          if (isGeneratedItem) {
+                                            // For generated items, add to hidden items list
+                                            const hiddenItems = tripData.hiddenPackingItems || {};
+                                            const updatedHiddenItems = {
+                                              ...hiddenItems,
+                                              [listIndex]: [...(hiddenItems[listIndex] || []), item]
+                                            };
+                                            
+                                            const updatedTripData = {
+                                              ...tripData,
+                                              hiddenPackingItems: updatedHiddenItems
+                                            };
+                                            setTripData(updatedTripData);
+                                            const updatedTrips = userTrips.map(trip => 
+                                              trip.id === tripData.id ? updatedTripData : trip
+                                            );
+                                            setUserTrips(updatedTrips);
+                                          } else {
+                                            // For custom items, remove from customPackingItems
+                                            const customItems = tripData.customPackingItems?.[listIndex] || [];
+                                            const customItemIndex = itemIndex - generatedItems.length;
+                                            const updatedCustomItems = [...customItems];
+                                            updatedCustomItems.splice(customItemIndex, 1);
+                                            
+                                            const updatedTripData = {
+                                              ...tripData,
+                                              customPackingItems: {
+                                                ...tripData.customPackingItems,
+                                                [listIndex]: updatedCustomItems
+                                              }
+                                            };
+                                            setTripData(updatedTripData);
+                                            const updatedTrips = userTrips.map(trip => 
+                                              trip.id === tripData.id ? updatedTripData : trip
+                                            );
+                                            setUserTrips(updatedTrips);
+                                          }
+                                          
+                                          // Update packing lists state for checkbox tracking
                                           const currentPackingLists = tripData.packingLists || {};
                                           const updatedPackingLists = { ...currentPackingLists };
                                           
-                                          // Remove the item from the packing lists state and shift indices
                                           if (updatedPackingLists[listIndex]) {
                                             const listItems = { ...updatedPackingLists[listIndex].items };
                                             // Remove the deleted item
@@ -3406,17 +5713,15 @@ const FamApp = () => {
                                             };
                                           }
                                           
-                                          const updatedTripData = {
+                                          const finalTripData = {
                                             ...tripData,
                                             packingLists: updatedPackingLists,
-                                            customPackingItems: {
-                                              ...tripData.customPackingItems,
-                                              [listIndex]: newItems
-                                            }
+                                            ...(tripData.hiddenPackingItems && { hiddenPackingItems: tripData.hiddenPackingItems }),
+                                            ...(tripData.customPackingItems && { customPackingItems: tripData.customPackingItems })
                                           };
-                                          setTripData(updatedTripData);
+                                          setTripData(finalTripData);
                                           const updatedTrips = userTrips.map(trip => 
-                                            trip.id === tripData.id ? updatedTripData : trip
+                                            trip.id === tripData.id ? finalTripData : trip
                                           );
                                           setUserTrips(updatedTrips);
                                         }}
@@ -5451,32 +7756,101 @@ const FamApp = () => {
       </>
     );
   }
-
   // Trip wizard view
-  if (currentView === 'wizard') {
-    return (
-      <TripWizard
-        onTripComplete={handleTripComplete}
-        onBackToDashboard={() => setCurrentView('dashboard')}
-        userData={userData}
-      />
-    );
-  }
 
-  // Default fallback - redirect to dashboard
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Redirecting...</h2>
-        <p className="text-gray-600">Taking you back to dashboard</p>
-        <Button 
-          onClick={() => setCurrentView('dashboard')}
-          className="mt-4"
-        >
-          Go to Dashboard
-        </Button>
+    <>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">FamApp</h1>
+                <p className="text-xs text-blue-700">Family Travel Made Simple</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500">
+                Step {currentStep + 1} of {steps.length}
+              </span>
+              <div className="w-32 bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all"
+                  style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            {currentStep === 0 ? "Let's plan your family trip" :
+             currentStep === 1 ? "Who's coming along?" :
+             currentStep === 2 ? "What's your family's travel style?" :
+             currentStep === 3 ? "What matters most to your family?" :
+             currentStep === 4 ? "How much are you planning to spend?" :
+             "Almost done!"}
+          </h2>
+          <p className="text-lg text-gray-600">
+            {currentStep === 0 ? "Stop being the human travel database. Let AI help coordinate your trip." :
+             currentStep === 1 ? "Just the basics - I'll learn more about your family later" :
+             currentStep === 2 ? "This helps me suggest activities that actually work for your crew" :
+             currentStep === 3 ? "Help me understand your priorities and concerns for the trip" :
+             currentStep === 4 ? "We'll suggest activities and experiences that fit your family's budget" :
+             "Your family trip coordinator is ready to help!"}
+          </p>
+        </div>
+
+        {/* Render current step */}
+        {currentStep === 0 && <DestinationStep tripData={tripData} setTripData={setTripData} validationErrors={validationErrors} />}
+        {currentStep === 1 && <FamilyProfilesStep tripData={tripData} setTripData={setTripData} validationErrors={validationErrors} />}
+        {currentStep === 2 && <TravelStyleStep tripData={tripData} setTripData={setTripData} />}
+        {currentStep === 3 && <ConcernsStep tripData={tripData} setTripData={setTripData} />}
+        {currentStep === 4 && <BudgetStep tripData={tripData} setTripData={setTripData} />}
+        {currentStep === 5 && <CompletionStep tripData={tripData} onTripComplete={handleTripComplete} />}
+
+        {/* Navigation buttons */}
+        {currentStep !== 5 && (
+          <div className="flex justify-between mt-8">
+            <Button 
+              variant="outline" 
+              onClick={prevStep}
+              disabled={currentStep === 0}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Previous
+            </Button>
+            
+            {currentStep < steps.length - 1 ? (
+              <Button onClick={nextStep} disabled={isValidating}>
+                {isValidating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Validating...
+                  </>
+                ) : (
+                  <>
+                    Continue
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
+    </>
   );
 };
 
