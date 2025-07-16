@@ -7882,10 +7882,14 @@ const FamApp = () => {
   );
 };
 
-// Wrap App in Error Boundary
+import { AppWithAuth } from './components/auth/AppWithAuth';
+
+// Wrap App in Error Boundary and Authentication
 const App = () => (
   <ErrorBoundary>
-    <FamApp />
+    <AppWithAuth>
+      <FamApp />
+    </AppWithAuth>
   </ErrorBoundary>
 );
 
