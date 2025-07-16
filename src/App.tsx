@@ -4002,78 +4002,77 @@ const FamApp = () => {
     return (
       <>
       <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center space-x-4 mb-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setCurrentView('dashboard')}
-                    className="text-gray-600 hover:text-gray-900"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Dashboard
-                  </Button>
-                </div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {tripData.city || 'Trip'} Family Adventure
-                </h1>
-                <div className="flex items-center space-x-6 text-sm text-gray-600 mt-1">
-                  <span className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {tripData.city}, {tripData.country}
-                  </span>
-                  <span className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {tripData.startDate && tripData.endDate
-                      ? `${new Date(tripData.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-${new Date(tripData.endDate).toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' })}`
-                      : 'Dates TBD'}
-                  </span>
-                  <span className="flex items-center">
-                    <Users className="w-4 h-4 mr-1" />
-                    {(tripData.adults?.length || 0) + (tripData.kids?.length || 0)} travelers
-                  </span>
-                  <span className="flex items-center">
-                    <Clock className="w-4 h-4 mr-1" />
-                    {daysUntil > 0 ? `${daysUntil} days to go` : 'Trip date passed'}
-                  </span>
-                  <span className="text-gray-400">
-                    Last updated 2 hours ago
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setShowFamilyProfiles(true)}
-                  className="text-gray-600 hover:text-gray-900"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Family Profiles
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share Trip
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Bell className="w-5 h-5" />
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Settings className="w-5 h-5" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <ResponsiveTripDetails 
           trip={tripData} 
           onBack={() => setCurrentView('dashboard')}
         >
+          {/* Desktop Header - only shows on desktop */}
+          <div className="bg-white border-b">
+            <div className="max-w-7xl mx-auto px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-4 mb-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setCurrentView('dashboard')}
+                      className="text-gray-600 hover:text-gray-900"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Dashboard
+                    </Button>
+                  </div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {tripData.city || 'Trip'} Family Adventure
+                  </h1>
+                  <div className="flex items-center space-x-6 text-sm text-gray-600 mt-1">
+                    <span className="flex items-center">
+                      <MapPin className="w-4 h-4 mr-1" />
+                      {tripData.city}, {tripData.country}
+                    </span>
+                    <span className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {tripData.startDate && tripData.endDate
+                        ? `${new Date(tripData.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-${new Date(tripData.endDate).toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' })}`
+                        : 'Dates TBD'}
+                    </span>
+                    <span className="flex items-center">
+                      <Users className="w-4 h-4 mr-1" />
+                      {(tripData.adults?.length || 0) + (tripData.kids?.length || 0)} travelers
+                    </span>
+                    <span className="flex items-center">
+                      <Clock className="w-4 h-4 mr-1" />
+                      {daysUntil > 0 ? `${daysUntil} days to go` : 'Trip date passed'}
+                    </span>
+                    <span className="text-gray-400">
+                      Last updated 2 hours ago
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowFamilyProfiles(true)}
+                    className="text-gray-600 hover:text-gray-900"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Family Profiles
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share Trip
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    <Bell className="w-5 h-5" />
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    <Settings className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
           <div className="max-w-7xl mx-auto px-6 py-6">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Sidebar */}
