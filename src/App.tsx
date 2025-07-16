@@ -4070,8 +4070,12 @@ const FamApp = () => {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <ResponsiveTripDetails 
+          trip={tripData} 
+          onBack={() => setCurrentView('dashboard')}
+        >
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Sidebar */}
             <div className="lg:col-span-1 space-y-6">
               {/* Trip Readiness Card */}
@@ -7500,6 +7504,7 @@ const FamApp = () => {
             </div>
           </div>
         )}
+        </ResponsiveTripDetails>
       </div>
       
       {/* Add Traveler Modal */}
@@ -7883,6 +7888,7 @@ const FamApp = () => {
 };
 
 import { AppWithAuth } from './components/auth/AppWithAuth';
+import { ResponsiveTripDetails } from './components/trip/ResponsiveTripDetails';
 
 // Wrap App in Error Boundary and Authentication
 const App = () => (
