@@ -137,6 +137,7 @@ interface TripData {
     isCustom: boolean;
   }>;
   hiddenReadinessItems?: string[];
+  readinessItemStatus?: { [itemId: string]: 'complete' | 'incomplete' };
 }
 
 interface ActivityItem {
@@ -334,8 +335,14 @@ const calculateTripReadinessData = (trip: any) => {
     items.push(...trip.customReadinessItems);
   }
   
+  // Apply manual status overrides
+  const itemsWithOverrides = items.map(item => {
+    const manualStatus = trip.readinessItemStatus?.[item.id];
+    return manualStatus ? { ...item, status: manualStatus } : item;
+  });
+  
   // Filter out hidden items
-  const visibleItems = items.filter(item => 
+  const visibleItems = itemsWithOverrides.filter(item => 
     !trip.hiddenReadinessItems?.includes(item.id)
   );
   
@@ -4100,6 +4107,73 @@ const FamApp = () => {
                           className="flex items-start space-x-3 p-2 rounded hover:bg-gray-50 cursor-pointer"
                           onClick={() => !showReadinessEditMode && handleSidebarItemClick(item)}
                         >
+                          <div 
+                            className="mt-0.5 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!(item as any).isCustom) {
+                                // Toggle completion status for regular items
+                                const updatedTripData = {
+                                  ...tripData,
+                                  readinessItemStatus: {
+                                    ...tripData.readinessItemStatus,
+                                    [item.id]: item.status === 'complete' ? 'incomplete' : 'complete'
+                                  }
+                                };
+                                setTripData(updatedTripData);
+                                const updatedTrips = userTrips.map(trip => 
+                                  trip.id === tripData.id ? updatedTripData : trip
+                                );
+                                setUserTrips(updatedTrips);
+                              } else {
+                                // Toggle completion status for custom items
+                                const updatedCustomItems = (tripData.customReadinessItems || []).map(customItem => 
+                                  customItem.id === item.id 
+                                    ? { ...customItem, status: customItem.status === 'complete' ? 'incomplete' : 'complete' }
+                                    : customItem
+                                );
+                                const updatedTripData = {
+                                  ...tripData,
+                                  customReadinessItems: updatedCustomItems
+                                };
+                                setTripData(updatedTripData);
+                                const updatedTrips = userTrips.map(trip => 
+                                  trip.id === tripData.id ? updatedTripData : trip
+                                );
+                                setUserTrips(updatedTrips);
+                              }
+                            }}
+                          >
+                            {item.status === 'complete' ? (
+                              <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
+                                <Check className="w-3 h-3 text-white" />
+                              </div>
+                            ) : item.urgent ? (
+                              <div className="w-5 h-5 rounded-full border-2 border-amber-500 flex items-center justify-center hover:bg-amber-50 transition-colors">
+                                <AlertTriangle className="w-3 h-3 text-amber-500" />
+                              </div>
+                            ) : (
+                              <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
+                                <X className="w-3 h-3 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center">
+                              <span className="text-sm font-medium text-gray-900">{item.title}</span>
+                              {item.urgent && (
+                                <Badge variant="destructive" className="ml-2 text-xs px-1.5 py-0">
+                                  Urgent
+                                </Badge>
+                              )}
+                              {(item as any).isCustom && (
+                                <Badge variant="outline" className="ml-2 text-xs px-1.5 py-0">
+                                  Custom
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-xs text-gray-500">{item.subtitle}</span>
+                          </div>
                           {showReadinessEditMode && !(item as any).isCustom && (
                             <Button 
                               variant="ghost" 
@@ -4124,33 +4198,6 @@ const FamApp = () => {
                               <X className="w-3 h-3" />
                             </Button>
                           )}
-                          <div className="mt-0.5">
-                            {item.status === 'complete' ? (
-                              <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                <Check className="w-3 h-3 text-white" />
-                              </div>
-                            ) : item.urgent ? (
-                              <AlertTriangle className="w-5 h-5 text-amber-500" />
-                            ) : (
-                              <X className="w-5 h-5 text-gray-400" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center">
-                              <span className="text-sm font-medium text-gray-900">{item.title}</span>
-                              {item.urgent && (
-                                <Badge variant="destructive" className="ml-2 text-xs px-1.5 py-0">
-                                  Urgent
-                                </Badge>
-                              )}
-                              {(item as any).isCustom && (
-                                <Badge variant="outline" className="ml-2 text-xs px-1.5 py-0">
-                                  Custom
-                                </Badge>
-                              )}
-                            </div>
-                            <span className="text-xs text-gray-500">{item.subtitle}</span>
-                          </div>
                           {showReadinessEditMode && (item as any).isCustom && (
                             <Button 
                               variant="ghost" 
