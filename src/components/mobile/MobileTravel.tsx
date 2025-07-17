@@ -75,13 +75,9 @@ export const MobileTravel: React.FC<MobileTravelProps> = ({
         <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
           <Plane className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No flights added yet</h3>
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-500">
             Add your flight details to keep track of your travel plans
           </p>
-          <Button onClick={onAddFlight} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add First Flight
-          </Button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -175,13 +171,9 @@ export const MobileTravel: React.FC<MobileTravelProps> = ({
         <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
           <Hotel className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No accommodations added yet</h3>
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-500">
             Add hotels, Airbnb, or other places you'll be staying
           </p>
-          <Button onClick={onAddAccommodation} className="bg-green-600 hover:bg-green-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Accommodation
-          </Button>
         </div>
       ) : (
         <div className="space-y-3">
@@ -272,13 +264,9 @@ export const MobileTravel: React.FC<MobileTravelProps> = ({
         <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
           <Car className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No transportation added yet</h3>
-          <p className="text-gray-500 mb-6">
+          <p className="text-gray-500">
             Add rental cars, trains, buses, or other transportation
           </p>
-          <Button onClick={onAddTransportation} className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Transportation
-          </Button>
         </div>
       ) : (
         <div className="space-y-3">

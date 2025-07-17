@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
+import { Input } from '../ui/input';
 import { 
-  Package, Users, Plus, Edit3, Trash2, 
-  CheckCircle, Circle, User, Baby, 
-  Shirt, Umbrella, Camera, Pill
+  Package, Plus, Trash2, CheckCircle, 
+  Shirt, Shield, Stethoscope, Baby, Activity,
+  FileText, Heart, MapPin, Plane
 } from 'lucide-react';
 
 interface MobilePackingProps {
@@ -22,9 +23,9 @@ export const MobilePacking: React.FC<MobilePackingProps> = ({
   onTogglePackingItem,
   onDeletePackingItem
 }) => {
-  const [activePersonIndex, setActivePersonIndex] = useState(0);
+  const [newItemText, setNewItemText] = useState<{ [key: number]: string }>({});
 
-  // Smart packing analysis based on trip data
+  // Smart packing analysis based on trip data (matching desktop logic)
   const getTripDuration = () => {
     if (!trip.startDate || !trip.endDate) return 0;
     const start = new Date(trip.startDate);
@@ -58,112 +59,218 @@ export const MobilePacking: React.FC<MobilePackingProps> = ({
     return 'temperate';
   };
 
-  // Generate smart packing lists based on trip data
-  const generateSmartPackingLists = () => {
+  const hasKids = trip.kids && trip.kids.length > 0;
+
+  // Generate category-based packing lists (matching desktop)
+  const getPackingCategories = () => {
     const duration = getTripDuration();
     const season = getTripSeason();
     const climate = getClimateCategory();
     
-    const baseItems = [
-      'Underwear (' + (duration + 2) + ' pairs)',
-      'Socks (' + (duration + 2) + ' pairs)',
-      'Phone charger',
-      'Toothbrush',
-      'Toothpaste',
-      'Shampoo',
-      'Passport/ID',
-      'Wallet/Credit cards',
-      'Medications'
+    const categories = [
+      {
+        id: 0,
+        name: 'Travel Essentials',
+        icon: FileText,
+        color: 'bg-blue-500',
+        items: [
+          'Passport/ID',
+          'Boarding passes',
+          'Travel insurance',
+          'Phone charger',
+          'Portable battery',
+          'Emergency contacts',
+          'Copies of important documents',
+          'Cash and cards',
+          'Travel adapter'
+        ]
+      },
+      {
+        id: 1,
+        name: 'Clothing & Shoes',
+        icon: Shirt,
+        color: 'bg-green-500',
+        items: (() => {
+          const baseItems = [
+            `Underwear (${duration + 2} pairs)`,
+            `Socks (${duration + 2} pairs)`,
+            'Comfortable walking shoes',
+            'Sleepwear'
+          ];
+          
+          // Season-specific items
+          const seasonalItems = {
+            spring: ['Light jacket', 'Layers', 'Comfortable shoes'],
+            summer: ['Light clothes', 'Swimwear', 'Sandals', 'Sun hat'],
+            fall: ['Warm jacket', 'Layers', 'Closed shoes'],
+            winter: ['Winter coat', 'Warm layers', 'Gloves', 'Warm hat', 'Boots']
+          };
+          
+          // Climate-specific items
+          const climateItems = {
+            tropical: ['Light breathable clothes', 'Flip flops'],
+            cold: ['Thermal underwear', 'Warm socks'],
+            arid: ['Lightweight long sleeves', 'Sun protection'],
+            temperate: ['Versatile layers']
+          };
+          
+          return [
+            ...baseItems,
+            ...seasonalItems[season as keyof typeof seasonalItems] || [],
+            ...climateItems[climate as keyof typeof climateItems] || []
+          ];
+        })()
+      },
+      {
+        id: 2,
+        name: 'Health & Hygiene',
+        icon: Stethoscope,
+        color: 'bg-red-500',
+        items: [
+          'Toothbrush',
+          'Toothpaste',
+          'Shampoo',
+          'Soap/body wash',
+          'Deodorant',
+          'Sunscreen',
+          'Any medications',
+          'First aid kit',
+          'Hand sanitizer',
+          ...(climate === 'tropical' ? ['Mosquito repellent'] : [])
+        ]
+      }
     ];
-    
-    // Season-specific items
-    const seasonalItems = {
-      spring: ['Light jacket', 'Umbrella', 'Comfortable walking shoes'],
-      summer: ['Sunscreen', 'Sunglasses', 'Swimwear', 'Light clothes', 'Sandals'],
-      fall: ['Warm jacket', 'Layers', 'Comfortable shoes', 'Umbrella'],
-      winter: ['Winter coat', 'Warm layers', 'Gloves', 'Warm hat', 'Boots']
-    };
-    
-    // Climate-specific items
-    const climateItems = {
-      tropical: ['Mosquito repellent', 'Light breathable clothes', 'Flip flops'],
-      cold: ['Thermal underwear', 'Warm socks', 'Hand warmers'],
-      arid: ['Extra sunscreen', 'Lip balm', 'Lightweight long sleeves'],
-      temperate: ['Versatile layers', 'Comfortable shoes']
-    };
-    
-    return [
-      ...baseItems,
-      ...seasonalItems[season as keyof typeof seasonalItems] || [],
-      ...climateItems[climate as keyof typeof climateItems] || []
-    ];
+
+    // Add kids items if family has children
+    if (hasKids) {
+      categories.push({
+        id: 3,
+        name: 'Kids Items',
+        icon: Baby,
+        color: 'bg-purple-500',
+        items: [
+          'Diapers/pull-ups',
+          'Baby wipes',
+          'Kids snacks',
+          'Favorite toys',
+          'Comfort items',
+          'Kids medications',
+          'Entertainment (books, tablets)',
+          'Stroller/carrier',
+          'Car seat (if needed)'
+        ]
+      });
+    }
+
+    // Add activity gear based on planned activities
+    const activityTypes = trip.activities?.map((a: any) => a.category || a.type).filter(Boolean) || [];
+    if (activityTypes.length > 0) {
+      const activityItems = [];
+      
+      if (activityTypes.includes('outdoor') || activityTypes.includes('nature')) {
+        activityItems.push('Hiking shoes', 'Backpack', 'Water bottle');
+      }
+      if (activityTypes.includes('beach') || activityTypes.includes('water')) {
+        activityItems.push('Beach towels', 'Swimwear', 'Snorkel gear');
+      }
+      if (activityTypes.includes('cultural') || activityTypes.includes('museum')) {
+        activityItems.push('Comfortable walking shoes', 'Camera');
+      }
+      
+      if (activityItems.length > 0) {
+        categories.push({
+          id: hasKids ? 4 : 3,
+          name: 'Activity Gear',
+          icon: Activity,
+          color: 'bg-orange-500',
+          items: activityItems
+        });
+      }
+    }
+
+    return categories;
   };
 
-  // Get all family members for packing lists
-  const getAllTravelers = () => {
-    const travelers = [];
-    if (trip.adults) travelers.push(...trip.adults);
-    if (trip.kids) travelers.push(...trip.kids);
-    return travelers;
-  };
-
-  const travelers = getAllTravelers();
-  const smartItems = generateSmartPackingLists();
+  const packingCategories = getPackingCategories();
 
   // Initialize packing lists if they don't exist
   if (!trip.packingLists) {
     trip.packingLists = {};
   }
 
-  const getPackingListForPerson = (personIndex: number) => {
-    if (!trip.packingLists[personIndex]) {
-      // Initialize with smart suggestions
-      trip.packingLists[personIndex] = {
-        items: smartItems.reduce((acc, item, index) => {
-          acc[index] = { checked: false };
-          return acc;
-        }, {} as { [key: number]: { checked: boolean } })
-      };
+  const getPackingListForCategory = (categoryId: number) => {
+    if (!trip.packingLists[categoryId]) {
+      const category = packingCategories.find(c => c.id === categoryId);
+      if (category) {
+        trip.packingLists[categoryId] = {
+          items: category.items.reduce((acc, item, index) => {
+            acc[index] = { checked: false };
+            return acc;
+          }, {} as { [key: number]: { checked: boolean } })
+        };
+      }
     }
-    return trip.packingLists[personIndex];
+    return trip.packingLists[categoryId];
   };
 
-  const getCustomPackingItems = (personIndex: number) => {
-    return trip.customPackingItems?.[personIndex] || [];
+  const getCustomPackingItems = (categoryId: number) => {
+    return trip.customPackingItems?.[categoryId] || [];
   };
 
-  const getPackingProgress = (personIndex: number) => {
-    const packingList = getPackingListForPerson(personIndex);
-    const customItems = getCustomPackingItems(personIndex);
+  const getHiddenPackingItems = (categoryId: number) => {
+    return trip.hiddenPackingItems?.[categoryId] || [];
+  };
+
+  const getCategoryProgress = (categoryId: number) => {
+    const packingList = getPackingListForCategory(categoryId);
+    const customItems = getCustomPackingItems(categoryId);
+    const hiddenItems = getHiddenPackingItems(categoryId);
+    const category = packingCategories.find(c => c.id === categoryId);
     
-    const smartItemsChecked = Object.values(packingList.items).filter(item => item.checked).length;
-    const totalItems = smartItems.length + customItems.length;
+    if (!packingList || !category) return 0;
     
-    if (totalItems === 0) return 0;
-    return Math.round((smartItemsChecked / totalItems) * 100);
+    const visibleGeneratedItems = category.items.filter((_, index) => 
+      !hiddenItems.includes(index.toString())
+    );
+    const totalItems = visibleGeneratedItems.length + customItems.length;
+    
+    if (totalItems === 0) return 100;
+    
+    const checkedGeneratedItems = visibleGeneratedItems.filter((_, index) => 
+      packingList.items[index]?.checked
+    ).length;
+    
+    // For custom items, assume they're all checked for now (simplified)
+    const checkedItems = checkedGeneratedItems + customItems.length;
+    
+    return Math.round((checkedItems / totalItems) * 100);
   };
 
-  const getPersonIcon = (person: any) => {
-    if (person.type === 'child') return Baby;
-    return User;
+  const getOverallProgress = () => {
+    const progresses = packingCategories.map(cat => getCategoryProgress(cat.id));
+    return progresses.length > 0 ? Math.round(progresses.reduce((a, b) => a + b, 0) / progresses.length) : 0;
   };
 
-  const getPersonColor = (index: number) => {
-    const colors = [
-      'bg-blue-500',
-      'bg-green-500', 
-      'bg-purple-500',
-      'bg-orange-500',
-      'bg-pink-500',
-      'bg-indigo-500'
-    ];
-    return colors[index % colors.length];
+  const addCustomItem = (categoryId: number) => {
+    const text = newItemText[categoryId]?.trim();
+    if (!text) return;
+    
+    if (!trip.customPackingItems) {
+      trip.customPackingItems = {};
+    }
+    if (!trip.customPackingItems[categoryId]) {
+      trip.customPackingItems[categoryId] = [];
+    }
+    
+    trip.customPackingItems[categoryId].push(text);
+    setNewItemText({ ...newItemText, [categoryId]: '' });
   };
 
-  const currentPerson = travelers[activePersonIndex];
-  const packingList = getPackingListForPerson(activePersonIndex);
-  const customItems = getCustomPackingItems(activePersonIndex);
-  const progress = getPackingProgress(activePersonIndex);
+  const handleKeyPress = (e: React.KeyboardEvent, categoryId: number) => {
+    if (e.key === 'Enter') {
+      addCustomItem(categoryId);
+    }
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -173,106 +280,82 @@ export const MobilePacking: React.FC<MobilePackingProps> = ({
           <div>
             <h1 className="text-lg font-bold text-gray-900">Packing Lists</h1>
             <p className="text-sm text-gray-600">
-              {travelers.length} travelers • {progress}% complete
+              {getTripDuration()}-day {getTripSeason()} trip • {getOverallProgress()}% packed
             </p>
           </div>
-          <Button 
-            onClick={() => onAddPackingItem(activePersonIndex)} 
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Item
-          </Button>
+          <div className="w-16 h-16 relative">
+            <svg className="w-16 h-16 transform -rotate-90">
+              <circle
+                cx="32"
+                cy="32"
+                r="28"
+                stroke="#e5e7eb"
+                strokeWidth="4"
+                fill="none"
+              />
+              <circle
+                cx="32"
+                cy="32"
+                r="28"
+                stroke="#3b82f6"
+                strokeWidth="4"
+                fill="none"
+                strokeDasharray={`${2 * Math.PI * 28}`}
+                strokeDashoffset={`${2 * Math.PI * 28 * (1 - getOverallProgress() / 100)}`}
+                className="transition-all duration-300"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-sm font-bold text-gray-900">{getOverallProgress()}%</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Person Tabs */}
-      {travelers.length > 0 && (
-        <div className="bg-white border-b border-gray-200 px-4 py-2">
-          <div className="flex space-x-2 overflow-x-auto">
-            {travelers.map((person, index) => {
-              const IconComponent = getPersonIcon(person);
-              const personProgress = getPackingProgress(index);
-              
-              return (
-                <button
-                  key={index}
-                  onClick={() => setActivePersonIndex(index)}
-                  className={`flex-shrink-0 flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                    activePersonIndex === index 
-                      ? 'bg-blue-100 text-blue-700' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${getPersonColor(index)}`}>
-                    <IconComponent className="w-3 h-3 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm font-medium">{person.name}</div>
-                    <div className="text-xs">{personProgress}%</div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* Categories */}
+      <div className="p-4 space-y-4">
+        {packingCategories.map(category => {
+          const packingList = getPackingListForCategory(category.id);
+          const customItems = getCustomPackingItems(category.id);
+          const hiddenItems = getHiddenPackingItems(category.id);
+          const progress = getCategoryProgress(category.id);
+          const IconComponent = category.icon;
 
-      {/* Content */}
-      <div className="p-4">
-        {travelers.length === 0 ? (
-          <div className="text-center py-12">
-            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No travelers added yet
-            </h3>
-            <p className="text-gray-600">
-              Add family members to create personalized packing lists
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Progress Card */}
-            <Card>
-              <CardHeader>
+          return (
+            <Card key={category.id} className="shadow-sm">
+              <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between">
-                  <span>{currentPerson?.name}'s Packing</span>
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${category.color}`}>
+                      <IconComponent className="w-4 h-4 text-white" />
+                    </div>
+                    <span>{category.name}</span>
+                  </div>
                   <Badge className="bg-blue-100 text-blue-800">
-                    {progress}% Complete
+                    {progress}%
                   </Badge>
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Smart Suggestions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Shirt className="w-5 h-5 mr-2" />
-                  Smart Suggestions
-                </CardTitle>
-                <div className="text-sm text-gray-600">
-                  Based on your {getTripDuration()}-day {getTripSeason()} trip to {trip.destination}
-                </div>
               </CardHeader>
+              
               <CardContent>
                 <div className="space-y-3">
-                  {smartItems.map((item, index) => {
-                    const isChecked = packingList.items[index]?.checked || false;
+                  {/* Generated Items */}
+                  {category.items.map((item, index) => {
+                    if (hiddenItems.includes(index.toString())) return null;
+                    
+                    const isChecked = packingList?.items[index]?.checked || false;
                     
                     return (
-                      <div key={index} className="flex items-center space-x-3">
+                      <div key={index} className="flex items-center space-x-3 group">
                         <Checkbox
                           checked={isChecked}
-                          onCheckedChange={() => onTogglePackingItem(activePersonIndex, index)}
+                          onCheckedChange={() => onTogglePackingItem(category.id, index)}
                         />
                         <span className={`flex-1 ${isChecked ? 'line-through text-gray-500' : ''}`}>
                           {item}
@@ -280,77 +363,82 @@ export const MobilePacking: React.FC<MobilePackingProps> = ({
                         {isChecked && (
                           <CheckCircle className="w-4 h-4 text-green-500" />
                         )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Custom Items */}
-            {customItems.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Plus className="w-5 h-5 mr-2" />
-                    Custom Items
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {customItems.map((item, index) => (
-                      <div key={index} className="flex items-center space-x-3">
-                        <Checkbox
-                          checked={false} // Custom items tracking can be added
-                          onCheckedChange={() => {
-                            // TODO: Implement custom item checking
-                          }}
-                        />
-                        <span className="flex-1">{item}</span>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onDeletePackingItem(activePersonIndex, smartItems.length + index)}
+                          onClick={() => onDeletePackingItem(category.id, index)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                    );
+                  })}
 
-            {/* Quick Add Categories */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Add</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { icon: Shirt, label: 'Clothing', color: 'bg-blue-500' },
-                    { icon: Umbrella, label: 'Weather', color: 'bg-green-500' },
-                    { icon: Camera, label: 'Electronics', color: 'bg-purple-500' },
-                    { icon: Pill, label: 'Health', color: 'bg-red-500' }
-                  ].map((category, index) => (
-                    <Button
-                      key={index}
-                      variant="outline"
-                      className="flex items-center space-x-2 h-12"
-                      onClick={() => onAddPackingItem(activePersonIndex)}
-                    >
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${category.color}`}>
-                        <category.icon className="w-3 h-3 text-white" />
-                      </div>
-                      <span>{category.label}</span>
-                    </Button>
+                  {/* Custom Items */}
+                  {customItems.map((item: string, index: number) => (
+                    <div key={`custom-${index}`} className="flex items-center space-x-3 group">
+                      <Checkbox checked={true} disabled />
+                      <span className="flex-1 text-blue-700 font-medium">{item}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDeletePackingItem(category.id, category.items.length + index)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   ))}
+
+                  {/* Add Custom Item */}
+                  <div className="flex items-center space-x-2 pt-2 border-t border-gray-100">
+                    <Input
+                      placeholder="Add custom item..."
+                      value={newItemText[category.id] || ''}
+                      onChange={(e) => setNewItemText({ ...newItemText, [category.id]: e.target.value })}
+                      onKeyPress={(e) => handleKeyPress(e, category.id)}
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={() => addCustomItem(category.id)}
+                      disabled={!newItemText[category.id]?.trim()}
+                      size="sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+          );
+        })}
+      </div>
+
+      {/* Trip Summary */}
+      <div className="p-4 pb-8">
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3 mb-3">
+              <MapPin className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold text-blue-900">Trip Summary</h3>
+            </div>
+            <div className="grid grid-cols-3 gap-4 text-center text-sm">
+              <div>
+                <div className="font-semibold text-blue-800">{getTripDuration()}</div>
+                <div className="text-blue-600">Days</div>
+              </div>
+              <div>
+                <div className="font-semibold text-blue-800">{trip.destination || 'Unknown'}</div>
+                <div className="text-blue-600">Destination</div>
+              </div>
+              <div>
+                <div className="font-semibold text-blue-800">{getTripSeason()}</div>
+                <div className="text-blue-600">Season</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

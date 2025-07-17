@@ -32,6 +32,74 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
   // Calculate trip stats
   const daysUntilTrip = Math.ceil((new Date(trip.startDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   const isUpcoming = daysUntilTrip > 0;
+
+  // Trip readiness calculation (matching desktop logic)
+  const calculateTripReadiness = () => {
+    const readinessItems = [];
+
+    // Planning Category
+    if (trip.city && trip.country && trip.startDate && trip.endDate) {
+      readinessItems.push({ status: 'complete', category: 'planning' });
+    } else {
+      readinessItems.push({ status: 'incomplete', category: 'planning' });
+    }
+
+    // Travel Category
+    const hasFlights = trip.flights && trip.flights.length > 0;
+    const hasAccommodations = trip.accommodations && trip.accommodations.length > 0;
+    
+    readinessItems.push({ 
+      status: hasFlights ? 'complete' : 'incomplete', 
+      category: 'travel' 
+    });
+    readinessItems.push({ 
+      status: hasAccommodations ? 'complete' : 'incomplete', 
+      category: 'travel' 
+    });
+
+    // Packing Category
+    const packingProgress = (() => {
+      if (!trip.packingLists) return 0;
+      
+      let totalItems = 0;
+      let checkedItems = 0;
+      
+      Object.values(trip.packingLists).forEach((list: any) => {
+        if (list.items) {
+          Object.values(list.items).forEach((item: any) => {
+            totalItems++;
+            if (item.checked) checkedItems++;
+          });
+        }
+      });
+      
+      return totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
+    })();
+
+    readinessItems.push({ 
+      status: packingProgress >= 80 ? 'complete' : 'incomplete', 
+      category: 'packing' 
+    });
+
+    // Activities/Itinerary
+    const hasActivities = trip.activities && trip.activities.length > 0;
+    readinessItems.push({ 
+      status: hasActivities ? 'complete' : 'incomplete', 
+      category: 'itinerary' 
+    });
+
+    const completedCount = readinessItems.filter(item => item.status === 'complete').length;
+    const progressPercentage = Math.round((completedCount / readinessItems.length) * 100);
+
+    return { 
+      completed: completedCount, 
+      total: readinessItems.length, 
+      percentage: progressPercentage,
+      packingProgress 
+    };
+  };
+
+  const tripReadiness = calculateTripReadiness();
   
   // Smart urgency detection
   const urgentItems = [
@@ -181,7 +249,7 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
         
         {/* Trip Info Section */}
         <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex-1">
               <h2 className="text-base font-semibold text-gray-900 mb-1 truncate">
                 {trip.destination || 'Madrid, Spain'}
@@ -197,10 +265,13 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
                     day: 'numeric' 
                   })}
                 </span>
-                <span className="flex items-center">
+                <button 
+                  className="flex items-center hover:text-blue-600 transition-colors"
+                  onClick={() => onQuickAction('manage-family')}
+                >
                   <Users className="w-4 h-4 mr-1" />
                   {trip.travelers?.length || 3} travelers
-                </span>
+                </button>
               </div>
             </div>
             <div className="text-right">
@@ -210,6 +281,24 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
               <div className="text-xs text-gray-500">
                 days to go
               </div>
+            </div>
+          </div>
+
+          {/* Trip Readiness Bar */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-gray-700">Trip Readiness</span>
+              <span className="text-blue-600 font-semibold">{tripReadiness.percentage}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${tripReadiness.percentage}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>{tripReadiness.completed} of {tripReadiness.total} complete</span>
+              <span>Packing: {tripReadiness.packingProgress}%</span>
             </div>
           </div>
         </div>
@@ -332,25 +421,6 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
           </div>
         )}
 
-        {/* Quick Stats Footer */}
-        <Card className="bg-gray-100">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-lg font-bold text-gray-900">{completedItems.length}</div>
-                <div className="text-xs text-gray-600">Completed</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-orange-600">{urgentItems.length + upcomingItems.length}</div>
-                <div className="text-xs text-gray-600">To Do</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-blue-600">{trip.travelers?.length || 0}</div>
-                <div className="text-xs text-gray-600">Travelers</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

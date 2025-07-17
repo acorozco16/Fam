@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { 
   Clock, Calendar, MapPin, Users, Plus, 
   CheckCircle, AlertTriangle, Edit3, Trash2,
-  Plane, Hotel, Car, Activity
+  Plane, Hotel, Car, Activity, Coffee, Building,
+  TreePine, Baby, Play, Utensils, Camera, 
+  Home, Compass, Phone
 } from 'lucide-react';
 
 interface MobileItineraryProps {
@@ -19,6 +21,8 @@ export const MobileItinerary: React.FC<MobileItineraryProps> = ({
   onAddActivity, 
   onEditActivity 
 }) => {
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
   // Generate all dates for the trip (same as desktop)
   const getAllTripDates = () => {
     const allTripDates: string[] = [];
@@ -135,6 +139,23 @@ export const MobileItinerary: React.FC<MobileItineraryProps> = ({
   const itineraryItemsByDate = getItineraryItemsByDate();
   const totalItems = Object.values(itineraryItemsByDate).flat().length;
 
+  // Set first day as default if no day selected
+  React.useEffect(() => {
+    if (allTripDates.length > 0 && !selectedDay) {
+      setSelectedDay(allTripDates[0]);
+    }
+  }, [allTripDates, selectedDay]);
+
+  // Get data for selected day
+  const selectedDayItems = selectedDay ? itineraryItemsByDate[selectedDay] || [] : [];
+  const getDayNumber = (dateString: string) => {
+    const tripStart = new Date(trip.startDate);
+    const currentDate = new Date(dateString);
+    const diffTime = currentDate.getTime() - tripStart.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays + 1;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Booked': return 'bg-green-100 text-green-800';
@@ -173,14 +194,6 @@ export const MobileItinerary: React.FC<MobileItineraryProps> = ({
     });
   };
 
-  const getDayNumber = (dateString: string) => {
-    const tripStart = new Date(trip.startDate);
-    const currentDate = new Date(dateString);
-    const diffTime = currentDate.getTime() - tripStart.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays + 1;
-  };
-
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Header */}
@@ -198,6 +211,42 @@ export const MobileItinerary: React.FC<MobileItineraryProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Day Selector */}
+      {allTripDates.length > 0 && (
+        <div className="bg-white border-b border-gray-200 px-4 py-3">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {allTripDates.map((date) => {
+              const dayNumber = getDayNumber(date);
+              const hasItems = itineraryItemsByDate[date] && itineraryItemsByDate[date].length > 0;
+              
+              return (
+                <button
+                  key={date}
+                  onClick={() => setSelectedDay(date)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    selectedDay === date
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="font-semibold">Day {dayNumber}</div>
+                    <div className="text-xs opacity-75">
+                      {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+                    {hasItems && (
+                      <div className="text-xs mt-1">
+                        {selectedDay === date ? '●' : '•'} {itineraryItemsByDate[date].length}
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="p-4 space-y-4">
@@ -219,39 +268,34 @@ export const MobileItinerary: React.FC<MobileItineraryProps> = ({
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               No activities planned yet
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600">
               Start building your itinerary by adding activities, tours, and experiences.
             </p>
-            <Button onClick={onAddActivity} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add First Activity
-            </Button>
           </div>
-        ) : (
-          // Show all trip dates
-          allTripDates.map(date => (
-            <div key={date} className="space-y-3">
-              {/* Date Header */}
-              <div className="flex items-center space-x-3 py-2">
-                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+        ) : selectedDay ? (
+          // Show selected day
+          <div className="space-y-4">
+            {/* Date Header */}
+            <div className="flex items-center space-x-3 py-2">
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-sm">
-                    {getDayNumber(date)}
+                    {getDayNumber(selectedDay)}
                   </span>
                 </div>
                 <div>
                   <h2 className="font-semibold text-gray-900">
-                    Day {getDayNumber(date)}
+                    Day {getDayNumber(selectedDay)}
                   </h2>
                   <p className="text-sm text-gray-600">
-                    {formatDate(date)}
+                    {formatDate(selectedDay)}
                   </p>
                 </div>
               </div>
 
               {/* Items for this date */}
               <div className="space-y-3 ml-6">
-                {itineraryItemsByDate[date] ? (
-                  itineraryItemsByDate[date].map((item, index) => {
+                {selectedDayItems.length > 0 ? (
+                  selectedDayItems.map((item, index) => {
                     const IconComponent = getItemTypeIcon(item.itemType);
                     const iconColor = getItemTypeColor(item.itemType);
                     
@@ -340,8 +384,7 @@ export const MobileItinerary: React.FC<MobileItineraryProps> = ({
                 )}
               </div>
             </div>
-          ))
-        )}
+        ) : null}
       </div>
     </div>
   );
