@@ -75,9 +75,13 @@ export const MobileTravel: React.FC<MobileTravelProps> = ({
         <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
           <Plane className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No flights added yet</h3>
-          <p className="text-gray-500">
+          <p className="text-gray-500 mb-4">
             Add your flight details to keep track of your travel plans
           </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-left">
+            <p className="text-sm text-blue-800 font-medium mb-1">✈️ Pro tip:</p>
+            <p className="text-sm text-blue-700">Book flights 6-8 weeks ahead for best prices. For families, consider direct flights to reduce travel stress.</p>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -171,9 +175,13 @@ export const MobileTravel: React.FC<MobileTravelProps> = ({
         <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
           <Hotel className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No accommodations added yet</h3>
-          <p className="text-gray-500">
+          <p className="text-gray-500 mb-4">
             Add hotels, Airbnb, or other places you'll be staying
           </p>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-left">
+            <p className="text-sm text-green-800 font-medium mb-1">🏨 Family tip:</p>
+            <p className="text-sm text-green-700">Look for hotels with connecting rooms, cribs available, and kid-friendly amenities like pools or play areas.</p>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -264,9 +272,13 @@ export const MobileTravel: React.FC<MobileTravelProps> = ({
         <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
           <Car className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No transportation added yet</h3>
-          <p className="text-gray-500">
+          <p className="text-gray-500 mb-4">
             Add rental cars, trains, buses, or other transportation
           </p>
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-left">
+            <p className="text-sm text-purple-800 font-medium mb-1">🚗 Travel tip:</p>
+            <p className="text-sm text-purple-700">For families, ensure car seats are available with rentals, or consider ride-sharing with car seats in cities.</p>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">

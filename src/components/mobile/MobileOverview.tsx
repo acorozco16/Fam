@@ -29,9 +29,15 @@ interface MobileOverviewProps {
 }
 
 export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAction, onBack }) => {
+  const [dismissedSuggestions, setDismissedSuggestions] = React.useState<string[]>([]);
+  
   // Calculate trip stats
   const daysUntilTrip = Math.ceil((new Date(trip.startDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   const isUpcoming = daysUntilTrip > 0;
+
+  const dismissSuggestion = (suggestionId: string) => {
+    setDismissedSuggestions(prev => [...prev, suggestionId]);
+  };
 
   // Trip readiness calculation (matching desktop logic)
   const calculateTripReadiness = () => {
@@ -101,82 +107,171 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
 
   const tripReadiness = calculateTripReadiness();
   
-  // Smart urgency detection
-  const urgentItems = [
-    {
-      id: 'passport-expiry',
-      title: 'Check Passport Expiration',
-      detail: 'Some countries require 6+ months validity',
-      type: 'critical',
-      icon: FileText,
-      action: 'Check Now',
-      timeframe: 'Do today'
-    },
-    {
-      id: 'flight-checkin',
-      title: 'Flight Check-in Opens Soon',
-      detail: 'Delta 2847 • Check-in opens in 18 hours',
-      type: 'urgent',
-      icon: Plane,
-      action: 'Set Reminder',
-      timeframe: '18 hours'
-    }
-  ];
+  // Dynamic smart suggestions based on trip data
+  const generateSmartSuggestions = () => {
+    const urgent = [];
+    const upcoming = [];
+    const completed = [];
+    const suggestions = [];
 
-  const upcomingItems = [
-    {
-      id: 'packing-deadline',
-      title: 'Start Packing',
-      detail: 'Recommended 3 days before departure',
-      type: 'upcoming',
-      icon: CheckCircle,
-      action: 'View Lists',
-      timeframe: '3 days left'
-    },
-    {
-      id: 'kids-prep',
-      title: 'Prepare Kids for Travel',
-      detail: 'Download movies, pack comfort items',
-      type: 'upcoming',
-      icon: Baby,
-      action: 'Plan Now',
-      timeframe: '1 week left'
-    }
-  ];
+    const country = trip.country?.toLowerCase() || '';
+    const destination = trip.destination?.toLowerCase() || '';
+    const hasKids = trip.kids && trip.kids.length > 0;
+    const hasFlights = trip.flights && trip.flights.length > 0;
+    const isInternational = country && country !== 'united states' && country !== 'usa';
 
-  const completedItems = [
-    {
-      id: 'flights-booked',
-      title: 'Flights Confirmed',
-      detail: 'Delta 2847 & 2848 • All travelers',
-      type: 'completed',
-      icon: CheckCircle
-    },
-    {
-      id: 'hotel-booked',
-      title: 'Hotel Reserved',
-      detail: 'Casa Fuster • 7 nights confirmed',
-      type: 'completed',
-      icon: CheckCircle
+    // URGENT ITEMS (Dynamic based on trip data)
+    
+    // International travel passport check
+    if (isInternational && !dismissedSuggestions.includes('passport-check')) {
+      urgent.push({
+        id: 'passport-check',
+        title: 'Check Passport Expiration',
+        detail: `${trip.country} requires 6+ months validity`,
+        type: 'critical',
+        icon: FileText,
+        action: 'Check Now',
+        timeframe: 'Do today'
+      });
     }
-  ];
 
-  const smartSuggestions = [
-    {
-      id: 'weather-prep',
-      title: 'Check Weather & Pack Accordingly',
-      detail: 'Madrid forecast: 15-20°C, possible rain',
-      icon: Calendar,
-      priority: 'medium'
-    },
-    {
-      id: 'family-meeting',
-      title: 'Family Trip Meeting',
-      detail: 'Review itinerary with kids, set expectations',
-      icon: Users,
-      priority: 'low'
+    // Flight check-in (if flights exist)
+    if (hasFlights && daysUntilTrip <= 2 && !dismissedSuggestions.includes('flight-checkin')) {
+      urgent.push({
+        id: 'flight-checkin',
+        title: 'Flight Check-in Opens Soon',
+        detail: 'Check-in typically opens 24 hours before',
+        type: 'urgent',
+        icon: Plane,
+        action: 'Set Reminder',
+        timeframe: `${daysUntilTrip} days left`
+      });
     }
-  ];
+
+    // Weather check for packing
+    if (daysUntilTrip <= 5 && !dismissedSuggestions.includes('weather-check')) {
+      urgent.push({
+        id: 'weather-check',
+        title: 'Check Weather Forecast',
+        detail: `Update packing list based on ${trip.destination} weather`,
+        type: 'urgent',
+        icon: AlertTriangle,
+        action: 'Check Weather',
+        timeframe: `${daysUntilTrip} days left`
+      });
+    }
+
+    // UPCOMING ITEMS (Dynamic)
+
+    // Packing deadline
+    if (daysUntilTrip <= 7 && tripReadiness.packingProgress < 50 && !dismissedSuggestions.includes('packing-start')) {
+      upcoming.push({
+        id: 'packing-start',
+        title: 'Start Packing',
+        detail: `Only ${tripReadiness.packingProgress}% packed - recommended to start now`,
+        type: 'upcoming',
+        icon: CheckCircle,
+        action: 'View Lists',
+        timeframe: `${daysUntilTrip} days left`
+      });
+    }
+
+    // Kids preparation (if family has children)
+    if (hasKids && daysUntilTrip <= 7 && !dismissedSuggestions.includes('kids-prep')) {
+      upcoming.push({
+        id: 'kids-prep',
+        title: 'Prepare Kids for Travel',
+        detail: 'Download movies, pack comfort items, explain the trip',
+        type: 'upcoming',
+        icon: Baby,
+        action: 'Plan Now',
+        timeframe: `${daysUntilTrip} days left`
+      });
+    }
+
+    // Download offline content
+    if (isInternational && daysUntilTrip <= 5 && !dismissedSuggestions.includes('offline-content')) {
+      upcoming.push({
+        id: 'offline-content',
+        title: 'Download Offline Content',
+        detail: 'Maps, translation apps, entertainment for flights',
+        type: 'upcoming',
+        icon: Phone,
+        action: 'Download',
+        timeframe: `${daysUntilTrip} days left`
+      });
+    }
+
+    // COMPLETED ITEMS (Based on actual trip data)
+
+    if (hasFlights) {
+      completed.push({
+        id: 'flights-booked',
+        title: 'Flights Confirmed',
+        detail: `${trip.flights.length} flight${trip.flights.length > 1 ? 's' : ''} booked`,
+        type: 'completed',
+        icon: CheckCircle
+      });
+    }
+
+    if (trip.accommodations && trip.accommodations.length > 0) {
+      completed.push({
+        id: 'hotel-booked',
+        title: 'Accommodations Reserved',
+        detail: `${trip.accommodations.length} place${trip.accommodations.length > 1 ? 's' : ''} confirmed`,
+        type: 'completed',
+        icon: CheckCircle
+      });
+    }
+
+    if (trip.activities && trip.activities.length > 0) {
+      completed.push({
+        id: 'activities-planned',
+        title: 'Activities Planned',
+        detail: `${trip.activities.length} experience${trip.activities.length > 1 ? 's' : ''} ready`,
+        type: 'completed',
+        icon: CheckCircle
+      });
+    }
+
+    // SMART SUGGESTIONS (Trip-specific)
+
+    // Destination-specific suggestions
+    if (destination.includes('beach') && !dismissedSuggestions.includes('beach-prep')) {
+      suggestions.push({
+        id: 'beach-prep',
+        title: 'Beach Trip Preparation',
+        detail: 'Reef-safe sunscreen, beach toys, waterproof gear',
+        icon: Calendar,
+        priority: 'medium'
+      });
+    }
+
+    if (destination.includes('mountain') && !dismissedSuggestions.includes('mountain-prep')) {
+      suggestions.push({
+        id: 'mountain-prep',
+        title: 'Mountain Trip Essentials',
+        detail: 'Check hiking gear, weather layers, altitude prep',
+        icon: Calendar,
+        priority: 'medium'
+      });
+    }
+
+    // Multi-generational travel
+    if (trip.adults && trip.adults.length > 2 && !dismissedSuggestions.includes('family-meeting')) {
+      suggestions.push({
+        id: 'family-meeting',
+        title: 'Family Coordination Meeting',
+        detail: 'Review plans with all travelers, assign responsibilities',
+        icon: Users,
+        priority: 'low'
+      });
+    }
+
+    return { urgent, upcoming, completed, suggestions };
+  };
+
+  const smartItems = generateSmartSuggestions();
 
   const getItemIcon = (type: string, icon: any) => {
     const IconComponent = icon;
@@ -306,7 +401,7 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
 
       <div className="p-4 space-y-4">
         {/* URGENT: What Needs Attention */}
-        {urgentItems.length > 0 && (
+        {smartItems.urgent.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="w-5 h-5 text-red-600" />
@@ -314,7 +409,7 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
             </div>
             
             <div className="space-y-2">
-              {urgentItems.map((item) => (
+              {smartItems.urgent.map((item) => (
                 <Card key={item.id} className={`border-l-4 ${getItemBorder(item.type)}`}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -326,7 +421,17 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
                           <div className="text-xs font-medium text-red-600 mt-1">{item.timeframe}</div>
                         </div>
                       </div>
-                      {getActionButton(item.type, item.action)}
+                      <div className="flex items-center gap-2">
+                        {getActionButton(item.type, item.action)}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => dismissSuggestion(item.id)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          ✕
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -336,7 +441,7 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
         )}
 
         {/* UPCOMING: Deadlines Approaching */}
-        {upcomingItems.length > 0 && (
+        {smartItems.upcoming.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-5 h-5 text-orange-600" />
@@ -344,7 +449,7 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
             </div>
             
             <div className="space-y-2">
-              {upcomingItems.map((item) => (
+              {smartItems.upcoming.map((item) => (
                 <Card key={item.id} className={`border-l-4 ${getItemBorder(item.type)}`}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -356,7 +461,17 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
                           <div className="text-xs font-medium text-orange-600 mt-1">{item.timeframe}</div>
                         </div>
                       </div>
-                      {getActionButton(item.type, item.action)}
+                      <div className="flex items-center gap-2">
+                        {getActionButton(item.type, item.action)}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => dismissSuggestion(item.id)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          ✕
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -366,16 +481,16 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
         )}
 
         {/* COMPLETED: What's Done */}
-        {completedItems.length > 0 && (
+        {smartItems.completed.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle className="w-5 h-5 text-green-600" />
               <h2 className="text-lg font-bold text-green-800">Completed</h2>
-              <Badge className="bg-green-100 text-green-800 ml-auto">{completedItems.length}</Badge>
+              <Badge className="bg-green-100 text-green-800 ml-auto">{smartItems.completed.length}</Badge>
             </div>
             
             <div className="space-y-2">
-              {completedItems.map((item) => (
+              {smartItems.completed.map((item) => (
                 <Card key={item.id} className={`border-l-4 ${getItemBorder(item.type)}`}>
                   <CardContent className="p-3">
                     <div className="flex items-center gap-3">
@@ -393,7 +508,7 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
         )}
 
         {/* SUGGESTED: Smart Next Steps */}
-        {smartSuggestions.length > 0 && (
+        {smartItems.suggestions.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Zap className="w-5 h-5 text-blue-600" />
@@ -401,7 +516,7 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
             </div>
             
             <div className="space-y-2">
-              {smartSuggestions.map((item) => (
+              {smartItems.suggestions.map((item) => (
                 <Card key={item.id} className="border-l-4 border-l-blue-300 bg-blue-50">
                   <CardContent className="p-3">
                     <div className="flex items-center gap-3">
@@ -410,9 +525,24 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
                         <div className="font-medium text-sm text-blue-900">{item.title}</div>
                         <div className="text-xs text-blue-700">{item.detail}</div>
                       </div>
-                      <Button variant="outline" size="sm" className="text-blue-700 border-blue-300">
-                        Consider
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-blue-700 border-blue-300"
+                          onClick={() => onQuickAction('consider')}
+                        >
+                          Consider
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => dismissSuggestion(item.id)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          ✕
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

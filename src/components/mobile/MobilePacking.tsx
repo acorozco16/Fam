@@ -100,24 +100,70 @@ export const MobilePacking: React.FC<MobilePackingProps> = ({
           
           // Season-specific items
           const seasonalItems = {
-            spring: ['Light jacket', 'Layers', 'Comfortable shoes'],
-            summer: ['Light clothes', 'Swimwear', 'Sandals', 'Sun hat'],
-            fall: ['Warm jacket', 'Layers', 'Closed shoes'],
-            winter: ['Winter coat', 'Warm layers', 'Gloves', 'Warm hat', 'Boots']
+            spring: ['Light jacket', 'Layers', 'Comfortable shoes', 'Umbrella (spring showers)'],
+            summer: ['Light clothes', 'Swimwear', 'Sandals', 'Sun hat', 'Cooling towel'],
+            fall: ['Warm jacket', 'Layers', 'Closed shoes', 'Umbrella', 'Light scarf'],
+            winter: ['Winter coat', 'Warm layers', 'Gloves', 'Warm hat', 'Boots', 'Hand warmers']
           };
           
           // Climate-specific items
           const climateItems = {
-            tropical: ['Light breathable clothes', 'Flip flops'],
-            cold: ['Thermal underwear', 'Warm socks'],
-            arid: ['Lightweight long sleeves', 'Sun protection'],
-            temperate: ['Versatile layers']
+            tropical: ['Light breathable clothes', 'Flip flops', 'Quick-dry towel', 'Cooling spray'],
+            cold: ['Thermal underwear', 'Warm socks', 'Lip balm', 'Hand warmers'],
+            arid: ['Lightweight long sleeves', 'Sun protection', 'Extra water bottle', 'Moisturizer'],
+            temperate: ['Versatile layers', 'Light rain jacket']
           };
+
+          // Trip duration specific items
+          const durationItems = [];
+          if (duration > 7) {
+            durationItems.push('Laundry detergent pods', 'Extra phone charger', 'Backup medications');
+          }
+          if (duration > 14) {
+            durationItems.push('First aid refills', 'Extra toiletries', 'Backup shoes');
+          }
+
+          // Destination-specific intelligence
+          const destinationItems = [];
+          const destination = trip.destination?.toLowerCase() || '';
+          const country = trip.country?.toLowerCase() || '';
+          
+          // Beach destinations
+          if (destination.includes('beach') || destination.includes('coast') || 
+              ['hawaii', 'maldives', 'caribbean', 'bali', 'cancun', 'miami'].some(place => 
+                destination.includes(place) || country.includes(place))) {
+            destinationItems.push('Beach umbrella', 'Reef-safe sunscreen', 'Waterproof phone case', 
+                                'Beach toys for kids', 'Snorkel gear', 'Beach towels');
+          }
+
+          // Mountain/hiking destinations  
+          if (destination.includes('mountain') || destination.includes('hiking') ||
+              ['alps', 'rockies', 'andes', 'himalayas'].some(place => 
+                destination.includes(place))) {
+            destinationItems.push('Hiking boots', 'Daypack', 'Water bottles', 'Energy bars', 
+                                'First aid kit', 'Headlamp');
+          }
+
+          // City destinations
+          if (destination.includes('city') || 
+              ['paris', 'london', 'tokyo', 'new york', 'rome', 'barcelona'].some(city => 
+                destination.includes(city))) {
+            destinationItems.push('Comfortable walking shoes', 'Portable phone charger', 
+                                'Day bag', 'City map offline', 'Metro card holder');
+          }
+
+          // International travel
+          if (country && country !== 'united states' && country !== 'usa') {
+            destinationItems.push('Travel adapter', 'Currency exchange', 'Translation app', 
+                                'International phone plan', 'Travel insurance docs');
+          }
           
           return [
             ...baseItems,
             ...seasonalItems[season as keyof typeof seasonalItems] || [],
-            ...climateItems[climate as keyof typeof climateItems] || []
+            ...climateItems[climate as keyof typeof climateItems] || [],
+            ...durationItems,
+            ...destinationItems
           ];
         })()
       },
@@ -143,22 +189,58 @@ export const MobilePacking: React.FC<MobilePackingProps> = ({
 
     // Add kids items if family has children
     if (hasKids) {
+      const kidsItems = [
+        'Kids snacks',
+        'Favorite toys',
+        'Comfort items',
+        'Kids medications',
+        'Entertainment (books, tablets)'
+      ];
+
+      // Age-specific intelligence
+      const ages = trip.kids?.map((kid: any) => parseInt(kid.age)).filter(Boolean) || [];
+      const hasToddler = ages.some(age => age < 3);
+      const hasSchoolAge = ages.some(age => age >= 5 && age <= 12);
+      const hasTeen = ages.some(age => age >= 13);
+
+      if (hasToddler) {
+        kidsItems.push('Diapers/pull-ups', 'Baby wipes', 'Stroller/carrier', 
+                      'Car seat (if needed)', 'Pacifiers', 'Baby formula/food',
+                      'High chair travel seat');
+      }
+
+      if (hasSchoolAge) {
+        kidsItems.push('School-age activities', 'Educational games', 
+                      'Art supplies', 'Homework if needed');
+      }
+
+      if (hasTeen) {
+        kidsItems.push('Teen entertainment', 'Portable chargers', 
+                      'Headphones', 'Teen toiletries');
+      }
+
+      // Flight-specific for kids
+      if (trip.flights && trip.flights.length > 0) {
+        const flightDuration = trip.flights[0]?.duration || '';
+        if (flightDuration.includes('3') || flightDuration.includes('4') || 
+            flightDuration.includes('5') || flightDuration.includes('long')) {
+          kidsItems.push('Flight entertainment extras', 'Kids headphones', 
+                        'Motion sickness remedies', 'Extra snacks for flight');
+        }
+      }
+
+      // International travel with kids
+      if (country && country !== 'united states' && country !== 'usa') {
+        kidsItems.push('Kids passport copies', 'Emergency contact cards', 
+                      'Kids medical info translated');
+      }
+
       categories.push({
         id: 3,
         name: 'Kids Items',
         icon: Baby,
         color: 'bg-purple-500',
-        items: [
-          'Diapers/pull-ups',
-          'Baby wipes',
-          'Kids snacks',
-          'Favorite toys',
-          'Comfort items',
-          'Kids medications',
-          'Entertainment (books, tablets)',
-          'Stroller/carrier',
-          'Car seat (if needed)'
-        ]
+        items: kidsItems
       });
     }
 
