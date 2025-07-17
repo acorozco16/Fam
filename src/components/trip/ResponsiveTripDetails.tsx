@@ -30,7 +30,6 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
 
   const handleQuickAction = (action: string) => {
     // Handle quick actions - you can trigger modals or navigation here
-    console.log('Quick action:', action);
     
     // Example: trigger existing modals based on action
     switch (action) {
@@ -51,7 +50,6 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
 
   // Mobile layout
   if (shouldUseMobile) {
-    console.log('✅ Using mobile layout - activeTab:', activeTab);
     return (
       <MobileLayout 
         activeTab={activeTab} 

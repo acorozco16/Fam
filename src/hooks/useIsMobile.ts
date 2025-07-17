@@ -13,7 +13,6 @@ export const useIsMobile = (breakpoint: number = 768): boolean => {
     const checkIsMobile = () => {
       const mobile = window.innerWidth < breakpoint;
       setIsMobile(mobile);
-      console.log('Mobile detection:', mobile, 'Window width:', window.innerWidth);
     };
 
     // Check immediately
