@@ -8,14 +8,26 @@ export const LoginScreen = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleLogin = async () => {
-    setIsLoggingIn(true);
-    const result = await login();
-    setIsLoggingIn(false);
-    
-    if (result.success) {
-      console.log('Login successful');
-    } else {
-      console.error('Login failed:', result.error);
+    try {
+      setIsLoggingIn(true);
+      console.log('🔑 Starting login process...');
+      
+      const result = await login();
+      
+      console.log('🔑 Login result:', result);
+      
+      if (result.success) {
+        console.log('✅ Login successful');
+        if (result.pending) {
+          console.log('⏳ Redirect auth pending...');
+        }
+      } else {
+        console.error('❌ Login failed:', result.error);
+      }
+    } catch (error) {
+      console.error('💥 Login error:', error);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 

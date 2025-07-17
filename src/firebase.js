@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -18,6 +18,15 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
 
+// Set persistence to local (survives browser restarts)
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log('✅ Auth persistence set to LOCAL');
+  })
+  .catch((error) => {
+    console.error('❌ Error setting auth persistence:', error);
+  });
+
 // Initialize Firestore
 export const db = getFirestore(app);
 
@@ -28,40 +37,50 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
-// Configure the provider to force account selection
+// Configure the provider
 googleProvider.setCustomParameters({
-  prompt: 'select_account'
+  prompt: 'select_account',
+  // Add additional parameters for better mobile support
+  access_type: 'offline',
+  include_granted_scopes: 'true'
 });
 
 // Google Sign In function
 export const signInWithGoogle = async () => {
   try {
-    // Use redirect on mobile devices for better compatibility
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // Always use popup for now - redirect has issues with Firebase config
+    const result = await signInWithPopup(auth, googleProvider);
     
-    if (isMobile) {
-      // Mobile: Use redirect flow
-      await signInWithRedirect(auth, googleProvider);
-      // The redirect result will be handled in AuthContext
-      return { success: true, pending: true };
-    } else {
-      // Desktop: Use popup flow
-      const result = await signInWithPopup(auth, googleProvider);
-      
-      // Extract user information
-      const user = result.user;
-      const userData = {
-        name: user.displayName,
-        email: user.email,
-        uid: user.uid,
-        photoURL: user.photoURL,
-        isGoogleUser: true
-      };
-      
-      return { success: true, user: userData };
-    }
+    // Extract user information
+    const user = result.user;
+    const userData = {
+      name: user.displayName,
+      email: user.email,
+      uid: user.uid,
+      photoURL: user.photoURL,
+      isGoogleUser: true
+    };
+    
+    return { success: true, user: userData };
   } catch (error) {
     console.error('Google sign-in error:', error);
+    
+    // If popup was blocked, try redirect as fallback
+    if (error.code === 'auth/popup-blocked' || 
+        error.code === 'auth/popup-closed-by-user' ||
+        error.code === 'auth/cancelled-popup-request') {
+      try {
+        await signInWithRedirect(auth, googleProvider);
+        return { success: true, pending: true };
+      } catch (redirectError) {
+        console.error('Redirect fallback also failed:', redirectError);
+        return { 
+          success: false, 
+          error: redirectError.message || 'Failed to sign in with Google' 
+        };
+      }
+    }
+    
     return { 
       success: false, 
       error: error.message || 'Failed to sign in with Google' 
