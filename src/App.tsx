@@ -3117,7 +3117,7 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
 const FamApp = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [tripData, setTripData] = useState<TripData>({});
-  const [currentView, setCurrentView] = useState<'landing' | 'signup' | 'dashboard' | 'createTripFlow' | 'wizard' | 'trip-details'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'signup' | 'dashboard' | 'createTripFlow' | 'wizard' | 'trip-details'>('dashboard');
   
   // DEBUG: Add visible indicator of current view
   useEffect(() => {
