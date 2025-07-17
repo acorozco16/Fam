@@ -157,28 +157,59 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
   
   return (
     <div className="bg-gray-50 min-h-screen max-w-full overflow-x-hidden">
-      {/* Mobile Trip Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4 pt-safe">
-        <h1 className="text-lg font-bold text-gray-900 mb-2 truncate">{trip.tripName}</h1>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <MapPin className="w-4 h-4 text-gray-400" />
-            <span className="truncate">{trip.destination}</span>
-            <span className="text-gray-300">•</span>
-            <span className="font-medium">{trip.travelers?.length || 3} travelers</span>
-          </div>
-          <div className="flex flex-col items-end text-right">
-            <div className="text-sm font-semibold text-blue-600">
-              {daysUntilTrip} days to go
+      {/* Mobile App Header - matches desktop style */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">FamApp</h1>
+                <p className="text-xs text-blue-700">Family Travel Made Simple</p>
+              </div>
             </div>
-            <div className="text-xs text-gray-500">
-              {new Date(trip.startDate).toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric' 
-              })} - {new Date(trip.endDate).toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric' 
-              })}
+            
+            <div className="flex items-center space-x-3">
+              <div className="w-7 h-7 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-xs font-medium">G</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Trip Info Section */}
+        <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h2 className="text-base font-semibold text-gray-900 mb-1 truncate">
+                {trip.destination || 'Madrid, Spain'}
+              </h2>
+              <div className="flex items-center space-x-3 text-sm text-gray-600">
+                <span className="flex items-center">
+                  <Calendar className="w-4 h-4 mr-1" />
+                  {new Date(trip.startDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })} - {new Date(trip.endDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </span>
+                <span className="flex items-center">
+                  <Users className="w-4 h-4 mr-1" />
+                  {trip.travelers?.length || 3} travelers
+                </span>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-bold text-blue-600">
+                {daysUntilTrip}
+              </div>
+              <div className="text-xs text-gray-500">
+                days to go
+              </div>
             </div>
           </div>
         </div>
