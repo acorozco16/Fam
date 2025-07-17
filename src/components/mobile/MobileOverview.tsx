@@ -154,14 +154,9 @@ export const MobileOverview: React.FC<MobileOverviewProps> = ({ trip, onQuickAct
     );
   };
 
-  console.log('🎯 MobileOverview rendering for trip:', trip.tripName);
   
   return (
     <div className="bg-gray-50 min-h-screen max-w-full overflow-x-hidden">
-      {/* DEBUG: Mobile Layout Indicator */}
-      <div className="bg-red-500 text-white text-center py-2 font-bold">
-        🔴 MOBILE LAYOUT IS ACTIVE 🔴
-      </div>
       {/* Mobile Trip Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4 pt-safe">
         <h1 className="text-lg font-bold text-gray-900 mb-2 truncate">{trip.tripName}</h1>
