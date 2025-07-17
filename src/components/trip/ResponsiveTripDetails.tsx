@@ -17,29 +17,8 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
   const isMobile = useIsMobile(768);
   const [activeTab, setActiveTab] = useState<'overview' | 'itinerary' | 'travel' | 'packing'>('overview');
   
-  // Force mobile detection for common mobile screen sizes
-  const [forceMobile, setForceMobile] = useState(false);
-  
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      const userAgent = navigator.userAgent;
-      
-      // VERY aggressive mobile detection - force mobile for iPhone
-      const isLikelyMobile = width <= 1200 || 
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Safari/i.test(userAgent) ||
-        ('ontouchstart' in window) ||
-        width < 1200 || // Force mobile for anything under 1200px
-        height < 1000; // Force mobile for short screens
-      
-      setForceMobile(isLikelyMobile);
-      console.log('🔍 Screen detection:', { width, height, userAgent, isMobile, forceMobile: isLikelyMobile });
-      console.log('📱 Will use mobile layout:', isLikelyMobile || isMobile);
-    }
-  }, [isMobile]);
 
-  const shouldUseMobile = true; // Force mobile for everyone to test
+  const shouldUseMobile = isMobile; // Use proper mobile detection
 
   // Calculate badges for mobile navigation - only show if > 0
   const badges = {

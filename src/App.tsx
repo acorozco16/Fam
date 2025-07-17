@@ -2786,7 +2786,6 @@ const Dashboard: React.FC<{
                                   variant="ghost" 
                                   size="sm"
                                   onClick={() => {
-                                    console.log('Adult edit clicked:', profile);
                                     setEditingProfile(profile);
                                     setShowEditProfile(true);
                                   }}
@@ -2844,7 +2843,6 @@ const Dashboard: React.FC<{
                                     variant="ghost" 
                                     size="sm"
                                     onClick={() => {
-                                      console.log('Child edit clicked:', profile);
                                       setEditingProfile(profile);
                                       setShowEditProfile(true);
                                     }}
@@ -3119,10 +3117,6 @@ const FamApp = () => {
   const [tripData, setTripData] = useState<TripData>({});
   const [currentView, setCurrentView] = useState<'landing' | 'signup' | 'dashboard' | 'createTripFlow' | 'wizard' | 'trip-details'>('dashboard');
   
-  // DEBUG: Add visible indicator of current view
-  useEffect(() => {
-    console.log('🔍 Current view changed to:', currentView);
-  }, [currentView]);
   const [userData, setUserData] = useState<{ 
     name: string; 
     email: string; 
@@ -3354,7 +3348,6 @@ const FamApp = () => {
         setFamilyProfiles(migratedProfiles);
         // Save to localStorage
         localStorage.setItem('famapp-family-profiles', JSON.stringify(migratedProfiles));
-        console.log(`Migrated ${migratedProfiles.length} family members to profiles`);
       }
     };
 
@@ -3657,7 +3650,6 @@ const FamApp = () => {
 
   // Render based on current view
   if (currentView === 'landing') {
-    console.log('🔍 In LANDING view');
     return <LandingPage onGetStarted={handleGetStarted} />;
   }
 
@@ -4009,22 +4001,6 @@ const FamApp = () => {
     
     return (
       <>
-      {/* DEBUG: Confirm we're in trip-details view */}
-      <div style={{
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        backgroundColor: 'purple', 
-        color: 'white', 
-        padding: '10px', 
-        textAlign: 'center', 
-        fontSize: '18px', 
-        fontWeight: 'bold',
-        zIndex: 9999
-      }}>
-        🟣 TRIP-DETAILS VIEW | TRIP: {tripData?.city || 'No trip'} 🟣
-      </div>
       <ResponsiveTripDetails 
         trip={tripData} 
         onBack={() => setCurrentView('dashboard')}
@@ -4046,7 +4022,7 @@ const FamApp = () => {
                     </Button>
                   </div>
                   <h1 className="text-2xl font-bold text-gray-900">
-                    🔴 TRIP-DETAILS VIEW 🔴 {tripData.city || 'Trip'} Family Adventure
+                    {tripData.city || 'Trip'} Family Adventure
                   </h1>
                   <div className="flex items-center space-x-6 text-sm text-gray-600 mt-1">
                     <span className="flex items-center">
@@ -4744,7 +4720,6 @@ const FamApp = () => {
                             </p>
                             <div className="flex flex-col sm:flex-row gap-3 justify-center">
                               <Button onClick={() => {
-                                console.log('Main Add Flight button clicked');
                                 setShowFlightModal(true);
                               }}>
                                 <Plane className="w-4 h-4 mr-2" />
@@ -6240,7 +6215,6 @@ const FamApp = () => {
                       );
                       setUserTrips(updatedTrips);
                       
-                      console.log('Activity updated:', updatedActivity);
                     } else {
                       // Add mode - create new activity
                       const activityWithId = {
@@ -6261,7 +6235,6 @@ const FamApp = () => {
                       );
                       setUserTrips(updatedTrips);
                       
-                      console.log('Activity added:', activityWithId);
                     }
                     
                     setShowAddActivityModal(false);
