@@ -6,25 +6,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 export const LoginScreen = () => {
   const { login, loading, error } = useAuth();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [debugInfo, setDebugInfo] = useState([]);
+
+  const addDebug = (message) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setDebugInfo(prev => [...prev, `${timestamp}: ${message}`]);
+  };
 
   const handleLogin = async () => {
     try {
       setIsLoggingIn(true);
+      setDebugInfo([]); // Clear previous debug info
+      
+      addDebug('Starting login process...');
       console.log('🔑 Starting login process...');
       
       const result = await login();
       
+      addDebug(`Login result: ${JSON.stringify(result)}`);
       console.log('🔑 Login result:', result);
       
       if (result.success) {
+        addDebug('Login successful');
         console.log('✅ Login successful');
         if (result.pending) {
+          addDebug('Redirect auth pending...');
           console.log('⏳ Redirect auth pending...');
         }
       } else {
+        addDebug(`Login failed: ${result.error}`);
         console.error('❌ Login failed:', result.error);
       }
     } catch (error) {
+      addDebug(`Login error: ${error.message}`);
       console.error('💥 Login error:', error);
     } finally {
       setIsLoggingIn(false);
@@ -77,6 +91,16 @@ export const LoginScreen = () => {
           <div className="text-center text-sm text-gray-500">
             <p>Your trips will be saved securely in the cloud</p>
           </div>
+          
+          {/* Debug Panel - Remove after fixing */}
+          {debugInfo.length > 0 && (
+            <div className="mt-4 p-3 bg-gray-100 rounded-md">
+              <p className="text-xs font-semibold mb-1">Debug Info:</p>
+              {debugInfo.map((info, index) => (
+                <p key={index} className="text-xs text-gray-600">{info}</p>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
