@@ -3657,6 +3657,7 @@ const FamApp = () => {
 
   // Render based on current view
   if (currentView === 'landing') {
+    console.log('🔍 In LANDING view');
     return <LandingPage onGetStarted={handleGetStarted} />;
   }
 
@@ -3977,26 +3978,7 @@ const FamApp = () => {
     );
   }
 
-  // DEBUG: Visual indicator of current view
-  if (true) {
-    return (
-      <div style={{
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        backgroundColor: 'purple', 
-        color: 'white', 
-        padding: '10px', 
-        textAlign: 'center', 
-        fontSize: '18px', 
-        fontWeight: 'bold',
-        zIndex: 9999
-      }}>
-        🟣 CURRENT VIEW: {currentView} | TRIP: {tripData?.city || 'No trip'} 🟣
-      </div>
-    );
-  }
+  // Removed debug banner - trying different approach
 
   if (currentView === 'trip-details') {
     const tripReadinessItems = calculateTripReadinessData(tripData);
@@ -4027,6 +4009,22 @@ const FamApp = () => {
     
     return (
       <>
+      {/* DEBUG: Confirm we're in trip-details view */}
+      <div style={{
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        backgroundColor: 'purple', 
+        color: 'white', 
+        padding: '10px', 
+        textAlign: 'center', 
+        fontSize: '18px', 
+        fontWeight: 'bold',
+        zIndex: 9999
+      }}>
+        🟣 TRIP-DETAILS VIEW | TRIP: {tripData?.city || 'No trip'} 🟣
+      </div>
       <ResponsiveTripDetails 
         trip={tripData} 
         onBack={() => setCurrentView('dashboard')}
@@ -4048,7 +4046,7 @@ const FamApp = () => {
                     </Button>
                   </div>
                   <h1 className="text-2xl font-bold text-gray-900">
-                    {tripData.city || 'Trip'} Family Adventure
+                    🔴 TRIP-DETAILS VIEW 🔴 {tripData.city || 'Trip'} Family Adventure
                   </h1>
                   <div className="flex items-center space-x-6 text-sm text-gray-600 mt-1">
                     <span className="flex items-center">

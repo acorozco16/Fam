@@ -28,6 +28,7 @@ import {
   TransportFormData,
   NewTravelerForm
 } from '../../types';
+import { ResponsiveTripDetails } from './ResponsiveTripDetails';
 
 // Google Maps types
 declare global {
@@ -147,7 +148,11 @@ export const TripDetails: React.FC<TripDetailsProps> = ({
   const daysUntil = calculateDaysUntil(tripData.startDate);
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <ResponsiveTripDetails 
+      trip={tripData} 
+      onBack={onBackToDashboard}
+    >
+      <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -186,5 +191,6 @@ export const TripDetails: React.FC<TripDetailsProps> = ({
         </div>
       </div>
     </div>
+    </ResponsiveTripDetails>
   );
 };
