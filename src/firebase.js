@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -36,25 +36,58 @@ googleProvider.setCustomParameters({
 // Google Sign In function
 export const signInWithGoogle = async () => {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
+    // Use redirect on mobile devices for better compatibility
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    // Extract user information
-    const user = result.user;
-    const userData = {
-      name: user.displayName,
-      email: user.email,
-      uid: user.uid,
-      photoURL: user.photoURL,
-      isGoogleUser: true
-    };
-    
-    return { success: true, user: userData };
+    if (isMobile) {
+      // Mobile: Use redirect flow
+      await signInWithRedirect(auth, googleProvider);
+      // The redirect result will be handled in AuthContext
+      return { success: true, pending: true };
+    } else {
+      // Desktop: Use popup flow
+      const result = await signInWithPopup(auth, googleProvider);
+      
+      // Extract user information
+      const user = result.user;
+      const userData = {
+        name: user.displayName,
+        email: user.email,
+        uid: user.uid,
+        photoURL: user.photoURL,
+        isGoogleUser: true
+      };
+      
+      return { success: true, user: userData };
+    }
   } catch (error) {
     console.error('Google sign-in error:', error);
     return { 
       success: false, 
       error: error.message || 'Failed to sign in with Google' 
     };
+  }
+};
+
+// Handle redirect result
+export const handleRedirectResult = async () => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result) {
+      const user = result.user;
+      const userData = {
+        name: user.displayName,
+        email: user.email,
+        uid: user.uid,
+        photoURL: user.photoURL,
+        isGoogleUser: true
+      };
+      return { success: true, user: userData };
+    }
+    return { success: false, noResult: true };
+  } catch (error) {
+    console.error('Redirect result error:', error);
+    return { success: false, error: error.message };
   }
 };
 

@@ -26,11 +26,12 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
       const height = window.innerHeight;
       const userAgent = navigator.userAgent;
       
-      // More aggressive mobile detection - force mobile for any small screen
-      const isLikelyMobile = width <= 900 || 
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(userAgent) ||
+      // VERY aggressive mobile detection - force mobile for iPhone
+      const isLikelyMobile = width <= 1200 || 
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Safari/i.test(userAgent) ||
         ('ontouchstart' in window) ||
-        width < 1024; // Force mobile for anything under desktop size
+        width < 1200 || // Force mobile for anything under 1200px
+        height < 1000; // Force mobile for short screens
       
       setForceMobile(isLikelyMobile);
       console.log('🔍 Screen detection:', { width, height, userAgent, isMobile, forceMobile: isLikelyMobile });
@@ -38,8 +39,7 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
     }
   }, [isMobile]);
 
-  // Force mobile by default, only use desktop for large screens
-  const shouldUseMobile = true; // Always use mobile for now to debug
+  const shouldUseMobile = true; // Force mobile for everyone to test
 
   // Calculate badges for mobile navigation - only show if > 0
   const badges = {
@@ -74,11 +74,39 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
   if (shouldUseMobile) {
     console.log('✅ Using mobile layout - activeTab:', activeTab);
     return (
-      <div style={{backgroundColor: 'red', color: 'white', padding: '20px', textAlign: 'center', fontSize: '20px', fontWeight: 'bold'}}>
-        🔴 RESPONSIVE TRIP DETAILS - MOBILE MODE 🔴
-        <br />
-        Trip: {trip?.tripName || trip?.city || 'Unknown'}
-      </div>
+      <MobileLayout 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        badges={badges}
+      >
+        {activeTab === 'overview' && (
+          <MobileOverview trip={trip} onQuickAction={handleQuickAction} />
+        )}
+        
+        {activeTab === 'itinerary' && (
+          <div className="p-4">
+            <h2 className="text-xl font-bold mb-4">Itinerary</h2>
+            {/* TODO: Add MobileItinerary component */}
+            <p className="text-gray-600">Itinerary tab coming soon...</p>
+          </div>
+        )}
+        
+        {activeTab === 'travel' && (
+          <div className="p-4">
+            <h2 className="text-xl font-bold mb-4">Travel</h2>
+            {/* TODO: Add MobileTravel component */}
+            <p className="text-gray-600">Travel tab coming soon...</p>
+          </div>
+        )}
+        
+        {activeTab === 'packing' && (
+          <div className="p-4">
+            <h2 className="text-xl font-bold mb-4">Packing</h2>
+            {/* TODO: Add MobilePacking component */}
+            <p className="text-gray-600">Packing tab coming soon...</p>
+          </div>
+        )}
+      </MobileLayout>
     );
   }
 

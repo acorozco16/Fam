@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, signInWithGoogle, signOutUser } from '../firebase';
+import { auth, signInWithGoogle, signOutUser, handleRedirectResult } from '../firebase';
 import { tripService } from '../services/tripService';
 
 const AuthContext = createContext();
@@ -19,8 +19,23 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Check for redirect result on mount (for mobile auth)
+    const checkRedirectResult = async () => {
+      try {
+        const result = await handleRedirectResult();
+        if (result.success && result.user) {
+          console.log('📱 Redirect auth successful:', result.user);
+        }
+      } catch (error) {
+        console.error('Redirect check error:', error);
+      }
+    };
+    
+    checkRedirectResult();
+    
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
+        console.log('🔍 Firebase auth state changed:', !!firebaseUser);
         if (firebaseUser) {
           const userData = {
             uid: firebaseUser.uid,
@@ -30,11 +45,13 @@ export const AuthProvider = ({ children }) => {
             emailVerified: firebaseUser.emailVerified
           };
           
+          console.log('✅ Setting user data:', userData);
           setUser(userData);
           
-          // Auto-migrate local trips on first login
-          await tripService.migrateLocalTrips(firebaseUser.uid);
+          // Auto-migrate local trips on first login - temporarily disabled
+          // await tripService.migrateLocalTrips(firebaseUser.uid);
         } else {
+          console.log('❌ No firebase user, setting user to null');
           setUser(null);
         }
       } catch (error) {
