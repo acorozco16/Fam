@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { MobileLayout } from '../mobile/MobileLayout';
 import { MobileOverview } from '../mobile/MobileOverview';
+import { MobileItinerary } from '../mobile/MobileItinerary';
 
 interface ResponsiveTripDetailsProps {
   trip: any; // Replace with your TripData type
@@ -61,11 +62,17 @@ export const ResponsiveTripDetails: React.FC<ResponsiveTripDetailsProps> = ({
         )}
         
         {activeTab === 'itinerary' && (
-          <div className="p-4">
-            <h2 className="text-xl font-bold mb-4">Itinerary</h2>
-            {/* TODO: Add MobileItinerary component */}
-            <p className="text-gray-600">Itinerary tab coming soon...</p>
-          </div>
+          <MobileItinerary 
+            trip={trip} 
+            onAddActivity={() => {
+              // TODO: Connect to parent's add activity modal
+              console.log('Add activity clicked');
+            }}
+            onEditActivity={(activity) => {
+              // TODO: Connect to parent's edit activity modal
+              console.log('Edit activity:', activity);
+            }}
+          />
         )}
         
         {activeTab === 'travel' && (
