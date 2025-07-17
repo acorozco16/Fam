@@ -3669,7 +3669,7 @@ const FamApp = () => {
     return (
       <>
         <Dashboard 
-          user={userData}
+          user={userData || { name: 'Guest User', email: 'guest@example.com' }}
           trips={userTrips}
           onCreateTrip={handleCreateTrip}
           onSelectTrip={handleSelectTrip}
