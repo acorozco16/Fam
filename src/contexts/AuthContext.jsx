@@ -33,6 +33,14 @@ export const AuthProvider = ({ children }) => {
     
     checkRedirectResult();
     
+    // Check URL params for auth completion
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('auth') === 'true') {
+      console.log('🔄 Auth redirect detected, checking auth state...');
+      // Force a refresh of auth state
+      auth.currentUser?.reload();
+    }
+    
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         console.log('🔍 Firebase auth state changed:', !!firebaseUser);

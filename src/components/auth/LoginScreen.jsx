@@ -7,6 +7,10 @@ export const LoginScreen = () => {
   const { login, loading, error } = useAuth();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [debugInfo, setDebugInfo] = useState([]);
+  
+  // Detect if running as PWA (home screen app)
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true;
 
   const addDebug = (message) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -17,6 +21,13 @@ export const LoginScreen = () => {
     try {
       setIsLoggingIn(true);
       setDebugInfo([]); // Clear previous debug info
+      
+      // If running as PWA, show instructions
+      if (isPWA) {
+        addDebug('PWA mode detected - showing Safari instructions');
+        setIsLoggingIn(false);
+        return;
+      }
       
       addDebug('Starting login process...');
       console.log('🔑 Starting login process...');
@@ -41,7 +52,9 @@ export const LoginScreen = () => {
       addDebug(`Login error: ${error.message}`);
       console.error('💥 Login error:', error);
     } finally {
-      setIsLoggingIn(false);
+      if (!isPWA) {
+        setIsLoggingIn(false);
+      }
     }
   };
 
@@ -90,6 +103,11 @@ export const LoginScreen = () => {
           
           <div className="text-center text-sm text-gray-500">
             <p>Your trips will be saved securely in the cloud</p>
+            {isPWA && (
+              <p className="mt-2 text-xs text-orange-600">
+                Note: Login will open in Safari due to app restrictions
+              </p>
+            )}
           </div>
           
           {/* Debug Panel - Remove after fixing */}
