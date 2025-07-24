@@ -1,0 +1,125 @@
+/**
+ * New York City Family Travel Intelligence
+ * Broadway, Central Park, iconic experiences
+ */
+
+export function generateNewYorkTasks(familyProfile: any, daysUntilTrip: number) {
+  const tasks = [];
+  const kids = familyProfile.kids || [];
+  const hasSchoolAge = kids.some((kid: any) => {
+    const age = parseInt(kid.age);
+    return age >= 5 && age <= 12;
+  });
+
+  // Broadway show
+  tasks.push({
+    id: 'broadway-family-show',
+    title: 'Book Family Broadway Show',
+    subtitle: 'Lion King, Aladdin, or Frozen - book 2-3 months ahead for good prices',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: daysUntilTrip <= 60,
+    isCustom: false,
+    priority: 'high',
+    daysBeforeTrip: 60,
+    intelligence: {
+      reasoning: [
+        '🎭 Lion King: Best for all ages, amazing costumes',
+        '🧞‍♂️ Aladdin: High energy, great for Disney fans',
+        '❄️ Frozen: Perfect for Frozen-obsessed kids',
+        '🎟️ Lottery tickets day-of for cheaper options'
+      ].join('\n'),
+      source: 'NYC Broadway intelligence'
+    }
+  });
+
+  // Central Park strategy
+  tasks.push({
+    id: 'central-park-playground',
+    title: 'Plan Central Park Playground Tour',
+    subtitle: 'Heckscher Playground largest, Alice in Wonderland statue, Conservatory Garden',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '🏰 Heckscher Playground: largest with castle',
+        '🐰 Alice in Wonderland statue great for photos',
+        '🌸 Conservatory Garden beautiful for families',
+        '🛶 Boat rentals at Loeb Boathouse'
+      ].join('\n'),
+      source: 'NYC family activities'
+    }
+  });
+
+  // Statue of Liberty strategy
+  tasks.push({
+    id: 'statue-liberty-strategy',
+    title: 'Book Statue of Liberty Crown Access (If Kids 8+)',
+    subtitle: 'Crown access limited and requires advance booking, or stick to pedestal access',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: daysUntilTrip <= 90,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 90,
+    intelligence: {
+      reasoning: [
+        '👑 Crown access: kids must be 8+, book 3+ months ahead',
+        '🗽 Pedestal access: good for younger kids, easier booking',
+        '⛴️ Ferry ride itself exciting for kids',
+        '📸 Ellis Island Immigration Museum great for school-age'
+      ].join('\n'),
+      source: 'NYC family attractions'
+    }
+  });
+
+  // Subway with kids
+  tasks.push({
+    id: 'nyc-subway-strategy',
+    title: 'Plan NYC Subway Strategy with Kids',
+    subtitle: 'MetroCard for family, avoid rush hours, many stations not stroller accessible',
+    category: 'travel',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '🚇 Kids under 44" ride free (don\'t need MetroCard)',
+        '⏰ Avoid rush hours: 7-9am, 5-7pm',
+        '🛗 Only 25% of stations wheelchair/stroller accessible',
+        '📱 Use Citymapper app to find accessible routes'
+      ].join('\n'),
+      source: 'NYC transport intelligence'
+    }
+  });
+
+  // High Line with strollers
+  tasks.push({
+    id: 'high-line-family',
+    title: 'Plan High Line Walk (Check Stroller Policy)',
+    subtitle: 'Elevated park popular but can be crowded, strollers allowed but challenging',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'low',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '🌿 Elevated park built on old railway',
+        '🚼 Strollers allowed but narrow paths when crowded',
+        '📸 Great city views and photo opportunities',
+        '⏰ Go early morning or late afternoon for fewer crowds'
+      ].join('\n'),
+      source: 'NYC family activities'
+    }
+  });
+
+  return tasks;
+}

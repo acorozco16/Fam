@@ -29,6 +29,16 @@ import {
   Settings, ChevronRight, Target, Edit, ChevronDown
 } from 'lucide-react';
 
+import { SmartTaskGenerator } from './utils/smartTaskGenerator';
+import { FamilyMemberManager } from './components/collaboration/FamilyMemberManager';
+import { InviteModal } from './components/collaboration/InviteModal';
+import { RealtimeCollaborationBar } from './components/collaboration/RealtimeCollaborationBar';
+import { collaborationService } from './services/collaborationService';
+import { useRealtimeCollaboration } from './hooks/useRealtimeCollaboration';
+import { CollaborativeTrip, TripCollaborator, TripInvite } from './types';
+import { useAuth } from './contexts/AuthContext.jsx';
+import { tripPersistenceService } from './services/tripPersistenceService';
+
 // Types
 interface FamilyMember {
   id: string;
@@ -433,10 +443,57 @@ const FamilyProfilesStep: React.FC<{
 }> = ({ tripData, setTripData, validationErrors }) => {
   const [adults, setAdults] = useState<FamilyMember[]>(tripData.adults || []);
   const [kids, setKids] = useState<FamilyMember[]>(tripData.kids || []);
+  
+  // Load existing family profiles
+  const [existingProfiles, setExistingProfiles] = useState<FamilyMember[]>([]);
+  const [showExistingProfiles, setShowExistingProfiles] = useState(false);
+
+  // Load existing family profiles on component mount
+  React.useEffect(() => {
+    const savedProfiles = localStorage.getItem('famapp-family-profiles');
+    if (savedProfiles) {
+      try {
+        const profiles = JSON.parse(savedProfiles);
+        if (Array.isArray(profiles) && profiles.length > 0) {
+          setExistingProfiles(profiles);
+          setShowExistingProfiles(true);
+        }
+      } catch (error) {
+        console.warn('Error loading family profiles:', error);
+      }
+    }
+  }, []);
 
   const familyRoles = {
     adult: ['Mom', 'Dad', 'Grandma', 'Grandpa', 'Aunt', 'Uncle', 'Guardian', 'Other'],
     child: ['Son', 'Daughter', 'Grandson', 'Granddaughter', 'Niece', 'Nephew', 'Other']
+  };
+
+  // Add existing family member to trip
+  const addExistingMember = (profile: FamilyMember) => {
+    const memberCopy = {
+      ...profile,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 5) // New ID for this trip
+    };
+    
+    if (profile.type === 'adult') {
+      setAdults(prev => [...prev, memberCopy]);
+    } else {
+      setKids(prev => [...prev, memberCopy]);
+    }
+  };
+
+  // Check if a profile is already added to the trip
+  const isProfileAdded = (profile: FamilyMember) => {
+    const currentMembers = profile.type === 'adult' ? adults : kids;
+    return currentMembers.some(member => member.name === profile.name);
+  };
+
+  // Get available profiles (not already added)
+  const getAvailableProfiles = (type: 'adult' | 'child') => {
+    return existingProfiles
+      .filter(profile => profile.type === type)
+      .filter(profile => !isProfileAdded(profile));
   };
 
   const addFamilyMember = (type: 'adult' | 'child') => {
@@ -496,8 +553,48 @@ const FamilyProfilesStep: React.FC<{
               Add Adult
             </Button>
           </div>
+
+          {/* Existing Family Profiles - Adults */}
+          {showExistingProfiles && getAvailableProfiles('adult').length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center mb-3">
+                <Users className="w-4 h-4 mr-2 text-blue-600" />
+                <h4 className="text-sm font-medium text-gray-900">Add from existing family members:</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {getAvailableProfiles('adult').map((profile) => (
+                  <Card key={profile.id} className="cursor-pointer hover:shadow-md transition-shadow border-blue-100">
+                    <CardContent 
+                      className="p-4"
+                      onClick={() => addExistingMember(profile)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 font-medium">
+                              {profile.name?.charAt(0)?.toUpperCase() || 'A'}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{profile.name}</p>
+                            <p className="text-sm text-gray-500">
+                              {profile.relationship || 'Adult'} 
+                              {profile.age && ` • ${profile.age} years`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center text-blue-600">
+                          <Plus className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
           
-          {adults.length === 0 && (
+          {adults.length === 0 && getAvailableProfiles('adult').length === 0 && (
             <Card className="border-dashed">
               <CardContent className="pt-6 text-center text-gray-500">
                 <Users className="w-12 h-12 mx-auto mb-2 text-gray-300" />
@@ -571,8 +668,48 @@ const FamilyProfilesStep: React.FC<{
               Add Child
             </Button>
           </div>
+
+          {/* Existing Family Profiles - Children */}
+          {showExistingProfiles && getAvailableProfiles('child').length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center mb-3">
+                <Baby className="w-4 h-4 mr-2 text-green-600" />
+                <h4 className="text-sm font-medium text-gray-900">Add from existing family members:</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {getAvailableProfiles('child').map((profile) => (
+                  <Card key={profile.id} className="cursor-pointer hover:shadow-md transition-shadow border-green-100">
+                    <CardContent 
+                      className="p-4"
+                      onClick={() => addExistingMember(profile)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <span className="text-green-600 font-medium">
+                              {profile.name?.charAt(0)?.toUpperCase() || 'C'}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{profile.name}</p>
+                            <p className="text-sm text-gray-500">
+                              {profile.age && `${profile.age} years old`}
+                              {profile.relationship && ` • ${profile.relationship}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center text-green-600">
+                          <Plus className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
           
-          {kids.length === 0 && (
+          {kids.length === 0 && getAvailableProfiles('child').length === 0 && (
             <Card className="border-dashed">
               <CardContent className="pt-6 text-center text-gray-500">
                 <Baby className="w-12 h-12 mx-auto mb-2 text-gray-300" />
@@ -654,6 +791,84 @@ const FamilyProfilesStep: React.FC<{
           ))}
         </TabsContent>
       </Tabs>
+    </div>
+  );
+};
+
+// Trip Purpose Options
+const tripPurposes = [
+  { 
+    id: 'family-vacation',
+    title: 'Family Vacation & Sightseeing',
+    subtitle: 'Exploring attractions, culture, and family activities',
+    icon: '🏖️'
+  },
+  {
+    id: 'theme-parks', 
+    title: 'Theme Parks & Entertainment',
+    subtitle: 'Disney, Universal, or other major theme parks',
+    icon: '🎢'
+  },
+  {
+    id: 'visiting-family',
+    title: 'Visiting Family & Friends',  
+    subtitle: 'Staying with locals, family gatherings',
+    icon: '👨‍👩‍👧‍👦'
+  },
+  {
+    id: 'special-event',
+    title: 'Wedding, Celebration, or Event',
+    subtitle: 'Trip organized around a specific event',
+    icon: '🎉'
+  },
+  {
+    id: 'business-family',
+    title: 'Business Trip + Family Extension',
+    subtitle: 'Work trip extended for family time',
+    icon: '💼'
+  },
+  {
+    id: 'other',
+    title: 'Other Purpose',
+    subtitle: 'Something else not listed above',
+    icon: '✨'
+  }
+];
+
+const TripPurposeStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<React.SetStateAction<TripData>> }> = ({ tripData, setTripData }) => {
+  return (
+    <div className="max-w-3xl mx-auto">
+      <Card>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {tripPurposes.map((purpose) => (
+              <div key={purpose.id} className="relative">
+                <input
+                  type="radio"
+                  id={purpose.id}
+                  name="tripPurpose"
+                  value={purpose.id}
+                  checked={tripData.tripPurpose === purpose.id}
+                  onChange={(e) => setTripData(prev => ({ ...prev, tripPurpose: e.target.value }))}
+                  className="sr-only peer"
+                />
+                <label
+                  htmlFor={purpose.id}
+                  className="flex flex-col p-4 border rounded-lg cursor-pointer hover:bg-gray-50 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-200 transition-all"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-2xl">{purpose.icon}</span>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">{purpose.title}</div>
+                      <div className="text-sm text-gray-600">{purpose.subtitle}</div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
@@ -869,32 +1084,6 @@ const ConcernsStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<R
         }
       ],
       ai_example: '"I found activities near the medical district with a children\'s hospital 5 minutes away"'
-    },
-    {
-      id: 'health',
-      title: 'Health & Dietary',
-      subtitle: 'Everyone needs to eat and feel good',
-      description: 'Food allergies, medical needs, and dietary restrictions can make or break a family trip.',
-      icon: Heart,
-      color: 'green',
-      concerns: [
-        {
-          id: 'food-allergies',
-          label: 'Food allergies and dietary restrictions',
-          detail: 'Nut-free, gluten-free, vegetarian, halal, kosher options'
-        },
-        {
-          id: 'medical-needs',
-          label: 'Special medical needs',
-          detail: 'Pharmacy access, medical equipment, medication storage'
-        },
-        {
-          id: 'kid-friendly-food',
-          label: 'Kid-friendly food options',
-          detail: 'Places that actually have food your kids will eat'
-        }
-      ],
-      ai_example: '"This restaurant has a dedicated gluten-free menu and the staff is trained on allergies"'
     },
     {
       id: 'comfort',
@@ -1129,6 +1318,59 @@ const ConcernsStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<R
             rows={4}
             className="w-full"
           />
+        </CardContent>
+      </Card>
+
+      {/* Dietary Preferences Opt-in */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-start space-x-3">
+            <Utensils className="w-5 h-5 text-gray-600 mt-1" />
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-3">
+                <Checkbox 
+                  id="dietary-opt-in"
+                  checked={tripData.optInDietary || false}
+                  onCheckedChange={(checked) => {
+                    setTripData(prev => ({ 
+                      ...prev, 
+                      optInDietary: checked,
+                      dietaryPreferences: checked ? prev.dietaryPreferences : []
+                    }));
+                  }}
+                />
+                <Label htmlFor="dietary-opt-in" className="font-medium">
+                  Include dietary preferences to help with restaurant recommendations
+                </Label>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Optional: Help us suggest restaurants that work for your family's dietary needs
+              </p>
+              
+              {tripData.optInDietary && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {['Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free', 'Nut allergies', 'Seafood allergies', 'Halal', 'Kosher', 'Low-sodium', 'Diabetic-friendly'].map((dietary) => (
+                    <div key={dietary} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={dietary}
+                        checked={(tripData.dietaryPreferences || []).includes(dietary)}
+                        onCheckedChange={(checked) => {
+                          const current = tripData.dietaryPreferences || [];
+                          const updated = checked 
+                            ? [...current, dietary]
+                            : current.filter(d => d !== dietary);
+                          setTripData(prev => ({ ...prev, dietaryPreferences: updated }));
+                        }}
+                      />
+                      <Label htmlFor={dietary} className="text-sm">
+                        {dietary}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -2175,6 +2417,7 @@ const Dashboard: React.FC<{
   showEditProfile: boolean;
   setShowEditProfile: (show: boolean) => void;
   setFamilyProfiles: (profiles: FamilyMember[]) => void;
+  onLogout: () => void;
 }> = ({ 
   user, 
   trips, 
@@ -2187,7 +2430,8 @@ const Dashboard: React.FC<{
   setEditingProfile, 
   showEditProfile, 
   setShowEditProfile, 
-  setFamilyProfiles 
+  setFamilyProfiles,
+  onLogout 
 }) => {
   // Helper function to get family members from trip data
   const getFamilyMembersFromTrips = (trips: any[]): FamilyMember[] => {
@@ -2636,15 +2880,25 @@ const Dashboard: React.FC<{
                 <Plus className="w-4 h-4 mr-2" />
                 New Trip
               </Button>
-              <div className="flex items-center space-x-2">
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt={user.name} className="w-8 h-8 rounded-full" />
-                ) : (
-                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium">{user.name?.[0]}</span>
-                  </div>
-                )}
-                <span className="text-sm font-medium">{user.name}</span>
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt={user.name} className="w-8 h-8 rounded-full" />
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium">{user.name?.[0]}</span>
+                    </div>
+                  )}
+                  <span className="text-sm font-medium">{user.name}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={onLogout}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  Sign Out
+                </Button>
               </div>
             </div>
           </div>
@@ -3111,20 +3365,87 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
   }
 }
 
+// Family Profile Completeness Helper Functions
+const calculateProfileCompleteness = (profile: FamilyMember): number => {
+  const essentialFields = ['name', 'age', 'relationship'];
+  const detailedFields = ['interests', 'dietaryInfo', 'healthInfo', 'energyLevel', 'activityPreferences', 'sleepSchedule'];
+  
+  let score = 0;
+  let maxScore = 0;
+  
+  // Essential fields (60% weight)
+  essentialFields.forEach(field => {
+    maxScore += 60;
+    if (profile[field as keyof FamilyMember] && profile[field as keyof FamilyMember] !== '') {
+      score += 60;
+    }
+  });
+  
+  // Detailed fields (40% weight divided among fields)
+  const detailedWeight = 40 / detailedFields.length;
+  detailedFields.forEach(field => {
+    maxScore += detailedWeight;
+    const value = profile[field as keyof FamilyMember];
+    if (value && value !== '' && (Array.isArray(value) ? value.length > 0 : true)) {
+      score += detailedWeight;
+    }
+  });
+  
+  return Math.round((score / maxScore) * 100);
+};
+
+const getFamilyProfilesCompleteness = (familyProfiles: FamilyMember[], tripMembers: FamilyMember[]): {
+  overallCompleteness: number;
+  tripMemberCompleteness: number;
+  incompleteProfiles: FamilyMember[];
+  canUnlockPersonalization: boolean;
+} => {
+  if (familyProfiles.length === 0) {
+    return {
+      overallCompleteness: 0,
+      tripMemberCompleteness: 0,
+      incompleteProfiles: [],
+      canUnlockPersonalization: false
+    };
+  }
+  
+  // Calculate overall completeness
+  const overallScores = familyProfiles.map(calculateProfileCompleteness);
+  const overallCompleteness = Math.round(overallScores.reduce((a, b) => a + b, 0) / overallScores.length);
+  
+  // Calculate trip member completeness
+  const tripMemberProfiles = familyProfiles.filter(profile => 
+    tripMembers.some(member => member.name === profile.name || member.id === profile.id)
+  );
+  
+  const tripMemberScores = tripMemberProfiles.map(calculateProfileCompleteness);
+  const tripMemberCompleteness = tripMemberProfiles.length > 0 
+    ? Math.round(tripMemberScores.reduce((a, b) => a + b, 0) / tripMemberScores.length)
+    : 0;
+  
+  // Find incomplete profiles (less than 70% complete)
+  const incompleteProfiles = tripMemberProfiles.filter(profile => 
+    calculateProfileCompleteness(profile) < 70
+  );
+  
+  // Can unlock personalization if trip members are 70%+ complete
+  const canUnlockPersonalization = tripMemberCompleteness >= 70 && incompleteProfiles.length === 0;
+  
+  return {
+    overallCompleteness,
+    tripMemberCompleteness,
+    incompleteProfiles,
+    canUnlockPersonalization
+  };
+};
+
 // Main App Component
 const FamApp = () => {
+  const { user: authUser, loading: authLoading, isAuthenticated, logout } = useAuth();
+  
   const [currentStep, setCurrentStep] = useState(0);
   const [tripData, setTripData] = useState<TripData>({});
   const [currentView, setCurrentView] = useState<'landing' | 'signup' | 'dashboard' | 'createTripFlow' | 'wizard' | 'trip-details'>('dashboard');
-  
-  const [userData, setUserData] = useState<{ 
-    name: string; 
-    email: string; 
-    password?: string; 
-    uid?: string; 
-    photoURL?: string; 
-    isGoogleUser?: boolean; 
-  } | null>(null);
   
   const [userTrips, setUserTrips] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('itinerary');
@@ -3135,6 +3456,81 @@ const FamApp = () => {
   const [showFamilyProfiles, setShowFamilyProfiles] = useState(false);
   const [editingProfile, setEditingProfile] = useState<FamilyMember | null>(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  
+  // Collaboration state
+  const [showCollaboration, setShowCollaboration] = useState(false);
+  const [collaborativeTrip, setCollaborativeTrip] = useState<CollaborativeTrip | null>(null);
+  const [pendingShowCollaboration, setPendingShowCollaboration] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  
+  // Current user derived from Firebase auth
+  const currentUser = {
+    email: authUser?.email || 'user@example.com',
+    name: authUser?.displayName || 'Current User',
+    uid: authUser?.uid || 'demo-user',
+    photoURL: authUser?.photoURL || ''
+  };
+
+  // Generate unique trip ID if one doesn't exist
+  const getTripId = (trip: any) => {
+    if (trip.id) return trip.id;
+    if (trip.city && trip.startDate) {
+      return `${trip.city}-${trip.startDate}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    }
+    return `trip-${Date.now()}`;
+  };
+
+  // Real-time collaboration hook (always call but conditionally activate)
+  // Temporarily disabled to fix Firestore assertion errors
+  const shouldUseRealtime = false; // TODO: Re-enable: currentView === 'trip-details' && tripData && authUser;
+  const realtimeCollaboration = useRealtimeCollaboration({
+    tripId: shouldUseRealtime ? getTripId(tripData) : 'inactive-trip',
+    userId: currentUser.uid,
+    userName: currentUser.name
+  });
+
+  // Only use real-time data when appropriate
+  const activeRealtimeCollaboration = shouldUseRealtime ? realtimeCollaboration : null;
+
+  // Create trip in Firebase if it doesn't exist
+  useEffect(() => {
+    if (activeRealtimeCollaboration && currentView === 'trip-details' && tripData && authUser) {
+      const tripId = getTripId(tripData);
+      
+      // Check if trip exists, if not create it
+      activeRealtimeCollaboration.trip || 
+      (async () => {
+        try {
+          const existingTrip = await import('./services/realtimeCollaborationService').then(service => 
+            service.realtimeCollaborationService.getTrip(tripId)
+          );
+          
+          if (!existingTrip) {
+            console.log('🆕 Creating trip in Firebase:', tripId);
+            await import('./services/realtimeCollaborationService').then(service => 
+              service.realtimeCollaborationService.createTrip(tripData, currentUser.uid)
+            );
+          }
+        } catch (error) {
+          console.log('⚠️ Trip creation/check failed (using local data):', error);
+        }
+      })();
+    }
+  }, [activeRealtimeCollaboration, currentView, tripData, authUser, currentUser.uid]);
+
+  // Handle opening collaboration modal after collaborative trip is set
+  useEffect(() => {
+    console.log('=== USEEFFECT TRIGGERED ===');
+    console.log('pendingShowCollaboration:', pendingShowCollaboration);
+    console.log('collaborativeTrip:', collaborativeTrip);
+    
+    if (pendingShowCollaboration && collaborativeTrip) {
+      console.log('Opening collaboration modal...');
+      setShowCollaboration(true);
+      setPendingShowCollaboration(false);
+      console.log('Modal should now be open');
+    }
+  }, [pendingShowCollaboration, collaborativeTrip]);
   const [showAddTravelerModal, setShowAddTravelerModal] = useState(false);
   const [newTravelerForm, setNewTravelerForm] = useState({
     name: '',
@@ -3151,6 +3547,10 @@ const FamApp = () => {
   const [showTransportModal, setShowTransportModal] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [showReadinessEditMode, setShowReadinessEditMode] = useState(false);
+  
+  // Profile completion modal state
+  const [showProfileCompletionModal, setShowProfileCompletionModal] = useState(false);
+  const [justCreatedTrip, setJustCreatedTrip] = useState<TripData | null>(null);
   
   // Edit state for travel items
   const [editingFlightIndex, setEditingFlightIndex] = useState<number | null>(null);
@@ -3274,37 +3674,83 @@ const FamApp = () => {
     }
   }, [tripData.startDate, tripData.endDate, tripData.activities]);
 
-  // Load family profiles from localStorage
+  // Load family profiles from localStorage with validation and cleanup
   useEffect(() => {
     const savedProfiles = localStorage.getItem('famapp-family-profiles');
     if (savedProfiles) {
       try {
-        setFamilyProfiles(JSON.parse(savedProfiles));
+        const profiles = JSON.parse(savedProfiles);
+        // Validate and clean up profiles data
+        const validProfiles = profiles.filter((profile: FamilyMember) => {
+          // Remove profiles with invalid or very short names (like just "a")
+          return profile.name && 
+                 profile.name.trim().length > 1 && 
+                 profile.type && 
+                 (profile.type === 'adult' || profile.type === 'child');
+        });
+        
+        // If we filtered out invalid profiles, save the cleaned data back
+        if (validProfiles.length !== profiles.length) {
+          console.log(`Cleaned up ${profiles.length - validProfiles.length} invalid family profiles`);
+          localStorage.setItem('famapp-family-profiles', JSON.stringify(validProfiles));
+        }
+        
+        setFamilyProfiles(validProfiles);
       } catch (error) {
         console.error('Error loading family profiles from localStorage:', error);
+        // If there's an error, clear the corrupted data
+        localStorage.removeItem('famapp-family-profiles');
+        setFamilyProfiles([]);
       }
     }
   }, []);
 
-  // Auto-migrate family data from existing trips to profiles
+  // Auto-sync family data from trips to profiles
   useEffect(() => {
-    const migrateFromTripsToProfiles = () => {
-      if (familyProfiles.length > 0 || userTrips.length === 0) {
-        return; // Already have profiles or no trips to migrate from
+    const syncFamilyDataFromTrips = () => {
+      if (userTrips.length === 0) {
+        return; // No trips to sync from
       }
 
-      const allFamilyMembers: FamilyMember[] = [];
-      const memberMap = new Map<string, FamilyMember>();
+      // Create a map of existing family profiles for easy lookup
+      const existingProfilesMap = new Map<string, FamilyMember>();
+      familyProfiles.forEach(profile => {
+        const key = `${profile.type}-${profile.name?.toLowerCase().replace(/\s+/g, '-') || 'unnamed'}`;
+        existingProfilesMap.set(key, profile);
+      });
 
-      // Extract family members from all trips
+      // Extract family members from all trips and merge with existing profiles
+      const memberMap = new Map<string, FamilyMember>();
+      
+      // First, add all existing profiles to preserve their data
+      existingProfilesMap.forEach((profile, key) => {
+        memberMap.set(key, profile);
+      });
+
+      // Then, add or update members from trips
       userTrips.forEach(trip => {
         if (trip.adults) {
           trip.adults.forEach((adult: any) => {
-            const memberId = `adult-${adult.name?.toLowerCase().replace(/\s+/g, '-') || 'unnamed'}`;
-            if (!memberMap.has(memberId)) {
-              memberMap.set(memberId, {
-                id: memberId,
-                name: adult.name || 'Unnamed Adult',
+            const memberKey = `adult-${adult.name?.toLowerCase().replace(/\s+/g, '-') || 'unnamed'}`;
+            const existingProfile = memberMap.get(memberKey);
+            
+            if (existingProfile) {
+              // Update existing profile with any new data from trip
+              memberMap.set(memberKey, {
+                ...existingProfile,
+                age: adult.age || existingProfile.age,
+                email: adult.email || existingProfile.email,
+                interests: adult.interests || existingProfile.interests,
+                specialNeeds: adult.specialNeeds || existingProfile.specialNeeds,
+                relationship: adult.relationship || existingProfile.relationship || 'Parent',
+                updatedAt: new Date().toISOString()
+              });
+            } else {
+              // Create new profile - validate name first
+              const validName = adult.name && adult.name.trim().length > 1 ? adult.name : 'Unnamed Adult';
+              memberMap.set(memberKey, {
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                name: validName,
                 type: 'adult',
                 age: adult.age,
                 email: adult.email,
@@ -3320,14 +3766,29 @@ const FamApp = () => {
 
         if (trip.kids) {
           trip.kids.forEach((kid: any) => {
-            const memberId = `child-${kid.name?.toLowerCase().replace(/\s+/g, '-') || 'unnamed'}`;
-            if (!memberMap.has(memberId)) {
-              // Try to assign to first parent as default
-              const firstParent = Array.from(memberMap.values()).find(m => m.type === 'adult');
-              
-              memberMap.set(memberId, {
-                id: memberId,
-                name: kid.name || 'Unnamed Child',
+            const memberKey = `child-${kid.name?.toLowerCase().replace(/\s+/g, '-') || 'unnamed'}`;
+            const existingProfile = memberMap.get(memberKey);
+            
+            // Try to assign to first parent as default
+            const firstParent = Array.from(memberMap.values()).find(m => m.type === 'adult');
+            
+            if (existingProfile) {
+              // Update existing profile
+              memberMap.set(memberKey, {
+                ...existingProfile,
+                age: kid.age || existingProfile.age,
+                interests: kid.interests || existingProfile.interests,
+                specialNeeds: kid.specialNeeds || existingProfile.specialNeeds,
+                relationship: kid.relationship || existingProfile.relationship || 'Child',
+                parentId: existingProfile.parentId || firstParent?.id,
+                updatedAt: new Date().toISOString()
+              });
+            } else {
+              // Create new profile - validate name first
+              const validName = kid.name && kid.name.trim().length > 1 ? kid.name : 'Unnamed Child';
+              memberMap.set(memberKey, {
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                name: validName,
                 type: 'child',
                 age: kid.age,
                 interests: kid.interests,
@@ -3342,29 +3803,54 @@ const FamApp = () => {
         }
       });
 
-      const migratedProfiles = Array.from(memberMap.values());
+      const syncedProfiles = Array.from(memberMap.values());
       
-      if (migratedProfiles.length > 0) {
-        setFamilyProfiles(migratedProfiles);
-        // Save to localStorage
-        localStorage.setItem('famapp-family-profiles', JSON.stringify(migratedProfiles));
+      // Only update if there are actual changes
+      const profilesChanged = JSON.stringify(syncedProfiles.sort((a, b) => a.name.localeCompare(b.name))) !== 
+                              JSON.stringify(familyProfiles.sort((a, b) => a.name.localeCompare(b.name)));
+      
+      if (profilesChanged && syncedProfiles.length > 0) {
+        setFamilyProfiles(syncedProfiles);
+        localStorage.setItem('famapp-family-profiles', JSON.stringify(syncedProfiles));
       }
     };
 
-    migrateFromTripsToProfiles();
-  }, [userTrips, familyProfiles]);
+    syncFamilyDataFromTrips();
+  }, [userTrips]);
 
-  // Load trips from localStorage on component mount
+  // Load trips from localStorage on component mount (for non-authenticated users)
   useEffect(() => {
-    const savedTrips = localStorage.getItem('famapp-trips');
-    if (savedTrips) {
-      try {
-        setUserTrips(JSON.parse(savedTrips));
-      } catch (error) {
-        console.error('Error loading trips from localStorage:', error);
+    // Only load from localStorage if user is not authenticated
+    if (!currentUser) {
+      const savedTrips = localStorage.getItem('famapp-trips');
+      if (savedTrips) {
+        try {
+          setUserTrips(JSON.parse(savedTrips));
+        } catch (error) {
+          console.error('Error loading trips from localStorage:', error);
+        }
       }
     }
-  }, []);
+  }, [currentUser]);
+
+  // Listen for trips synced from Firebase after authentication
+  useEffect(() => {
+    const handleTripsSynced = (event) => {
+      console.log('📱 Received synced trips from AuthContext:', event.detail);
+      const { trips, userId } = event.detail;
+      
+      if (trips && currentUser?.uid === userId) {
+        console.log(`🔄 Updating userTrips state with ${trips.length} synced trips`);
+        setUserTrips(trips);
+      }
+    };
+
+    window.addEventListener('tripsSynced', handleTripsSynced);
+    
+    return () => {
+      window.removeEventListener('tripsSynced', handleTripsSynced);
+    };
+  }, [currentUser]);
 
   // Pre-select all family members when modal opens (add mode) or populate form (edit mode)
   useEffect(() => {
@@ -3449,14 +3935,38 @@ const FamApp = () => {
   }, [showAddActivityModal, tripData.country]);
 
 
-  // Save trips to localStorage whenever userTrips changes
+  // Save trips to localStorage whenever userTrips changes (backup only)
   useEffect(() => {
+    // Always save to localStorage as backup
     localStorage.setItem('famapp-trips', JSON.stringify(userTrips));
+    
+    // Temporarily disable automatic Firebase syncing to prevent assertion errors
+    // TODO: Re-enable once Firebase errors are resolved
+    // if (currentUser && userTrips.length > 0) {
+    //   // Save each trip to Firebase (debounced to avoid excessive writes)
+    //   const saveTripsToFirebase = async () => {
+    //     try {
+    //       for (const trip of userTrips) {
+    //         // Only save trips that belong to the current user or don't have a userId yet
+    //         if (!trip.userId || trip.userId === currentUser.uid) {
+    //           await tripPersistenceService.saveTrip(trip, currentUser.uid);
+    //         }
+    //       }
+    //     } catch (error) {
+    //       console.error('❌ Error syncing trips to Firebase:', error);
+    //     }
+    //   };
+    //   
+    //   // Debounce Firebase saves to avoid excessive writes
+    //   const timeoutId = setTimeout(saveTripsToFirebase, 1000);
+    //   return () => clearTimeout(timeoutId);
+    // }
   }, [userTrips]);
 
   const steps = [
     { title: 'Destination' },
     { title: 'Family' },
+    { title: 'Purpose' },
     { title: 'Style' },
     { title: 'Concerns' },
     { title: 'Budget' },
@@ -3630,22 +4140,139 @@ const FamApp = () => {
     if (selectedTrip) {
       setTripData(selectedTrip);
       setCurrentView('trip-details');
+      
+      // Initialize collaborative trip if needed
+      if (!collaborativeTrip || collaborativeTrip.id !== tripId) {
+        const collabTrip = collaborationService.createCollaborativeTrip(
+          selectedTrip,
+          currentUser.email,
+          currentUser.name
+        );
+        setCollaborativeTrip(collabTrip);
+      }
     }
   };
 
-  // Save trip when wizard completes
-  const handleTripComplete = (completedTripData: TripData) => {
-    const tripToSave = {
-      ...completedTripData,
-      id: completedTripData.id || Date.now().toString(),
-      status: 'planning',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+  // Helper function to sync family members from trip to profiles
+  const syncFamilyMembersFromTrip = (tripData: TripData) => {
+    const memberMap = new Map<string, FamilyMember>();
     
-    setUserTrips(prev => [...prev, tripToSave]);
-    setTripData(tripToSave); // Update tripData for dashboard view
-    setCurrentView('dashboard');
+    // Add existing profiles to preserve their data
+    familyProfiles.forEach(profile => {
+      const key = `${profile.type}-${profile.name?.toLowerCase().replace(/\s+/g, '-') || 'unnamed'}`;
+      memberMap.set(key, profile);
+    });
+
+    // Add/update adults from trip
+    if (tripData.adults) {
+      tripData.adults.forEach((adult: any) => {
+        const memberKey = `adult-${adult.name?.toLowerCase().replace(/\s+/g, '-') || 'unnamed'}`;
+        const existingProfile = memberMap.get(memberKey);
+        
+        if (existingProfile) {
+          memberMap.set(memberKey, {
+            ...existingProfile,
+            age: adult.age || existingProfile.age,
+            relationship: adult.relationship || existingProfile.relationship || 'Parent',
+            updatedAt: new Date().toISOString()
+          });
+        } else {
+          const validName = adult.name && adult.name.trim().length > 1 ? adult.name : 'Unnamed Adult';
+          memberMap.set(memberKey, {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+            name: validName,
+            type: 'adult',
+            age: adult.age,
+            relationship: adult.relationship || 'Parent',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+        }
+      });
+    }
+
+    // Add/update kids from trip
+    if (tripData.kids) {
+      const firstParent = Array.from(memberMap.values()).find(m => m.type === 'adult');
+      
+      tripData.kids.forEach((kid: any) => {
+        const memberKey = `child-${kid.name?.toLowerCase().replace(/\s+/g, '-') || 'unnamed'}`;
+        const existingProfile = memberMap.get(memberKey);
+        
+        if (existingProfile) {
+          memberMap.set(memberKey, {
+            ...existingProfile,
+            age: kid.age || existingProfile.age,
+            relationship: kid.relationship || existingProfile.relationship || 'Child',
+            parentId: existingProfile.parentId || firstParent?.id,
+            updatedAt: new Date().toISOString()
+          });
+        } else {
+          const validName = kid.name && kid.name.trim().length > 1 ? kid.name : 'Unnamed Child';
+          memberMap.set(memberKey, {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+            name: validName,
+            type: 'child',
+            age: kid.age,
+            relationship: kid.relationship || 'Child',
+            parentId: firstParent?.id,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+        }
+      });
+    }
+
+    const updatedProfiles = Array.from(memberMap.values());
+    setFamilyProfiles(updatedProfiles);
+    localStorage.setItem('famapp-family-profiles', JSON.stringify(updatedProfiles));
+  };
+
+  // Save trip when wizard completes
+  const handleTripComplete = async (completedTripData: TripData) => {
+    try {
+      // Calculate days until trip
+      const daysUntilTrip = completedTripData.startDate 
+        ? Math.ceil((new Date(completedTripData.startDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        : 90; // Default to 90 days if no start date
+
+      // Generate smart tasks based on trip data (now async)
+      const smartTasks = await SmartTaskGenerator.generateTasks({
+        trip: completedTripData,
+        daysUntilTrip
+      });
+
+      const tripToSave = {
+        ...completedTripData,
+        status: 'planning',
+        customReadinessItems: smartTasks // Add generated tasks to trip
+      };
+      
+      // Save trip using persistence service with proper error handling
+      const savedTrip = await tripPersistenceService.saveTrip(tripToSave, currentUser?.uid);
+      
+      // Immediately sync family members from this trip to profiles
+      syncFamilyMembersFromTrip(savedTrip);
+      
+      // Update state with the saved trip
+      setUserTrips(prev => {
+        const filtered = prev.filter(t => t.id !== savedTrip.id);
+        return [savedTrip, ...filtered];
+      });
+      setTripData(savedTrip); // Update tripData for dashboard view
+      setJustCreatedTrip(savedTrip); // Store trip for profile completion modal
+      setCurrentView('dashboard');
+      
+      // Show profile completion modal after trip creation
+      setTimeout(() => {
+        setShowProfileCompletionModal(true);
+      }, 500); // Small delay for smooth transition
+      
+      console.log('✅ Trip saved successfully:', savedTrip.id);
+    } catch (error) {
+      console.error('❌ Error saving trip:', error);
+      // Show error to user or handle gracefully
+    }
   };
 
   // Render based on current view
@@ -3661,7 +4288,11 @@ const FamApp = () => {
     return (
       <>
         <Dashboard 
-          user={userData || { name: 'Guest User', email: 'guest@example.com' }}
+          user={{ 
+            name: authUser?.displayName || 'Guest User', 
+            email: authUser?.email || 'guest@example.com',
+            photoURL: authUser?.photoURL || ''
+          }}
           trips={userTrips}
           onCreateTrip={handleCreateTrip}
           onSelectTrip={handleSelectTrip}
@@ -3673,6 +4304,7 @@ const FamApp = () => {
           showEditProfile={showEditProfile}
           setShowEditProfile={setShowEditProfile}
           setFamilyProfiles={setFamilyProfiles}
+          onLogout={logout}
         />
         
         
@@ -3955,6 +4587,7 @@ const FamApp = () => {
             </div>
           </div>
         )}
+
       </>
     );
   }
@@ -4004,6 +4637,134 @@ const FamApp = () => {
       <ResponsiveTripDetails 
         trip={tripData} 
         onBack={() => setCurrentView('dashboard')}
+        onAddActivity={() => setShowAddActivityModal(true)}
+        onEditActivity={(activity) => {
+          setEditingActivity(activity);
+          setNewActivity({
+            name: activity.name || '',
+            type: activity.type || '',
+            date: activity.date || '',
+            time: activity.time || '',
+            duration: activity.duration || '',
+            location: activity.location || '',
+            address: activity.address || '',
+            coordinates: activity.coordinates || null,
+            cost: activity.cost || '',
+            costType: activity.costType || 'per-person',
+            bookingRequired: activity.bookingRequired || false,
+            bookingUrl: activity.bookingUrl || '',
+            notes: activity.notes || '',
+            familyNotes: activity.familyNotes || '',
+            participants: activity.participants || [],
+            ageAppropriate: activity.ageAppropriate || [],
+            accessibility: activity.accessibility || [],
+            weatherDependent: activity.weatherDependent || false,
+            priority: activity.priority || 'medium'
+          });
+          setShowAddActivityModal(true);
+        }}
+        onAddFlight={() => setShowFlightModal(true)}
+        onEditFlight={(flight, index) => {
+          setEditingFlightIndex(index);
+          setFlightFormData({
+            airline: flight.airline || '',
+            flightNumber: flight.flightNumber || '',
+            departure: flight.departure || '',
+            arrival: flight.arrival || '',
+            departureTime: flight.departureTime || '',
+            arrivalTime: flight.arrivalTime || '',
+            confirmationNumber: flight.confirmationNumber || '',
+            status: flight.status || 'confirmed',
+            assignedMembers: flight.assignedMembers || []
+          });
+          setShowFlightModal(true);
+        }}
+        onAddAccommodation={() => setShowHotelModal(true)}
+        onEditAccommodation={(accommodation, index) => {
+          setEditingAccommodationIndex(index);
+          setAccommodationFormData({
+            type: accommodation.type || '',
+            name: accommodation.name || '',
+            address: accommodation.address || '',
+            checkIn: accommodation.checkIn || '',
+            checkOut: accommodation.checkOut || '',
+            details: accommodation.details || '',
+            roomQuantity: accommodation.roomQuantity || '',
+            roomAssignment: accommodation.roomAssignment || '',
+            assignedMembers: accommodation.assignedMembers || [],
+            status: accommodation.status || 'confirmed',
+            confirmationNumber: accommodation.confirmationNumber || ''
+          });
+          setShowHotelModal(true);
+        }}
+        onAddTransportation={() => setShowTransportModal(true)}
+        onEditTransportation={(transport, index) => {
+          setEditingTransportationIndex(index);
+          setTransportFormData({
+            type: transport.type || '',
+            details: transport.details || '',
+            departure: transport.departure || '',
+            arrival: transport.arrival || '',
+            date: transport.date || '',
+            time: transport.time || '',
+            assignedMembers: transport.assignedMembers || [],
+            confirmationNumber: transport.confirmationNumber || '',
+            status: transport.status || 'confirmed'
+          });
+          setShowTransportModal(true);
+        }}
+        onTogglePackingItem={(listIndex, itemIndex) => {
+          const updatedTripData = { ...tripData };
+          
+          if (!updatedTripData.packingLists) {
+            updatedTripData.packingLists = {};
+          }
+          if (!updatedTripData.packingLists[listIndex]) {
+            updatedTripData.packingLists[listIndex] = { items: {} };
+          }
+          if (!updatedTripData.packingLists[listIndex].items[itemIndex]) {
+            updatedTripData.packingLists[listIndex].items[itemIndex] = { checked: false };
+          }
+          
+          updatedTripData.packingLists[listIndex].items[itemIndex].checked = 
+            !updatedTripData.packingLists[listIndex].items[itemIndex].checked;
+          
+          setTripData(updatedTripData);
+          
+          const updatedTrips = userTrips.map(trip => 
+            trip.id === tripData.id ? updatedTripData : trip
+          );
+          setUserTrips(updatedTrips);
+        }}
+        onDeletePackingItem={(listIndex, itemIndex) => {
+          const updatedTripData = { ...tripData };
+          
+          if (updatedTripData.packingLists?.[listIndex]?.items[itemIndex]) {
+            delete updatedTripData.packingLists[listIndex].items[itemIndex];
+          }
+          
+          setTripData(updatedTripData);
+          
+          const updatedTrips = userTrips.map(trip => 
+            trip.id === tripData.id ? updatedTripData : trip
+          );
+          setUserTrips(updatedTrips);
+        }}
+        onAddPackingItem={(listIndex) => {
+          // This handler is primarily for compatibility with the ResponsiveTripDetails interface
+          // The actual custom item addition is handled by MobilePacking component using onUpdateTrip
+          console.log('Add packing item clicked for category:', listIndex);
+        }}
+        onUpdateTrip={(updatedTrip) => {
+          setTripData(updatedTrip);
+          
+          const updatedTrips = userTrips.map(trip => 
+            trip.id === tripData.id ? updatedTrip : trip
+          );
+          setUserTrips(updatedTrips);
+        }}
+        familyProfiles={familyProfiles}
+        onOpenFamilyProfiles={() => setShowFamilyProfiles(true)}
       >
           {/* Desktop Header - only shows on desktop */}
           <div className="bg-white border-b">
@@ -4058,7 +4819,24 @@ const FamApp = () => {
                     <Users className="w-4 h-4 mr-2" />
                     Family Profiles
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // Ensure we have a collaborative trip
+                      if (!collaborativeTrip || collaborativeTrip.id !== tripData.id) {
+                        const collabTrip = collaborationService.createCollaborativeTrip(
+                          tripData,
+                          currentUser.email,
+                          currentUser.name
+                        );
+                        setCollaborativeTrip(collabTrip);
+                      }
+                      
+                      // Show modal
+                      setShowCollaboration(true);
+                    }}
+                  >
                     <Share2 className="w-4 h-4 mr-2" />
                     Share Trip
                   </Button>
@@ -4072,6 +4850,19 @@ const FamApp = () => {
               </div>
             </div>
           </div>
+
+          {/* Real-time Collaboration Bar */}
+          {activeRealtimeCollaboration && (
+            <RealtimeCollaborationBar
+              presenceUsers={activeRealtimeCollaboration.presenceUsers}
+              collaborators={activeRealtimeCollaboration.collaborators}
+              typingUsers={activeRealtimeCollaboration.typingUsers}
+              isOnline={activeRealtimeCollaboration.isOnline}
+              connectionStatus={activeRealtimeCollaboration.connectionStatus}
+              currentUserId={currentUser.uid}
+            />
+          )}
+
           <div className="max-w-7xl mx-auto px-6 py-6">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Sidebar */}
@@ -5661,33 +6452,121 @@ const FamApp = () => {
                                     <div key={itemIndex} className="flex items-center space-x-2 group">
                                       <Checkbox 
                                         id={`${listIndex}-${itemIndex}`}
-                                        checked={tripData.packingLists?.[listIndex]?.items?.[itemIndex]?.checked || false}
+                                        checked={(() => {
+                                          // Determine if this is a generated item or custom item
+                                          const originalGeneratedItems = listIndex === 0 ? essentialItems : 
+                                                               listIndex === 1 ? clothingItems :
+                                                               listIndex === 2 ? healthItems :
+                                                               listIndex === 3 && hasKids ? kidsItems :
+                                                               listIndex === (hasKids ? 4 : 3) ? activityItems : [];
+                                          
+                                          const filteredGeneratedItems = originalGeneratedItems.filter(item => 
+                                            !(tripData.hiddenPackingItems?.[listIndex] || []).includes(item)
+                                          );
+                                          
+                                          const isGeneratedItem = itemIndex < filteredGeneratedItems.length;
+                                          
+                                          if (isGeneratedItem) {
+                                            return tripData.packingLists?.[listIndex]?.items?.[itemIndex]?.checked || false;
+                                          } else {
+                                            // Custom item - check if it's an object with checked property
+                                            const customItems = tripData.customPackingItems?.[listIndex] || [];
+                                            const customItemIndex = itemIndex - filteredGeneratedItems.length;
+                                            const customItem = customItems[customItemIndex];
+                                            return typeof customItem === 'object' ? customItem.checked : false;
+                                          }
+                                        })()}
                                         onCheckedChange={(checked) => {
-                                          const updatedTripData = {
-                                            ...tripData,
-                                            packingLists: {
-                                              ...tripData.packingLists,
-                                              [listIndex]: {
-                                                ...tripData.packingLists?.[listIndex],
-                                                items: {
-                                                  ...tripData.packingLists?.[listIndex]?.items,
-                                                  [itemIndex]: { checked }
+                                          // Determine if this is a generated item or custom item
+                                          const originalGeneratedItems = listIndex === 0 ? essentialItems : 
+                                                               listIndex === 1 ? clothingItems :
+                                                               listIndex === 2 ? healthItems :
+                                                               listIndex === 3 && hasKids ? kidsItems :
+                                                               listIndex === (hasKids ? 4 : 3) ? activityItems : [];
+                                          
+                                          const filteredGeneratedItems = originalGeneratedItems.filter(item => 
+                                            !(tripData.hiddenPackingItems?.[listIndex] || []).includes(item)
+                                          );
+                                          
+                                          const isGeneratedItem = itemIndex < filteredGeneratedItems.length;
+                                          
+                                          if (isGeneratedItem) {
+                                            // Handle generated item
+                                            const updatedTripData = {
+                                              ...tripData,
+                                              packingLists: {
+                                                ...tripData.packingLists,
+                                                [listIndex]: {
+                                                  ...tripData.packingLists?.[listIndex],
+                                                  items: {
+                                                    ...tripData.packingLists?.[listIndex]?.items,
+                                                    [itemIndex]: { checked }
+                                                  }
                                                 }
                                               }
-                                            }
-                                          };
-                                          setTripData(updatedTripData);
-                                          const updatedTrips = userTrips.map(trip => 
-                                            trip.id === tripData.id ? updatedTripData : trip
-                                          );
-                                          setUserTrips(updatedTrips);
+                                            };
+                                            setTripData(updatedTripData);
+                                            const updatedTrips = userTrips.map(trip => 
+                                              trip.id === tripData.id ? updatedTripData : trip
+                                            );
+                                            setUserTrips(updatedTrips);
+                                          } else {
+                                            // Handle custom item
+                                            const customItems = tripData.customPackingItems?.[listIndex] || [];
+                                            const customItemIndex = itemIndex - filteredGeneratedItems.length;
+                                            const updatedCustomItems = customItems.map((item, idx) => {
+                                              if (idx === customItemIndex) {
+                                                return typeof item === 'string' 
+                                                  ? { id: `custom-${listIndex}-${idx}`, text: item, checked }
+                                                  : { ...item, checked };
+                                              }
+                                              return item;
+                                            });
+                                            
+                                            const updatedTripData = {
+                                              ...tripData,
+                                              customPackingItems: {
+                                                ...tripData.customPackingItems,
+                                                [listIndex]: updatedCustomItems
+                                              }
+                                            };
+                                            setTripData(updatedTripData);
+                                            const updatedTrips = userTrips.map(trip => 
+                                              trip.id === tripData.id ? updatedTripData : trip
+                                            );
+                                            setUserTrips(updatedTrips);
+                                          }
                                         }}
                                       />
                                       <Label 
                                         htmlFor={`${listIndex}-${itemIndex}`} 
-                                        className={`text-sm flex-1 cursor-pointer ${tripData.packingLists?.[listIndex]?.items?.[itemIndex]?.checked ? 'line-through text-gray-500' : ''}`}
+                                        className={`text-sm flex-1 cursor-pointer ${(() => {
+                                          // Determine if this is a generated item or custom item for styling
+                                          const originalGeneratedItems = listIndex === 0 ? essentialItems : 
+                                                               listIndex === 1 ? clothingItems :
+                                                               listIndex === 2 ? healthItems :
+                                                               listIndex === 3 && hasKids ? kidsItems :
+                                                               listIndex === (hasKids ? 4 : 3) ? activityItems : [];
+                                          
+                                          const filteredGeneratedItems = originalGeneratedItems.filter(item => 
+                                            !(tripData.hiddenPackingItems?.[listIndex] || []).includes(item)
+                                          );
+                                          
+                                          const isGeneratedItem = itemIndex < filteredGeneratedItems.length;
+                                          
+                                          if (isGeneratedItem) {
+                                            return tripData.packingLists?.[listIndex]?.items?.[itemIndex]?.checked ? 'line-through text-gray-500' : '';
+                                          } else {
+                                            // Custom item styling
+                                            const customItems = tripData.customPackingItems?.[listIndex] || [];
+                                            const customItemIndex = itemIndex - filteredGeneratedItems.length;
+                                            const customItem = customItems[customItemIndex];
+                                            const isChecked = typeof customItem === 'object' ? customItem.checked : false;
+                                            return isChecked ? 'line-through text-gray-500' : '';
+                                          }
+                                        })()}`}
                                       >
-                                        {item}
+                                        {typeof item === 'string' ? item : item.text}
                                       </Label>
                                       <Button 
                                         variant="ghost" 
@@ -5814,7 +6693,12 @@ const FamApp = () => {
                                         if (newItem) {
                                           // Add only to custom items, not the entire list
                                           const currentCustomItems = tripData.customPackingItems?.[listIndex] || [];
-                                          const updatedCustomItems = [...currentCustomItems, newItem];
+                                          const newCustomItem = {
+                                            id: `custom-${listIndex}-${Date.now()}`,
+                                            text: newItem,
+                                            checked: false
+                                          };
+                                          const updatedCustomItems = [...currentCustomItems, newCustomItem];
                                           
                                           const updatedTripData = {
                                             ...tripData,
@@ -7022,71 +7906,100 @@ const FamApp = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Family Profiles</h2>
+                <div>
+                  <h2 className="text-2xl font-bold">Family Profiles</h2>
+                  {tripData && (tripData.adults?.length || 0) + (tripData.kids?.length || 0) > 0 && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Current trip: {(tripData.adults?.length || 0) + (tripData.kids?.length || 0)} travelers to {tripData.city}
+                    </p>
+                  )}
+                </div>
                 <Button variant="ghost" size="sm" onClick={() => setShowFamilyProfiles(false)}>
                   <X className="w-5 h-5" />
                 </Button>
               </div>
               
               <div className="p-6">
-                {familyProfiles.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Family Profiles Yet</h3>
-                    <p className="text-gray-500 mb-6">Family profiles are automatically created when you plan trips. Start your first trip to get started!</p>
-                    <Button onClick={() => {
-                      setShowFamilyProfiles(false);
-                      setCurrentView('dashboard');
-                    }}>
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Back to Dashboard
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <p className="text-gray-600">
-                        {familyProfiles.length} family member{familyProfiles.length !== 1 ? 's' : ''}
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setEditingProfile({
-                            id: '',
-                            name: '',
-                            type: 'adult',
-                            relationship: '',
-                            email: '',
-                            dateOfBirth: '',
-                            age: '',
-                            interests: '',
-                            specialNeeds: '',
-                            healthInfo: '',
-                            dietaryInfo: '',
-                            energyLevel: [],
-                            activityPreferences: [],
-                            sleepSchedule: '',
-                            bestTimes: '',
-                            specialConsiderations: '',
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString()
-                          });
-                          setShowEditProfile(true);
-                        }}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Family Member
+                {(() => {
+                  // Filter family profiles to only show those who are part of the current trip
+                  const currentTripMembers = familyProfiles.filter(profile => {
+                    // Check if this profile is in the current trip's adults or kids
+                    const isInAdults = tripData.adults?.some(adult => 
+                      adult.name === profile.name || adult.id === profile.id
+                    );
+                    const isInKids = tripData.kids?.some(kid => 
+                      kid.name === profile.name || kid.id === profile.id
+                    );
+                    return isInAdults || isInKids;
+                  });
+
+                  return currentTripMembers.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Family Profiles for Current Trip</h3>
+                      <p className="text-gray-500 mb-6">No family member profiles found for the current trip travelers.</p>
+                      <Button onClick={() => {
+                        setShowFamilyProfiles(false);
+                        setCurrentView('dashboard');
+                      }}>
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back to Dashboard
                       </Button>
                     </div>
-                    
-                    {/* Adults Section */}
-                    {familyProfiles.some(p => p.type === 'adult') && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Adults</h3>
-                        <div className="grid gap-4">
-                          {familyProfiles
-                            .filter(profile => profile.type === 'adult')
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-gray-600">
+                            {currentTripMembers.length} family member{currentTripMembers.length !== 1 ? 's' : ''} on this trip
+                          </p>
+                          {currentTripMembers.some(p => !p.name || p.name.trim().length <= 1) && (
+                            <p className="text-xs text-orange-600 mt-1">
+                              Some profiles may need cleanup - refresh to fix
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setEditingProfile({
+                                id: '',
+                                name: '',
+                                type: 'adult',
+                                relationship: '',
+                                email: '',
+                                dateOfBirth: '',
+                                age: '',
+                                interests: '',
+                                specialNeeds: '',
+                                healthInfo: '',
+                                dietaryInfo: '',
+                                energyLevel: [],
+                                activityPreferences: [],
+                                sleepSchedule: '',
+                                bestTimes: '',
+                                specialConsiderations: '',
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString()
+                              });
+                              setShowEditProfile(true);
+                            }}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Family Member
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Adults Section */}
+                      {currentTripMembers.some(p => p.type === 'adult') && (
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-3">Adults</h3>
+                          <div className="grid gap-4">
+                            {currentTripMembers
+                              .filter(profile => profile.type === 'adult')
                             .map(profile => (
                               <div key={profile.id} className="border rounded-lg p-4">
                                 <div className="flex items-center justify-between">
@@ -7130,15 +8043,15 @@ const FamApp = () => {
                       </div>
                     )}
                     
-                    {/* Children Section */}
-                    {familyProfiles.some(p => p.type === 'child') && (
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Children</h3>
-                        <div className="grid gap-4">
-                          {familyProfiles
-                            .filter(profile => profile.type === 'child')
-                            .map(profile => {
-                              const parent = familyProfiles.find(p => p.id === profile.parentId);
+                      {/* Children Section */}
+                      {currentTripMembers.some(p => p.type === 'child') && (
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-3">Children</h3>
+                          <div className="grid gap-4">
+                            {currentTripMembers
+                              .filter(profile => profile.type === 'child')
+                              .map(profile => {
+                                const parent = currentTripMembers.find(p => p.id === profile.parentId);
                               return (
                                 <div key={profile.id} className="border rounded-lg p-4">
                                   <div className="flex items-center justify-between">
@@ -7184,11 +8097,12 @@ const FamApp = () => {
                                 </div>
                               );
                             })}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -7499,6 +8413,121 @@ const FamApp = () => {
             </div>
           </div>
         )}
+        
+        {/* Profile Completion Modal */}
+        {showProfileCompletionModal && justCreatedTrip && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
+              <div className="p-6">
+                {/* Success Icon & Header */}
+                <div className="text-center mb-6">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Trip Created Successfully!</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {justCreatedTrip.city && justCreatedTrip.country 
+                      ? `${justCreatedTrip.city}, ${justCreatedTrip.country}` 
+                      : 'Your trip is ready'}
+                  </p>
+                </div>
+
+                {/* Value Proposition */}
+                <div className="mb-6">
+                  <h4 className="text-base font-medium text-gray-900 mb-3">Ready for personalized recommendations?</h4>
+                  <p className="text-sm text-gray-600 mb-4">Complete family profiles to unlock:</p>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-5 w-5 mt-0.5">
+                        <svg className="h-4 w-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="ml-2 text-gray-700">Custom nap & bedtime blocks in your itinerary</span>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-5 w-5 mt-0.5">
+                        <svg className="h-4 w-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="ml-2 text-gray-700">Restaurant recommendations for dietary needs</span>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-5 w-5 mt-0.5">
+                        <svg className="h-4 w-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="ml-2 text-gray-700">Age-appropriate activities for each family member</span>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 h-5 w-5 mt-0.5">
+                        <svg className="h-4 w-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="ml-2 text-gray-700">Personalized packing lists</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Family Members Preview */}
+                {(justCreatedTrip.adults || justCreatedTrip.kids) && (
+                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <h5 className="text-sm font-medium text-gray-900 mb-2">Family Members for This Trip:</h5>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      {justCreatedTrip.adults?.map((adult, index) => (
+                        <div key={index} className="flex items-center">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                          {adult.name} ({adult.age ? `${adult.age} years` : 'Adult'})
+                        </div>
+                      ))}
+                      {justCreatedTrip.kids?.map((kid, index) => (
+                        <div key={index} className="flex items-center">
+                          <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                          {kid.name} ({kid.age ? `${kid.age} years` : 'Child'})
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button 
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    onClick={() => {
+                      setShowProfileCompletionModal(false);
+                      setShowFamilyProfiles(true);
+                    }}
+                  >
+                    Complete Family Profiles (2 minutes)
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setShowProfileCompletionModal(false);
+                      setJustCreatedTrip(null);
+                    }}
+                  >
+                    Skip for now
+                  </Button>
+                </div>
+
+                {/* Small disclaimer */}
+                <p className="text-xs text-gray-500 text-center mt-4">
+                  You can always complete profiles later from the "Who's Going" section
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         </ResponsiveTripDetails>
         
         {/* Add Traveler Modal */}
@@ -7780,6 +8809,87 @@ const FamApp = () => {
           </div>
         </div>
       )}
+
+      {/* Collaboration Manager Modal */}
+      {showCollaboration && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Trip Collaboration</h2>
+                <p className="text-gray-600">Manage family members and trip sharing</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowCollaboration(false)}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            
+            <div className="p-6">
+              {activeRealtimeCollaboration && !activeRealtimeCollaboration.isLoading ? (
+                <FamilyMemberManager
+                  tripId={getTripId(tripData)}
+                  tripTitle={`${tripData.city}, ${tripData.country}` || 'Your Trip'}
+                  ownerId={activeRealtimeCollaboration.collaborators.find(c => c.role === 'owner')?.userId || currentUser.uid}
+                  currentUserEmail={currentUser.uid}
+                  currentUserName={currentUser.name}
+                  collaborators={activeRealtimeCollaboration.collaborators}
+                  pendingInvites={[]} // TODO: Add real invite management
+                  onRemoveCollaborator={async (userId) => {
+                    try {
+                      await activeRealtimeCollaboration.removeCollaborator(userId);
+                    } catch (error) {
+                      console.error('Failed to remove collaborator:', error);
+                    }
+                  }}
+                  onCancelInvite={(inviteId) => {
+                    console.log('Cancel invite:', inviteId);
+                    // TODO: Implement invite cancellation
+                  }}
+                  onOpenInviteModal={() => {
+                    setShowCollaboration(false);
+                    setShowInviteModal(true);
+                  }}
+                />
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-lg text-gray-600 mb-4">Loading collaboration...</div>
+                  <Button onClick={() => {
+                    const collabTrip = collaborationService.createCollaborativeTrip(
+                      tripData,
+                      currentUser.email,
+                      currentUser.name
+                    );
+                    setCollaborativeTrip(collabTrip);
+                  }}>
+                    Retry
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Modal */}
+      {showInviteModal && activeRealtimeCollaboration && (
+        <InviteModal
+          isOpen={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          tripId={getTripId(tripData)}
+          tripTitle={`${tripData.city}, ${tripData.country}` || 'Your Trip'}
+          userEmail={currentUser.uid}
+          userName={currentUser.name}
+          onInviteSent={async (email: string, role: 'collaborator' | 'viewer', message?: string) => {
+            try {
+              await activeRealtimeCollaboration.inviteUser(email, role, message);
+              setShowInviteModal(false);
+            } catch (error) {
+              console.error('Failed to send invite:', error);
+              throw error;
+            }
+          }}
+        />
+      )}
       </>
     );
   }
@@ -7823,17 +8933,19 @@ const FamApp = () => {
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             {currentStep === 0 ? "Let's plan your family trip" :
              currentStep === 1 ? "Who's coming along?" :
-             currentStep === 2 ? "What's your family's travel style?" :
-             currentStep === 3 ? "What matters most to your family?" :
-             currentStep === 4 ? "How much are you planning to spend?" :
+             currentStep === 2 ? "What's the main purpose of this trip?" :
+             currentStep === 3 ? "What's your family's travel style?" :
+             currentStep === 4 ? "What matters most to your family?" :
+             currentStep === 5 ? "How much are you planning to spend?" :
              "Almost done!"}
           </h2>
           <p className="text-lg text-gray-600">
             {currentStep === 0 ? "Stop being the human travel database. Let AI help coordinate your trip." :
              currentStep === 1 ? "Just the basics - I'll learn more about your family later" :
-             currentStep === 2 ? "This helps me suggest activities that actually work for your crew" :
-             currentStep === 3 ? "Help me understand your priorities and concerns for the trip" :
-             currentStep === 4 ? "We'll suggest activities and experiences that fit your family's budget" :
+             currentStep === 2 ? "This completely changes what I recommend - Disney trips vs weddings vs business" :
+             currentStep === 3 ? "This helps me suggest activities that actually work for your crew" :
+             currentStep === 4 ? "Help me understand your priorities and concerns for the trip" :
+             currentStep === 5 ? "We'll suggest activities and experiences that fit your family's budget" :
              "Your family trip coordinator is ready to help!"}
           </p>
         </div>
@@ -7841,13 +8953,14 @@ const FamApp = () => {
         {/* Render current step */}
         {currentStep === 0 && <DestinationStep tripData={tripData} setTripData={setTripData} validationErrors={validationErrors} />}
         {currentStep === 1 && <FamilyProfilesStep tripData={tripData} setTripData={setTripData} validationErrors={validationErrors} />}
-        {currentStep === 2 && <TravelStyleStep tripData={tripData} setTripData={setTripData} />}
-        {currentStep === 3 && <ConcernsStep tripData={tripData} setTripData={setTripData} />}
-        {currentStep === 4 && <BudgetStep tripData={tripData} setTripData={setTripData} />}
-        {currentStep === 5 && <CompletionStep tripData={tripData} onTripComplete={handleTripComplete} />}
+        {currentStep === 2 && <TripPurposeStep tripData={tripData} setTripData={setTripData} />}
+        {currentStep === 3 && <TravelStyleStep tripData={tripData} setTripData={setTripData} />}
+        {currentStep === 4 && <ConcernsStep tripData={tripData} setTripData={setTripData} />}
+        {currentStep === 5 && <BudgetStep tripData={tripData} setTripData={setTripData} />}
+        {currentStep === 6 && <CompletionStep tripData={tripData} onTripComplete={handleTripComplete} />}
 
         {/* Navigation buttons */}
-        {currentStep !== 5 && (
+        {currentStep !== 6 && (
           <div className="flex justify-between mt-8">
             <Button 
               variant="outline" 
@@ -7875,8 +8988,10 @@ const FamApp = () => {
             ) : null}
           </div>
         )}
+
       </div>
     </div>
+
     </>
   );
 };

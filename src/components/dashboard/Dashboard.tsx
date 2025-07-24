@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   MapPin, Calendar, Users, Plus, Star, Clock, 
   Plane, CheckCircle, ArrowRight, X, Edit,
-  Zap, AlertTriangle, Sparkles
+  Zap, AlertTriangle, Sparkles, Heart, Target
 } from 'lucide-react';
 
 import { 
@@ -18,6 +18,7 @@ import {
   ActivityItem, 
   Reminder 
 } from '../../types';
+import { ProfileGamification } from '../gamification/ProfileGamification';
 
 interface DashboardProps {
   user: any;
@@ -632,6 +633,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </CardContent>
               </Card>
             </div>
+
+            {/* Simple Benefits Card for New Users */}
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Heart className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Better recommendations for your family</h3>
+                  <p className="text-gray-600">
+                    The more we know about your family's ages, interests, and needs, the better suggestions we can give you for activities, restaurants, and logistics.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
@@ -713,6 +729,155 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div className="text-sm text-gray-500">{activeTrips.length} active trip{activeTrips.length !== 1 ? 's' : ''}</div>
               </div>
 
+              {/* Contextual Family Profile Completion Prompts */}
+              {(() => {
+                // Calculate profile completeness for contextual prompts
+                const calculateProfileCompleteness = (profile: FamilyMember): number => {
+                  const essentialFields = ['name', 'age', 'relationship'];
+                  const detailedFields = ['interests', 'dietaryInfo', 'healthInfo', 'energyLevel', 'activityPreferences', 'sleepSchedule'];
+                  
+                  let score = 0;
+                  let maxScore = 0;
+                  
+                  essentialFields.forEach(field => {
+                    maxScore += 60;
+                    if (profile[field as keyof FamilyMember] && profile[field as keyof FamilyMember] !== '') {
+                      score += 60;
+                    }
+                  });
+                  
+                  const detailedWeight = 40 / detailedFields.length;
+                  detailedFields.forEach(field => {
+                    maxScore += detailedWeight;
+                    const value = profile[field as keyof FamilyMember];
+                    if (value && value !== '' && (Array.isArray(value) ? value.length > 0 : true)) {
+                      score += detailedWeight;
+                    }
+                  });
+                  
+                  return Math.round((score / maxScore) * 100);
+                };
+
+                const incompleteProfiles = familyProfiles.filter(profile => calculateProfileCompleteness(profile) < 70);
+                const overallCompleteness = familyProfiles.length > 0 
+                  ? Math.round(familyProfiles.reduce((sum, profile) => sum + calculateProfileCompleteness(profile), 0) / familyProfiles.length)
+                  : 0;
+
+                // Show contextual prompts based on different scenarios
+                if (familyProfiles.length === 0 && activeTrips.length > 0) {
+                  // User has trips but no family profiles
+                  return (
+                    <Card className="border-2 border-dashed border-blue-200 bg-blue-50">
+                      <CardContent className="p-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                            <UserPlus className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 mb-1">Create Family Profiles for Better Recommendations</h3>
+                            <p className="text-gray-600 text-sm mb-3">
+                              Add family members to get personalized activity suggestions, dining recommendations, and travel tips tailored to your family's ages and interests.
+                            </p>
+                            <Button 
+                              size="sm" 
+                              onClick={() => setShowFamilyProfiles(true)}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Create Family Profiles
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                } else if (incompleteProfiles.length > 0 && incompleteProfiles.length <= 2) {
+                  // User has some incomplete profiles (1-2 people)
+                  return (
+                    <Card className="border-l-4 border-orange-400 bg-orange-50">
+                      <CardContent className="p-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                            <Target className="w-5 h-5 text-orange-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 mb-1">Complete {incompleteProfiles[0].name}'s Profile</h3>
+                            <p className="text-gray-600 text-sm mb-3">
+                              Add interests, dietary preferences, and activity levels to unlock personalized recommendations for your trips.
+                            </p>
+                            <div className="flex items-center space-x-3">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => setShowFamilyProfiles(true)}
+                                className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                              >
+                                Complete Profile
+                              </Button>
+                              <span className="text-xs text-orange-600">
+                                {calculateProfileCompleteness(incompleteProfiles[0])}% complete
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                } else if (incompleteProfiles.length > 2) {
+                  // User has many incomplete profiles
+                  return (
+                    <Card className="border-l-4 border-amber-400 bg-amber-50">
+                      <CardContent className="p-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                            <AlertTriangle className="w-5 h-5 text-amber-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 mb-1">Complete Your Family Profiles</h3>
+                            <p className="text-gray-600 text-sm mb-3">
+                              {incompleteProfiles.length} family members need complete profiles to unlock personalized trip recommendations.
+                            </p>
+                            <div className="flex items-center space-x-3">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => setShowFamilyProfiles(true)}
+                                className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                              >
+                                Complete Profiles
+                              </Button>
+                              <span className="text-xs text-amber-600">
+                                {overallCompleteness}% family completion
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                } else if (overallCompleteness >= 70 && activeTrips.length > 0) {
+                  // Profiles are complete - show achievement
+                  return (
+                    <Card className="border-l-4 border-green-400 bg-green-50">
+                      <CardContent className="p-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 mb-1">✨ Personalized Recommendations Unlocked!</h3>
+                            <p className="text-gray-600 text-sm">
+                              Your family profiles are complete. Check your trip overviews for personalized activity and dining suggestions.
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                }
+                
+                return null;
+              })()}
+
               {/* Active Trips */}
               <div className="space-y-4">
                 {activeTrips.map((trip) => (
@@ -723,6 +888,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   />
                 ))}
               </div>
+
+              {/* Profile Progress Section */}
+              {familyProfiles.length > 0 && (
+                <div className="mt-8">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Family Information</h2>
+                  <ProfileGamification
+                    familyProfiles={familyProfiles}
+                    onOpenFamilyProfiles={() => setShowFamilyProfiles(true)}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

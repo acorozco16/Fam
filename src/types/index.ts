@@ -44,10 +44,63 @@ export interface Activity {
   category?: string;
 }
 
+// Collaboration Types
+export interface TripCollaborator {
+  userId: string;
+  email: string;
+  name: string;
+  role: 'owner' | 'collaborator' | 'viewer';
+  joinedAt: string;
+  lastActive?: string;
+  avatar?: string;
+  permissions?: TripPermissions;
+}
+
+export interface TripInvite {
+  id: string;
+  tripId: string;
+  inviterEmail: string;
+  inviterName: string;
+  inviteeEmail: string;
+  role: 'collaborator' | 'viewer';
+  token: string;
+  status: 'pending' | 'accepted' | 'declined' | 'expired';
+  createdAt: string;
+  expiresAt: string;
+  message?: string; // Optional personal message
+}
+
+export interface TripPermissions {
+  canEdit: boolean;
+  canInvite: boolean;
+  canDelete: boolean;
+  canManageTasks: boolean;
+  canBookActivities: boolean;
+  canViewBudget: boolean;
+  canManageFamily: boolean;
+}
+
 export interface TripCollaboration {
   activeCollaborators: number;
   pendingInvites: number;
   contributors: FamilyMember[];
+  // Enhanced collaboration data
+  collaborators: TripCollaborator[];
+  invites: TripInvite[];
+  lastModified: string;
+  modifiedBy: string;
+}
+
+// Collaborative Trip - extends TripData with collaboration features
+export interface CollaborativeTrip extends TripData {
+  ownerId: string;
+  collaborators: TripCollaborator[];
+  permissions: { [userId: string]: TripPermissions };
+  invites: TripInvite[];
+  lastModified: string;
+  modifiedBy: string;
+  isShared: boolean;
+  shareCode?: string; // For easy sharing
 }
 
 export interface EnhancedTrip {
@@ -93,7 +146,7 @@ export interface TripData {
   additionalNotes?: string;
   accommodations?: any[];
   hotels?: any[]; // Keep for backward compatibility
-  customPackingItems?: { [listIndex: number]: string[] };
+  customPackingItems?: { [listIndex: number]: Array<{ id: string; text: string; checked: boolean }> };
   packingLists?: { [listIndex: number]: { items: { [itemIndex: number]: { checked: boolean } } } };
   customReadinessItems?: Array<{
     id: string;
@@ -105,6 +158,28 @@ export interface TripData {
     isCustom: boolean;
   }>;
   hiddenReadinessItems?: string[];
+  // New dietary preferences fields
+  optInDietary?: boolean;
+  dietaryPreferences?: string[];
+  // Trip purpose field
+  tripPurpose?: string;
+}
+
+export interface TripTip {
+  id: string;
+  title: string;
+  description: string;
+  category: 'attraction' | 'restaurant' | 'transport' | 'cultural';
+  ageRecommendation?: string;
+  estimatedDuration?: string;
+  cost?: string;
+  canAddToItinerary: boolean;
+  itineraryTemplate?: {
+    name: string;
+    location?: string;
+    estimatedDuration: string;
+    category: string;
+  };
 }
 
 export interface ActivityItem {
@@ -184,7 +259,7 @@ export type TripStatus = 'Planning' | 'Early Planning' | 'Ready' | 'In Progress'
 // Activity Status Types
 export type ActivityStatus = 'Booked' | 'Planned' | 'Suggested';
 
-// Readiness Item Types
+// Readiness Item Types with Task Assignment
 export interface ReadinessItem {
   id: string;
   title: string;
@@ -193,4 +268,48 @@ export interface ReadinessItem {
   status: 'complete' | 'incomplete';
   urgent?: boolean;
   isCustom: boolean;
+  priority?: 'high' | 'medium' | 'low';
+  daysBeforeTrip?: number;
+  intelligence?: {
+    reasoning: string;
+    source: string;
+  };
+  // Task assignment fields
+  assignedTo?: string; // User ID or email of assigned family member
+  assignedBy?: string; // Who assigned this task
+  assignedAt?: string; // When task was assigned
+  completedBy?: string; // Who completed the task
+  completedAt?: string; // When task was completed
+  comments?: TaskComment[]; // Family member comments on task
+}
+
+export interface TaskComment {
+  id: string;
+  taskId: string;
+  authorId: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
+}
+
+// User/Auth Types for Collaboration
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  createdAt: string;
+  lastActive?: string;
+}
+
+// Collaboration Events for Real-time Updates
+export interface CollaborationEvent {
+  id: string;
+  tripId: string;
+  userId: string;
+  userName: string;
+  type: 'task_completed' | 'task_assigned' | 'trip_edited' | 'member_joined' | 'comment_added';
+  details: string;
+  timestamp: string;
+  metadata?: Record<string, any>;
 }

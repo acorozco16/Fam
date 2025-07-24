@@ -7,19 +7,37 @@ import {
   CheckCircle, AlertTriangle, Edit3, Trash2,
   Plane, Hotel, Car, Activity, Coffee, Building,
   TreePine, Baby, Play, Utensils, Camera, 
-  Home, Compass, Phone
+  Home, Compass, Phone, Sparkles, User
 } from 'lucide-react';
+
+interface FamilyMember {
+  id: string;
+  name: string;
+  type: 'adult' | 'child';
+  age?: string;
+  relationship?: string;
+  interests?: string;
+  dietaryInfo?: string;
+  healthInfo?: string;
+  energyLevel?: string[];
+  activityPreferences?: string[];
+  sleepSchedule?: string;
+}
 
 interface MobileItineraryProps {
   trip: any;
   onAddActivity: () => void;
   onEditActivity: (activity: any) => void;
+  familyProfiles?: FamilyMember[];
+  onOpenFamilyProfiles?: () => void;
 }
 
 export const MobileItinerary: React.FC<MobileItineraryProps> = ({ 
   trip, 
   onAddActivity, 
-  onEditActivity 
+  onEditActivity,
+  familyProfiles = [],
+  onOpenFamilyProfiles
 }) => {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
@@ -135,6 +153,54 @@ export const MobileItinerary: React.FC<MobileItineraryProps> = ({
     return itineraryItemsByDate;
   };
 
+  // Profile completeness calculation
+  const calculateProfileCompleteness = (profile: FamilyMember): number => {
+    const essentialFields = ['name', 'age', 'relationship'];
+    const detailedFields = ['interests', 'dietaryInfo', 'healthInfo', 'energyLevel', 'activityPreferences', 'sleepSchedule'];
+    
+    let score = 0;
+    let maxScore = 0;
+    
+    // Essential fields (60% weight)
+    essentialFields.forEach(field => {
+      maxScore += 60;
+      if (profile[field as keyof FamilyMember] && profile[field as keyof FamilyMember] !== '') {
+        score += 60;
+      }
+    });
+    
+    // Detailed fields (40% weight)
+    detailedFields.forEach(field => {
+      maxScore += 40;
+      const value = profile[field as keyof FamilyMember];
+      if (value && (Array.isArray(value) ? value.length > 0 : value !== '')) {
+        score += 40;
+      }
+    });
+    
+    return Math.round((score / maxScore) * 100);
+  };
+
+  const getProfileCompleteness = () => {
+    if (familyProfiles.length === 0) {
+      return { percentage: 0, canUnlockPersonalization: false, incompleteCount: 0 };
+    }
+    
+    const completenessScores = familyProfiles.map(calculateProfileCompleteness);
+    const averageCompleteness = Math.round(
+      completenessScores.reduce((sum, score) => sum + score, 0) / completenessScores.length
+    );
+    const incompleteCount = completenessScores.filter(score => score < 70).length;
+    
+    return {
+      percentage: averageCompleteness,
+      canUnlockPersonalization: averageCompleteness >= 70,
+      incompleteCount
+    };
+  };
+
+  const profileCompleteness = getProfileCompleteness();
+
   const allTripDates = getAllTripDates();
   const itineraryItemsByDate = getItineraryItemsByDate();
   const totalItems = Object.values(itineraryItemsByDate).flat().length;
@@ -211,6 +277,45 @@ export const MobileItinerary: React.FC<MobileItineraryProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Profile Completion Prompt */}
+      {!profileCompleteness.canUnlockPersonalization && (
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-blue-200 px-4 py-4">
+          <div className="flex items-start space-x-3">
+            <div className="p-2 bg-blue-100 rounded-full">
+              <Sparkles className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-blue-900 mb-1">
+                Get Personalized Activity Recommendations
+              </h3>
+              <p className="text-xs text-blue-700 mb-3">
+                Complete family profiles to unlock AI-powered activity suggestions tailored to your family's interests, energy levels, and preferences.
+              </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-xs text-blue-600">
+                  <User className="w-4 h-4" />
+                  <span>{profileCompleteness.percentage}% complete</span>
+                  {profileCompleteness.incompleteCount > 0 && (
+                    <span className="text-blue-500">
+                      • {profileCompleteness.incompleteCount} profiles need completion
+                    </span>
+                  )}
+                </div>
+                {onOpenFamilyProfiles && (
+                  <Button 
+                    onClick={onOpenFamilyProfiles}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs"
+                  >
+                    Complete Profiles
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Day Selector */}
       {allTripDates.length > 0 && (

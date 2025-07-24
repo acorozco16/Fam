@@ -11,10 +11,50 @@ import {
   MapPin, Calendar, Users, Plus, Trash2, Star, 
   Plane, Hotel, Car, Sparkles, Heart, Compass, DollarSign, 
   Shield, Stethoscope, User, UserCheck, Baby,
-  ArrowRight, ArrowLeft, Check, CheckCircle, AlertCircle
+  ArrowRight, ArrowLeft, Check, CheckCircle, AlertCircle, Utensils
 } from 'lucide-react';
 
 import { TripData, FamilyMember, WizardStep } from '../../types';
+
+// Trip Purpose Options
+const tripPurposes = [
+  { 
+    id: 'family-vacation',
+    title: 'Family Vacation & Sightseeing',
+    subtitle: 'Exploring attractions, culture, and family activities',
+    icon: '🏖️'
+  },
+  {
+    id: 'theme-parks', 
+    title: 'Theme Parks & Entertainment',
+    subtitle: 'Disney, Universal, or other major theme parks',
+    icon: '🎢'
+  },
+  {
+    id: 'visiting-family',
+    title: 'Visiting Family & Friends',  
+    subtitle: 'Staying with locals, family gatherings',
+    icon: '👨‍👩‍👧‍👦'
+  },
+  {
+    id: 'special-event',
+    title: 'Wedding, Celebration, or Event',
+    subtitle: 'Trip organized around a specific event',
+    icon: '🎉'
+  },
+  {
+    id: 'business-family',
+    title: 'Business Trip + Family Extension',
+    subtitle: 'Work trip extended for family time',
+    icon: '💼'
+  },
+  {
+    id: 'other',
+    title: 'Other Purpose',
+    subtitle: 'Something else not listed above',
+    icon: '✨'
+  }
+];
 
 interface TripWizardProps {
   onTripComplete: (tripData: TripData) => void;
@@ -301,6 +341,49 @@ const FamilyProfilesStep: React.FC<{
   );
 };
 
+const TripPurposeStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<React.SetStateAction<TripData>> }> = ({ tripData, setTripData }) => {
+  return (
+    <div className="max-w-3xl mx-auto">
+      <Card>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {tripPurposes.map((purpose) => (
+              <div key={purpose.id} className="relative">
+                <input
+                  type="radio"
+                  id={purpose.id}
+                  name="tripPurpose"
+                  value={purpose.id}
+                  checked={tripData.tripPurpose === purpose.id}
+                  onChange={(e) => setTripData(prev => ({ ...prev, tripPurpose: e.target.value }))}
+                  className="sr-only peer"
+                />
+                <label
+                  htmlFor={purpose.id}
+                  className="flex flex-col p-4 border rounded-lg cursor-pointer hover:bg-gray-50 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-200 transition-all"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-2xl">{purpose.icon}</span>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">{purpose.title}</div>
+                      <div className="text-sm text-gray-600">{purpose.subtitle}</div>
+                    </div>
+                    <div className="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-blue-500 peer-checked:bg-blue-500 relative">
+                      {tripData.tripPurpose === purpose.id && (
+                        <div className="absolute inset-1 bg-white rounded-full"></div>
+                      )}
+                    </div>
+                  </div>
+                </label>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 const TravelStyleStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<React.SetStateAction<TripData>> }> = ({ tripData, setTripData }) => {
   const travelStyles = [
     {
@@ -375,6 +458,8 @@ const TravelStyleStep: React.FC<{ tripData: TripData; setTripData: React.Dispatc
 const ConcernsStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<React.SetStateAction<TripData>> }> = ({ tripData, setTripData }) => {
   const [selectedConcerns, setSelectedConcerns] = useState<string[]>(tripData.concerns || []);
   const [additionalNotes, setAdditionalNotes] = useState(tripData.additionalNotes || '');
+  const [optInDietary, setOptInDietary] = useState(tripData.optInDietary || false);
+  const [dietaryPreferences, setDietaryPreferences] = useState<string[]>(tripData.dietaryPreferences || []);
 
   const concernCategories = [
     {
@@ -419,6 +504,32 @@ const ConcernsStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<R
     setTripData(prev => ({ ...prev, concerns: updatedConcerns }));
   };
 
+  const dietaryOptions = [
+    'Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free', 
+    'Nut allergies', 'Seafood allergies', 'Halal', 'Kosher',
+    'Low-sodium', 'Diabetic-friendly'
+  ];
+
+  const toggleDietaryPreference = (preference: string) => {
+    const updated = dietaryPreferences.includes(preference)
+      ? dietaryPreferences.filter(p => p !== preference)
+      : [...dietaryPreferences, preference];
+    
+    setDietaryPreferences(updated);
+    setTripData(prev => ({ ...prev, dietaryPreferences: updated }));
+  };
+
+  const handleOptInDietary = (checked: boolean) => {
+    setOptInDietary(checked);
+    if (!checked) {
+      // Clear dietary preferences if opting out
+      setDietaryPreferences([]);
+      setTripData(prev => ({ ...prev, optInDietary: false, dietaryPreferences: [] }));
+    } else {
+      setTripData(prev => ({ ...prev, optInDietary: true }));
+    }
+  };
+
   useEffect(() => {
     setTripData(prev => ({ ...prev, additionalNotes }));
   }, [additionalNotes, setTripData]);
@@ -456,6 +567,73 @@ const ConcernsStep: React.FC<{ tripData: TripData; setTripData: React.Dispatch<R
           </CardContent>
         </Card>
       ))}
+
+      {/* Dietary Preferences Opt-in Section */}
+      <Card className="border-2 border-blue-100 bg-blue-50/30">
+        <CardHeader className="pb-4">
+          <div className="flex items-start space-x-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100">
+              <Utensils className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <CardTitle className="text-lg flex items-center gap-2">
+                Dietary Preferences 
+                <Badge variant="secondary" className="text-xs">Optional</Badge>
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Help us suggest restaurants and food experiences that work for your family
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Opt-in Checkbox */}
+            <div className="flex items-start space-x-3 p-4 bg-white rounded-lg border">
+              <Checkbox
+                id="opt-in-dietary"
+                checked={optInDietary}
+                onCheckedChange={handleOptInDietary}
+              />
+              <div className="flex-1">
+                <Label htmlFor="opt-in-dietary" className="font-medium cursor-pointer">
+                  Yes, help me find suitable dining options
+                </Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  This information stays on your device and helps us suggest family-friendly restaurants.
+                  You can change this anytime.
+                </p>
+              </div>
+            </div>
+
+            {/* Dietary Options (only show if opted in) */}
+            {optInDietary && (
+              <div className="space-y-3">
+                <h4 className="font-medium text-gray-900">Select any that apply to your family:</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {dietaryOptions.map(option => (
+                    <div key={option} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`dietary-${option}`}
+                        checked={dietaryPreferences.includes(option)}
+                        onCheckedChange={() => toggleDietaryPreference(option)}
+                      />
+                      <Label htmlFor={`dietary-${option}`} className="text-sm cursor-pointer">
+                        {option}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-xs text-gray-500 mt-3 p-3 bg-gray-50 rounded">
+                  <Shield className="w-4 h-4 inline mr-1" />
+                  Privacy Note: This information is stored locally on your device to improve trip suggestions. 
+                  We never share personal dietary information.
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -620,6 +798,7 @@ export const TripWizard: React.FC<TripWizardProps> = ({
   const steps = [
     { title: 'Destination' },
     { title: 'Family' },
+    { title: 'Purpose' },
     { title: 'Style' },
     { title: 'Concerns' },
     { title: 'Budget' },
@@ -794,17 +973,19 @@ export const TripWizard: React.FC<TripWizardProps> = ({
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             {currentStep === 0 ? "Let's plan your family trip" :
              currentStep === 1 ? "Who's coming along?" :
-             currentStep === 2 ? "What's your family's travel style?" :
-             currentStep === 3 ? "What matters most to your family?" :
-             currentStep === 4 ? "How much are you planning to spend?" :
+             currentStep === 2 ? "What's the main purpose of this trip?" :
+             currentStep === 3 ? "What's your family's travel style?" :
+             currentStep === 4 ? "What matters most to your family?" :
+             currentStep === 5 ? "How much are you planning to spend?" :
              "Almost done!"}
           </h2>
           <p className="text-lg text-gray-600">
             {currentStep === 0 ? "Stop being the human travel database. Let AI help coordinate your trip." :
              currentStep === 1 ? "Just the basics - I'll learn more about your family later" :
-             currentStep === 2 ? "This helps me suggest activities that actually work for your crew" :
-             currentStep === 3 ? "Help me understand your priorities and concerns for the trip" :
-             currentStep === 4 ? "We'll suggest activities and experiences that fit your family's budget" :
+             currentStep === 2 ? "This completely changes what I recommend - Disney trips vs weddings vs business" :
+             currentStep === 3 ? "This helps me suggest activities that actually work for your crew" :
+             currentStep === 4 ? "Help me understand your priorities and concerns for the trip" :
+             currentStep === 5 ? "We'll suggest activities and experiences that fit your family's budget" :
              "Your family trip coordinator is ready to help!"}
           </p>
         </div>
@@ -812,13 +993,14 @@ export const TripWizard: React.FC<TripWizardProps> = ({
         {/* Render current step */}
         {currentStep === 0 && <DestinationStep tripData={tripData} setTripData={setTripData} validationErrors={validationErrors} />}
         {currentStep === 1 && <FamilyProfilesStep tripData={tripData} setTripData={setTripData} validationErrors={validationErrors} />}
-        {currentStep === 2 && <TravelStyleStep tripData={tripData} setTripData={setTripData} />}
-        {currentStep === 3 && <ConcernsStep tripData={tripData} setTripData={setTripData} />}
-        {currentStep === 4 && <BudgetStep tripData={tripData} setTripData={setTripData} />}
-        {currentStep === 5 && <CompletionStep tripData={tripData} onTripComplete={handleTripComplete} />}
+        {currentStep === 2 && <TripPurposeStep tripData={tripData} setTripData={setTripData} />}
+        {currentStep === 3 && <TravelStyleStep tripData={tripData} setTripData={setTripData} />}
+        {currentStep === 4 && <ConcernsStep tripData={tripData} setTripData={setTripData} />}
+        {currentStep === 5 && <BudgetStep tripData={tripData} setTripData={setTripData} />}
+        {currentStep === 6 && <CompletionStep tripData={tripData} onTripComplete={handleTripComplete} />}
 
         {/* Navigation buttons */}
-        {currentStep !== 5 && (
+        {currentStep !== 6 && (
           <div className="flex justify-between mt-8">
             <Button 
               variant="outline" 

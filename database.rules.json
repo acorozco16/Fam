@@ -1,0 +1,33 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    
+    "presence": {
+      "$tripId": {
+        "$userId": {
+          ".read": "auth != null && (auth.uid == $userId || root.child('trips').child($tripId).child('userId').val() == auth.uid)",
+          ".write": "auth != null && auth.uid == $userId",
+          ".validate": "newData.hasChildren(['status', 'lastSeen']) && newData.child('status').isString() && newData.child('lastSeen').isNumber()"
+        }
+      }
+    },
+    
+    "typing": {
+      "$tripId": {
+        "$userId": {
+          ".read": "auth != null && (auth.uid == $userId || root.child('trips').child($tripId).child('userId').val() == auth.uid)",
+          ".write": "auth != null && auth.uid == $userId",
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+    
+    "connections": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    }
+  }
+}

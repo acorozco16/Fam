@@ -1,0 +1,47 @@
+rules_version = '2';
+
+// Cloud Storage Security Rules for FamApp
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // User profile images
+    match /users/{userId}/profile/{fileName} {
+      // Users can only read/write their own profile images
+      allow read, write: if isOwner(userId) && 
+                        fileName.matches('.*\\.(jpg|jpeg|png|webp)$') &&
+                        request.resource.size < 5 * 1024 * 1024; // 5MB limit
+    }
+    
+    // Trip-related images (activities, accommodations, etc.)
+    match /trips/{tripId}/images/{fileName} {
+      // Trip owner or collaborators can upload images
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() &&
+                  fileName.matches('.*\\.(jpg|jpeg|png|webp)$') &&
+                  request.resource.size < 10 * 1024 * 1024; // 10MB limit for trip images
+    }
+    
+    // Temporary uploads (for processing)
+    match /temp/{userId}/{fileName} {
+      // Users can upload to their temp folder, but files auto-delete after 24 hours
+      allow read, write: if isOwner(userId) &&
+                        fileName.matches('.*\\.(jpg|jpeg|png|webp|pdf)$') &&
+                        request.resource.size < 10 * 1024 * 1024; // 10MB limit
+    }
+    
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

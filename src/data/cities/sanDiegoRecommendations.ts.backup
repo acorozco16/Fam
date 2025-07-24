@@ -1,0 +1,150 @@
+/**
+ * San Diego Family Travel Intelligence
+ * Zoo, beaches, Legoland nearby, perfect weather
+ */
+
+export function generateSanDiegoTasks(familyProfile: any, daysUntilTrip: number) {
+  const tasks = [];
+  const kids = familyProfile.kids || [];
+  const hasToddler = kids.some((kid: any) => parseInt(kid.age) <= 4);
+  const hasSchoolAge = kids.some((kid: any) => {
+    const age = parseInt(kid.age);
+    return age >= 5 && age <= 12;
+  });
+
+  // San Diego Zoo
+  tasks.push({
+    id: 'san-diego-zoo',
+    title: 'Plan Full Day at San Diego Zoo',
+    subtitle: 'World-famous zoo, arrive early, use guided bus tour to see highlights with kids',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'high',
+    daysBeforeTrip: 21,
+    intelligence: {
+      reasoning: [
+        '🐼 Famous for pandas and massive size',
+        '🚌 Guided bus tour great overview for families',
+        '🌅 Arrive at opening (9am) for cooler weather',
+        '🎪 Kids love the animal shows and presentations'
+      ].join('\n'),
+      source: 'San Diego family attractions'
+    }
+  });
+
+  // Legoland strategy
+  if (hasSchoolAge) {
+    tasks.push({
+      id: 'legoland-california',
+      title: 'Plan Legoland California Day Trip',
+      subtitle: 'Perfect for ages 2-12, in Carlsbad (45 min north), buy tickets online for discount',
+      category: 'planning',
+      status: 'incomplete',
+      urgent: false,
+      isCustom: false,
+      priority: 'high',
+      daysBeforeTrip: 30,
+      intelligence: {
+        reasoning: [
+          '🧱 Designed for ages 2-12 (perfect family park)',
+          '🚗 45 minutes north in Carlsbad',
+          '🎢 Gentler rides than other theme parks',
+          '💰 Online tickets cheaper than gate prices'
+        ].join('\n'),
+        source: 'San Diego family attractions'
+      }
+    });
+  }
+
+  // Beach strategy
+  tasks.push({
+    id: 'san-diego-beaches',
+    title: 'Choose Family-Friendly Beach',
+    subtitle: 'La Jolla Shores: calm water, seals; Mission Beach: boardwalk; Coronado: iconic',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '🏖️ La Jolla Shores: calm water, sea lions nearby',
+        '🎡 Mission Beach: boardwalk, amusement park',
+        '🏨 Coronado Beach: beautiful sand, Hotel del Coronado',
+        '🌊 Pacific Ocean cold year-round - bring wetsuits'
+      ].join('\n'),
+      source: 'San Diego beach intelligence'
+    }
+  });
+
+  // Balboa Park
+  tasks.push({
+    id: 'balboa-park-family',
+    title: 'Plan Balboa Park Museum Day',
+    subtitle: 'Multiple museums, playgrounds, California Building iconic - don\'t try to do everything',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '🏛️ 15+ museums - choose 1-2 max with kids',
+        '🚂 Miniature railroad and carousel',
+        '🏰 California Building iconic architecture',
+        '🌳 Beautiful gardens and multiple playgrounds'
+      ].join('\n'),
+      source: 'San Diego family activities'
+    }
+  });
+
+  // Harbor cruise
+  tasks.push({
+    id: 'san-diego-harbor-cruise',
+    title: 'Book Family Harbor Cruise',
+    subtitle: '1-2 hour cruises, see sea lions, navy ships, beautiful city skyline',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'low',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '⛵ 1-2 hour cruises perfect for families',
+        '🦭 Kids love spotting sea lions',
+        '⚓ See active Navy ships and aircraft carriers',
+        '📸 Beautiful skyline views for photos'
+      ].join('\n'),
+      source: 'San Diego family activities'
+    }
+  });
+
+  // Weather planning
+  tasks.push({
+    id: 'san-diego-weather-clothes',
+    title: 'Pack San Diego Layer Clothes',
+    subtitle: 'Perfect weather but ocean breeze - bring light jackets for evening',
+    category: 'packing',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'low',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '☀️ Perfect weather year-round (65-75°F)',
+        '🌊 Ocean breeze makes evenings cool',
+        '👕 Layers: t-shirts + light jackets',
+        '🕶️ Sunglasses and sunscreen essential'
+      ].join('\n'),
+      source: 'San Diego weather intelligence'
+    }
+  });
+
+  return tasks;
+}

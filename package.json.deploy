@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "deploy:staging": "npm run build && firebase deploy --only hosting:staging",
+    "deploy:production": "npm run build && firebase deploy",
+    "deploy:rules": "firebase deploy --only firestore:rules,database:rules,storage:rules",
+    "deploy:functions": "firebase deploy --only functions",
+    "deploy:indexes": "firebase deploy --only firestore:indexes"
+  }
+}

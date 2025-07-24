@@ -1,0 +1,151 @@
+/**
+ * Amsterdam Family Travel Intelligence
+ * Canals, bikes, English-friendly, very family-oriented
+ */
+
+export function generateAmsterdamTasks(familyProfile: any, daysUntilTrip: number) {
+  const tasks = [];
+  const kids = familyProfile.kids || [];
+  const hasSchoolAge = kids.some((kid: any) => {
+    const age = parseInt(kid.age);
+    return age >= 6 && age <= 12;
+  });
+
+  // Canal cruise with kids
+  tasks.push({
+    id: 'amsterdam-canal-cruise',
+    title: 'Book Family-Friendly Canal Cruise',
+    subtitle: 'Essential Amsterdam experience - choose 1-hour cruise with glass roof for kids',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 21,
+    intelligence: {
+      reasoning: [
+        '🛥️ 1-hour cruises perfect length for kids',
+        '🏠 Kids love spotting narrow canal houses',
+        '☔ Glass roof boats work in any weather',
+        '📱 Many companies offer audio guides in English'
+      ].join('\n'),
+      source: 'Amsterdam family activities'
+    }
+  });
+
+  // Bike rental strategy
+  if (hasSchoolAge) {
+    tasks.push({
+      id: 'amsterdam-bike-rental',
+      title: 'Plan Family Bike Rental and Routes',
+      subtitle: 'Rent cargo bikes or tag-alongs, stick to Vondelpark and quiet neighborhoods',
+      category: 'planning',
+      status: 'incomplete',
+      urgent: false,
+      isCustom: false,
+      priority: 'medium',
+      daysBeforeTrip: 14,
+      intelligence: {
+        reasoning: [
+          '🚲 Cargo bikes perfect for families with small kids',
+          '🏞️ Vondelpark has safe, car-free bike paths',
+          '⚠️ Avoid busy city center with kids - too chaotic',
+          '🔒 Always rent with good locks - bike theft common'
+        ].join('\n'),
+        source: 'Amsterdam cycling intelligence'
+      }
+    });
+  }
+
+  // Vondelpark playground
+  tasks.push({
+    id: 'vondelpark-playground',
+    title: 'Plan Vondelpark Playground Visit',
+    subtitle: 'Multiple playgrounds, open-air theater, perfect for family picnics',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '🏞️ Amsterdam\'s Central Park with multiple playgrounds',
+        '🎭 Free open-air theater performances in summer',
+        '🧺 Perfect for family picnics',
+        '☕ Cafés throughout the park for parents'
+      ].join('\n'),
+      source: 'Amsterdam family activities'
+    }
+  });
+
+  // Anne Frank House
+  if (hasSchoolAge) {
+    tasks.push({
+      id: 'anne-frank-house',
+      title: 'Book Anne Frank House (Book 2 Months Ahead)',
+      subtitle: 'Moving experience for kids 8+ who understand WWII history',
+      category: 'planning',
+      status: 'incomplete',
+      urgent: daysUntilTrip <= 60,
+      isCustom: false,
+      priority: 'medium',
+      daysBeforeTrip: 60,
+      intelligence: {
+        reasoning: [
+          '📚 Appropriate for kids 8+ who understand WWII',
+          '🎫 Must book online exactly 2 months ahead',
+          '📱 Audio guide helps kids understand story',
+          '⏰ Plan 2-3 hours including queue time'
+        ].join('\n'),
+        source: 'Amsterdam cultural sites'
+      }
+    });
+  }
+
+  // Rijksmuseum family tour
+  tasks.push({
+    id: 'rijksmuseum-family',
+    title: 'Book Rijksmuseum Family Tour or Treasure Hunt',
+    subtitle: 'Special kids activities make art museum engaging for families',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'low',
+    daysBeforeTrip: 21,
+    intelligence: {
+      reasoning: [
+        '🎨 Family tours designed for kids 6-12',
+        '🗺️ Treasure hunt activities keep kids engaged',
+        '🖼️ Focus on famous Dutch paintings kids can relate to',
+        '⏰ 1.5 hour tours perfect length for families'
+      ].join('\n'),
+      source: 'Amsterdam museum intelligence'
+    }
+  });
+
+  // Stroopwafel hunting
+  tasks.push({
+    id: 'stroopwafel-hunt',
+    title: 'Plan Stroopwafel Tasting Tour',
+    subtitle: 'Traditional Dutch treat - kids love warm stroopwafels from street vendors',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'low',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '🧇 Traditional Dutch caramel waffle cookie',
+        '🔥 Fresh, warm ones from street vendors are best',
+        '📍 Albert Cuyp Market has famous stroopwafel stands',
+        '☕ Place on top of hot coffee to warm the caramel'
+      ].join('\n'),
+      source: 'Amsterdam food culture'
+    }
+  });
+
+  return tasks;
+}

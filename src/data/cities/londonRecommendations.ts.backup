@@ -1,0 +1,149 @@
+/**
+ * London Family Travel Intelligence
+ * English-speaking, family attractions, history kids can touch
+ */
+
+export function generateLondonTasks(familyProfile: any, daysUntilTrip: number) {
+  const tasks = [];
+  const kids = familyProfile.kids || [];
+  const hasSchoolAge = kids.some((kid: any) => {
+    const age = parseInt(kid.age);
+    return age >= 5 && age <= 12;
+  });
+
+  // Tower of London with kids
+  tasks.push({
+    id: 'tower-of-london-strategy',
+    title: 'Book Tower of London Early Entry',
+    subtitle: 'Crown Jewels + Beefeater tours perfect for kids - book 9am slot to beat crowds',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: daysUntilTrip <= 21,
+    isCustom: false,
+    priority: 'high',
+    daysBeforeTrip: 30,
+    intelligence: {
+      reasoning: [
+        '👑 Crown Jewels fascinate kids of all ages',
+        '🛡️ Beefeater tours engaging for families',
+        '🏰 Real castle with real history kids can touch',
+        '⏰ Early entry 9am - crowds arrive after 11am'
+      ].join('\n'),
+      source: 'London family attractions'
+    }
+  });
+
+  // Harry Potter studio tour
+  if (hasSchoolAge) {
+    tasks.push({
+      id: 'harry-potter-studio-tour',
+      title: 'Book Harry Potter Studio Tour (Book 3+ Months Ahead)',
+      subtitle: 'Most popular London family attraction - sells out months in advance',
+      category: 'planning',
+      status: 'incomplete',
+      urgent: daysUntilTrip <= 90,
+      isCustom: false,
+      priority: 'high',
+      daysBeforeTrip: 90,
+      intelligence: {
+        reasoning: [
+          '⚡ Must-book 3+ months ahead - sells out instantly',
+          '🚌 Includes round-trip bus from central London',
+          '🎬 3-4 hours total including travel time',
+          '👨‍👩‍👧‍👦 Perfect for ages 6+ who know the movies'
+        ].join('\n'),
+        source: 'London family attractions'
+      }
+    });
+  }
+
+  // London Eye timing
+  tasks.push({
+    id: 'london-eye-timing',
+    title: 'Book London Eye Sunset Slot',
+    subtitle: 'Skip-the-line essential, sunset timing magical for families',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 21,
+    intelligence: {
+      reasoning: [
+        '🎡 30-minute ride with spectacular city views',
+        '🌅 Sunset slots most magical for photos',
+        '🎫 Skip-the-line tickets essential (saves 1+ hours)',
+        '👶 Great for all ages - enclosed pods, no scary parts'
+      ].join('\n'),
+      source: 'London family attractions'
+    }
+  });
+
+  // Hyde Park playground
+  tasks.push({
+    id: 'hyde-park-playground',
+    title: 'Plan Hyde Park Playground Visit',
+    subtitle: 'Diana Memorial Playground - amazing for kids 2-12, plus Kensington Palace nearby',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '🏰 Peter Pan themed playground with pirate ship',
+        '👸 Near Kensington Palace (Diana\'s home)',
+        '🦆 Serpentine Lake for duck feeding',
+        '☕ Hyde Park cafés for parent coffee breaks'
+      ].join('\n'),
+      source: 'London family activities'
+    }
+  });
+
+  // West End show
+  tasks.push({
+    id: 'west-end-family-show',
+    title: 'Book Family-Friendly West End Show',
+    subtitle: 'Lion King, Frozen, or Matilda - book 2-3 months ahead for good seats',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: daysUntilTrip <= 60,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 60,
+    intelligence: {
+      reasoning: [
+        '🎭 Lion King: Best for all ages, amazing costumes',
+        '❄️ Frozen: Perfect for Disney fans',
+        '📚 Matilda: Great for book-loving kids 6+',
+        '🎟️ Book 2-3 months ahead for reasonable prices'
+      ].join('\n'),
+      source: 'London West End intelligence'
+    }
+  });
+
+  // Underground/tube with kids
+  tasks.push({
+    id: 'london-tube-strategy',
+    title: 'Get Oyster Cards for Family',
+    subtitle: 'Kids under 11 free, contactless payment, much cheaper than individual tickets',
+    category: 'travel',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '🎫 Kids under 11 travel free on all transport',
+        '💳 Oyster cards or contactless much cheaper',
+        '🚇 Tube mostly stroller accessible with lifts',
+        '🚌 Buses great for sightseeing + stroller friendly'
+      ].join('\n'),
+      source: 'London transport intelligence'
+    }
+  });
+
+  return tasks;
+}

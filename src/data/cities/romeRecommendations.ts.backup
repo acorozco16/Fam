@@ -1,0 +1,166 @@
+/**
+ * Rome Family Travel Intelligence
+ * History kids can touch, gelato, overwhelming but magical
+ */
+
+export function generateRomeTasks(familyProfile: any, daysUntilTrip: number) {
+  const tasks = [];
+  const kids = familyProfile.kids || [];
+  const hasToddler = kids.some((kid: any) => parseInt(kid.age) <= 4);
+
+  // Colosseum family strategy
+  tasks.push({
+    id: 'colosseum-family-tour',
+    title: 'Book Colosseum Family Tour with Gladiator Focus',
+    subtitle: 'Skip-the-line essential, gladiator stories captivate kids, underground tours for 8+',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: daysUntilTrip <= 30,
+    isCustom: false,
+    priority: 'high',
+    daysBeforeTrip: 45,
+    intelligence: {
+      reasoning: [
+        '⚔️ Gladiator stories fascinate kids of all ages',
+        '🎫 Skip-the-line tours save 1+ hours in queues',
+        '🕳️ Underground tours for kids 8+ (more dramatic)',
+        '🏛️ Combo tickets include Roman Forum and Palatine Hill'
+      ].join('\n'),
+      source: 'Rome family attractions'
+    }
+  });
+
+  // Vatican with kids strategy
+  tasks.push({
+    id: 'vatican-family-strategy',
+    title: 'Plan Vatican Museums Early Morning Visit',
+    subtitle: 'Overwhelming for young kids - focus on Sistine Chapel, book 8am entry',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: daysUntilTrip <= 45,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 45,
+    intelligence: {
+      reasoning: [
+        '🎨 Skip most galleries - head straight to Sistine Chapel',
+        '🌅 8am early entry before crowds arrive',
+        '👶 Too overwhelming for kids under 6',
+        '👕 Dress code: covered shoulders and knees'
+      ].join('\n'),
+      source: 'Rome family attractions'
+    }
+  });
+
+  // Trevi Fountain timing
+  tasks.push({
+    id: 'trevi-fountain-timing',
+    title: 'Visit Trevi Fountain Early Morning or Evening',
+    subtitle: 'Avoid midday crowds, bring coins for wishes, gelato nearby',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '🪙 Kids love throwing coins and making wishes',
+        '🌅 Best times: 7-8am or after 7pm',
+        '📸 Incredibly crowded midday - impossible photos',
+        '🍨 Giolitti gelato shop 5 minutes walk away'
+      ].join('\n'),
+      source: 'Rome family attractions'
+    }
+  });
+
+  // Gelato education
+  tasks.push({
+    id: 'rome-gelato-hunt',
+    title: 'Research Best Family Gelato Shops',
+    subtitle: 'Giolitti, Fatamorgana, Il Gelato - avoid tourist trap gelaterias',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '🍨 Real gelato: natural colors, covered containers',
+        '🏆 Best: Giolitti (historic), Fatamorgana (creative flavors)',
+        '🚫 Avoid: bright artificial colors, uncovered gelato',
+        '💡 Kids love picking multiple flavors'
+      ].join('\n'),
+      source: 'Rome food culture'
+    }
+  });
+
+  // Walking strategy
+  tasks.push({
+    id: 'rome-walking-strategy',
+    title: 'Plan Rome Walking Strategy for Families',
+    subtitle: 'Cobblestones hard on strollers, comfortable shoes essential, plan rest stops',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'high',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '🚶‍♂️ Rome = lots of walking on uneven cobblestones',
+        '👟 Comfortable walking shoes absolutely essential',
+        '🛒 Strollers difficult on cobblestones',
+        '⛲ Plan rest stops at fountains and piazzas'
+      ].join('\n'),
+      source: 'Rome logistics intelligence'
+    }
+  });
+
+  // Spanish Steps alternative
+  tasks.push({
+    id: 'spanish-steps-alternative',
+    title: 'Skip Spanish Steps During Peak Hours',
+    subtitle: 'Sitting banned, incredibly crowded - visit early morning or find alternative viewpoints',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'low',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '🚫 Sitting on steps now banned (€400 fine)',
+        '👥 Extremely crowded midday - not fun with kids',
+        '🌅 Early morning visits less crowded',
+        '📸 Quick photo stop, don\'t plan long visit'
+      ].join('\n'),
+      source: 'Rome attractions intelligence'
+    }
+  });
+
+  // Trastevere family dinner
+  tasks.push({
+    id: 'trastevere-family-dinner',
+    title: 'Plan Family Dinner in Trastevere',
+    subtitle: 'Charming neighborhood, family-friendly restaurants, kids love the narrow streets',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '🏘️ Charming cobblestone neighborhood',
+        '🍝 Authentic Roman restaurants with kids menus',
+        '🌙 Beautiful evening atmosphere for families',
+        '🚶‍♂️ Easy walk from city center across Tiber'
+      ].join('\n'),
+      source: 'Rome family dining'
+    }
+  });
+
+  return tasks;
+}

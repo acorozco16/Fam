@@ -15,13 +15,15 @@ interface MobilePackingProps {
   onAddPackingItem: (listIndex: number) => void;
   onTogglePackingItem: (listIndex: number, itemIndex: number) => void;
   onDeletePackingItem: (listIndex: number, itemIndex: number) => void;
+  onUpdateTrip?: (updatedTrip: any) => void;
 }
 
 export const MobilePacking: React.FC<MobilePackingProps> = ({ 
   trip, 
   onAddPackingItem,
   onTogglePackingItem,
-  onDeletePackingItem
+  onDeletePackingItem,
+  onUpdateTrip
 }) => {
   const [newItemText, setNewItemText] = useState<{ [key: number]: string }>({});
 
@@ -230,7 +232,7 @@ export const MobilePacking: React.FC<MobilePackingProps> = ({
       }
 
       // International travel with kids
-      if (country && country !== 'united states' && country !== 'usa') {
+      if (trip.country && trip.country.toLowerCase() !== 'united states' && trip.country.toLowerCase() !== 'usa') {
         kidsItems.push('Kids passport copies', 'Emergency contact cards', 
                       'Kids medical info translated');
       }
@@ -322,8 +324,16 @@ export const MobilePacking: React.FC<MobilePackingProps> = ({
       packingList.items[index]?.checked
     ).length;
     
-    // For custom items, assume they're all checked for now (simplified)
-    const checkedItems = checkedGeneratedItems + customItems.length;
+    // Count checked custom items (handle both old string format and new object format)
+    const checkedCustomItems = customItems.filter((item: any) => {
+      if (typeof item === 'string') {
+        return false; // Old string format items are not checked by default
+      } else {
+        return item.checked;
+      }
+    }).length;
+    
+    const checkedItems = checkedGeneratedItems + checkedCustomItems;
     
     return Math.round((checkedItems / totalItems) * 100);
   };
@@ -337,15 +347,78 @@ export const MobilePacking: React.FC<MobilePackingProps> = ({
     const text = newItemText[categoryId]?.trim();
     if (!text) return;
     
-    if (!trip.customPackingItems) {
-      trip.customPackingItems = {};
-    }
-    if (!trip.customPackingItems[categoryId]) {
-      trip.customPackingItems[categoryId] = [];
+    const newItem = {
+      id: `custom-${categoryId}-${Date.now()}`,
+      text,
+      checked: false
+    };
+    
+    if (onUpdateTrip) {
+      const existingItems = trip.customPackingItems?.[categoryId] || [];
+      const updatedTrip = {
+        ...trip,
+        customPackingItems: {
+          ...trip.customPackingItems,
+          [categoryId]: [...existingItems, newItem]
+        }
+      };
+      onUpdateTrip(updatedTrip);
+    } else {
+      // Fallback to direct modification
+      if (!trip.customPackingItems) trip.customPackingItems = {};
+      if (!trip.customPackingItems[categoryId]) trip.customPackingItems[categoryId] = [];
+      trip.customPackingItems[categoryId].push(newItem);
     }
     
-    trip.customPackingItems[categoryId].push(text);
     setNewItemText({ ...newItemText, [categoryId]: '' });
+  };
+
+  const toggleCustomPackingItem = (categoryId: number, itemId: string) => {
+    if (!onUpdateTrip) return;
+
+    const existingItems = trip.customPackingItems?.[categoryId] || [];
+    const updatedItems = existingItems.map((item: any) => {
+      // Handle both old string format and new object format
+      if (typeof item === 'string') {
+        const convertedItem = { id: `custom-${categoryId}-${Date.now()}`, text: item, checked: false };
+        return convertedItem.id === itemId ? { ...convertedItem, checked: !convertedItem.checked } : convertedItem;
+      } else {
+        return item.id === itemId ? { ...item, checked: !item.checked } : item;
+      }
+    });
+
+    const updatedTrip = {
+      ...trip,
+      customPackingItems: {
+        ...trip.customPackingItems,
+        [categoryId]: updatedItems
+      }
+    };
+
+    onUpdateTrip(updatedTrip);
+  };
+
+  const deleteCustomPackingItem = (categoryId: number, itemId: string) => {
+    if (!onUpdateTrip) return;
+
+    const existingItems = trip.customPackingItems?.[categoryId] || [];
+    const updatedItems = existingItems.filter((item: any) => {
+      if (typeof item === 'string') {
+        return `custom-${categoryId}-${item}` !== itemId;
+      } else {
+        return item.id !== itemId;
+      }
+    });
+
+    const updatedTrip = {
+      ...trip,
+      customPackingItems: {
+        ...trip.customPackingItems,
+        [categoryId]: updatedItems
+      }
+    };
+
+    onUpdateTrip(updatedTrip);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent, categoryId: number) => {
@@ -458,20 +531,32 @@ export const MobilePacking: React.FC<MobilePackingProps> = ({
                   })}
 
                   {/* Custom Items */}
-                  {customItems.map((item: string, index: number) => (
-                    <div key={`custom-${index}`} className="flex items-center space-x-3 group">
-                      <Checkbox checked={true} disabled />
-                      <span className="flex-1 text-blue-700 font-medium">{item}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onDeletePackingItem(category.id, category.items.length + index)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
+                  {customItems.map((item: any, index: number) => {
+                    // Handle both old string format and new object format for backward compatibility
+                    const itemData = typeof item === 'string' 
+                      ? { id: `custom-${category.id}-${index}`, text: item, checked: false }
+                      : item;
+                    
+                    return (
+                      <div key={itemData.id} className="flex items-center space-x-3 group">
+                        <Checkbox 
+                          checked={itemData.checked}
+                          onCheckedChange={() => toggleCustomPackingItem(category.id, itemData.id)}
+                        />
+                        <span className={`flex-1 text-blue-700 font-medium ${itemData.checked ? 'line-through text-gray-500' : ''}`}>
+                          {itemData.text}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteCustomPackingItem(category.id, itemData.id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
 
                   {/* Add Custom Item */}
                   <div className="flex items-center space-x-2 pt-2 border-t border-gray-100">
@@ -497,31 +582,8 @@ export const MobilePacking: React.FC<MobilePackingProps> = ({
         })}
       </div>
 
-      {/* Trip Summary */}
-      <div className="p-4 pb-8">
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3 mb-3">
-              <MapPin className="w-5 h-5 text-blue-600" />
-              <h3 className="font-semibold text-blue-900">Trip Summary</h3>
-            </div>
-            <div className="grid grid-cols-3 gap-4 text-center text-sm">
-              <div>
-                <div className="font-semibold text-blue-800">{getTripDuration()}</div>
-                <div className="text-blue-600">Days</div>
-              </div>
-              <div>
-                <div className="font-semibold text-blue-800">{trip.destination || 'Unknown'}</div>
-                <div className="text-blue-600">Destination</div>
-              </div>
-              <div>
-                <div className="font-semibold text-blue-800">{getTripSeason()}</div>
-                <div className="text-blue-600">Season</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Bottom padding for safe area */}
+      <div className="h-8" />
     </div>
   );
 };

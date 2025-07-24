@@ -1,0 +1,144 @@
+/**
+ * Copenhagen Family Travel Intelligence
+ * Tivoli Gardens, very kid-friendly, bikes, hygge culture
+ */
+
+export function generateCopenhagenTasks(familyProfile: any, daysUntilTrip: number) {
+  const tasks = [];
+  const kids = familyProfile.kids || [];
+  const hasToddler = kids.some((kid: any) => parseInt(kid.age) <= 4);
+
+  // Tivoli Gardens
+  tasks.push({
+    id: 'tivoli-gardens-tickets',
+    title: 'Buy Tivoli Gardens Tickets',
+    subtitle: 'World\'s second-oldest amusement park, magical for all ages, in city center',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'high',
+    daysBeforeTrip: 30,
+    intelligence: {
+      reasoning: [
+        '🎠 Historic amusement park (1843) in city center',
+        '🎪 Perfect mix of rides for all ages',
+        '🌹 Beautiful gardens and fairy tale atmosphere',
+        '🎫 Separate admission + ride tickets or unlimited ride pass'
+      ].join('\n'),
+      source: 'Copenhagen family attractions'
+    }
+  });
+
+  // Bike rental with kids
+  tasks.push({
+    id: 'copenhagen-family-bikes',
+    title: 'Rent Family Bikes with Child Seats',
+    subtitle: 'Copenhagen = bike city, cargo bikes or child seats, dedicated bike lanes everywhere',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '🚲 Copenhagen = world\'s most bike-friendly city',
+        '👶 Cargo bikes or child seats available',
+        '🛣️ Dedicated bike lanes separate from cars',
+        '🗺️ Bike to Little Mermaid, parks, attractions'
+      ].join('\n'),
+      source: 'Copenhagen transport intelligence'
+    }
+  });
+
+  // Little Mermaid statue
+  tasks.push({
+    id: 'little-mermaid-statue',
+    title: 'Plan Little Mermaid Statue Visit',
+    subtitle: 'Iconic but smaller than expected - combine with Kastellet park visit',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'low',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '🧜‍♀️ Iconic but surprisingly small statue',
+        '🏰 Combine with Kastellet (star fortress) nearby',
+        '📸 Quick photo stop, don\'t plan long visit',
+        '🚲 Easy bike ride from city center'
+      ].join('\n'),
+      source: 'Copenhagen attractions'
+    }
+  });
+
+  // Nyhavn harbor
+  tasks.push({
+    id: 'nyhavn-harbor-family',
+    title: 'Plan Nyhavn Harbor Stroll and Boat Tour',
+    subtitle: 'Colorful houses perfect for photos, canal boat tours, family-friendly restaurants',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '🏠 Iconic colorful 17th-century houses',
+        '⛵ Canal boat tours start from here',
+        '☕ Outdoor cafés perfect for families',
+        '📸 Most photographed spot in Copenhagen'
+      ].join('\n'),
+      source: 'Copenhagen family activities'
+    }
+  });
+
+  // Danish pastry education
+  tasks.push({
+    id: 'danish-pastry-hunt',
+    title: 'Research Best Danish Pastry Shops',
+    subtitle: 'Kids love kanelsnegle (cinnamon rolls) and wienerbrød, avoid tourist traps',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'low',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '🥐 Kanelsnegle (cinnamon snails) perfect for kids',
+        '🧈 Real Danish pastry different from American "danish"',
+        '🏆 Best bakeries: Lagkagehuset, Andersen Bakery',
+        '☕ Pair with hot chocolate for kids'
+      ].join('\n'),
+      source: 'Copenhagen food culture'
+    }
+  });
+
+  // Experimentarium science museum
+  tasks.push({
+    id: 'experimentarium-science',
+    title: 'Plan Experimentarium Science Museum Visit',
+    subtitle: 'Interactive science museum perfect for curious kids, hands-on exhibits',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '🔬 Interactive science museum',
+        '👶 Great for kids 3+ who love hands-on learning',
+        '🚇 Easy metro access from city center',
+        '⏰ Plan 3-4 hours for full experience'
+      ].join('\n'),
+      source: 'Copenhagen family museums'
+    }
+  });
+
+  return tasks;
+}

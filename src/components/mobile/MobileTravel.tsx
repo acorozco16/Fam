@@ -5,8 +5,22 @@ import { Badge } from '../ui/badge';
 import { 
   Plane, Hotel, Car, MapPin, Clock, Users, 
   Plus, Edit3, Trash2, Calendar, Phone, 
-  AlertTriangle, CheckCircle, Compass
+  AlertTriangle, CheckCircle, Compass, Sparkles, User
 } from 'lucide-react';
+
+interface FamilyMember {
+  id: string;
+  name: string;
+  type: 'adult' | 'child';
+  age?: string;
+  relationship?: string;
+  interests?: string;
+  dietaryInfo?: string;
+  healthInfo?: string;
+  energyLevel?: string[];
+  activityPreferences?: string[];
+  sleepSchedule?: string;
+}
 
 interface MobileTravelProps {
   trip: any;
@@ -16,6 +30,8 @@ interface MobileTravelProps {
   onEditAccommodation: (accommodation: any, index: number) => void;
   onAddTransportation: () => void;
   onEditTransportation: (transport: any, index: number) => void;
+  familyProfiles?: FamilyMember[];
+  onOpenFamilyProfiles?: () => void;
 }
 
 export const MobileTravel: React.FC<MobileTravelProps> = ({ 
@@ -25,13 +41,63 @@ export const MobileTravel: React.FC<MobileTravelProps> = ({
   onAddAccommodation,
   onEditAccommodation,
   onAddTransportation,
-  onEditTransportation
+  onEditTransportation,
+  familyProfiles = [],
+  onOpenFamilyProfiles
 }) => {
   const [activeSection, setActiveSection] = useState<'flights' | 'accommodations' | 'transportation'>('flights');
 
   const flights = trip.flights || [];
   const accommodations = trip.accommodations || trip.hotels || [];
   const transportation = trip.transportation || [];
+
+  // Profile completeness calculation
+  const calculateProfileCompleteness = (profile: FamilyMember): number => {
+    const essentialFields = ['name', 'age', 'relationship'];
+    const detailedFields = ['interests', 'dietaryInfo', 'healthInfo', 'energyLevel', 'activityPreferences', 'sleepSchedule'];
+    
+    let score = 0;
+    let maxScore = 0;
+    
+    // Essential fields (60% weight)
+    essentialFields.forEach(field => {
+      maxScore += 60;
+      if (profile[field as keyof FamilyMember] && profile[field as keyof FamilyMember] !== '') {
+        score += 60;
+      }
+    });
+    
+    // Detailed fields (40% weight)
+    detailedFields.forEach(field => {
+      maxScore += 40;
+      const value = profile[field as keyof FamilyMember];
+      if (value && (Array.isArray(value) ? value.length > 0 : value !== '')) {
+        score += 40;
+      }
+    });
+    
+    return Math.round((score / maxScore) * 100);
+  };
+
+  const getProfileCompleteness = () => {
+    if (familyProfiles.length === 0) {
+      return { percentage: 0, canUnlockPersonalization: false, incompleteCount: 0 };
+    }
+    
+    const completenessScores = familyProfiles.map(calculateProfileCompleteness);
+    const averageCompleteness = Math.round(
+      completenessScores.reduce((sum, score) => sum + score, 0) / completenessScores.length
+    );
+    const incompleteCount = completenessScores.filter(score => score < 70).length;
+    
+    return {
+      percentage: averageCompleteness,
+      canUnlockPersonalization: averageCompleteness >= 70,
+      incompleteCount
+    };
+  };
+
+  const profileCompleteness = getProfileCompleteness();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -379,6 +445,45 @@ export const MobileTravel: React.FC<MobileTravelProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Profile Completion Prompt */}
+      {!profileCompleteness.canUnlockPersonalization && (
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b border-purple-200 px-4 py-4">
+          <div className="flex items-start space-x-3">
+            <div className="p-2 bg-purple-100 rounded-full">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-purple-900 mb-1">
+                Get Family-Optimized Travel Recommendations
+              </h3>
+              <p className="text-xs text-purple-700 mb-3">
+                Complete family profiles to unlock personalized travel suggestions based on family size, ages, accessibility needs, and travel preferences.
+              </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-xs text-purple-600">
+                  <User className="w-4 h-4" />
+                  <span>{profileCompleteness.percentage}% complete</span>
+                  {profileCompleteness.incompleteCount > 0 && (
+                    <span className="text-purple-500">
+                      • {profileCompleteness.incompleteCount} profiles need completion
+                    </span>
+                  )}
+                </div>
+                {onOpenFamilyProfiles && (
+                  <Button 
+                    onClick={onOpenFamilyProfiles}
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 text-xs"
+                  >
+                    Complete Profiles
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="p-4">

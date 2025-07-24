@@ -15,8 +15,11 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
     return <LoadingScreen />;
   }
 
-  // Skip auth requirement - let users use the app without signing in
-  // They can still sign in later if they want cloud sync
-  console.log('✅ Showing main app (auth optional)');
+  if (!isAuthenticated) {
+    console.log('🔐 User not authenticated, showing login screen');
+    return <LoginScreen />;
+  }
+
+  console.log('✅ User authenticated, showing main app');
   return <>{children}</>;
 };

@@ -1,15 +1,17 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBttEMyJ5vw9RGP6HuZh6aX1jeAKxr8eIU",
-  authDomain: "famapp-d7bf4.firebaseapp.com",
-  projectId: "famapp-d7bf4",
-  storageBucket: "famapp-d7bf4.firebasestorage.app",
-  messagingSenderId: "1047866984314",
-  appId: "1:1047866984314:web:51f2bcb0de89911e9278c3",
-  measurementId: "G-N239T49PQ0"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBttEMyJ5vw9RGP6HuZh6aX1jeAKxr8eIU",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "famapp-d7bf4.firebaseapp.com",
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://famapp-d7bf4-default-rtdb.firebaseio.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "famapp-d7bf4",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "famapp-d7bf4.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1047866984314",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1047866984314:web:51f2bcb0de89911e9278c3",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-N239T49PQ0"
 };
 
 // Initialize Firebase
@@ -29,6 +31,9 @@ setPersistence(auth, browserLocalPersistence)
 
 // Initialize Firestore
 export const db = getFirestore(app);
+
+// Initialize Real-time Database
+export const rtdb = getDatabase(app);
 
 // Initialize Google Auth Provider
 export const googleProvider = new GoogleAuthProvider();

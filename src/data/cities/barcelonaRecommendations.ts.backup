@@ -1,0 +1,144 @@
+/**
+ * Barcelona Family Travel Intelligence
+ * Beaches + culture, manageable size, great food
+ */
+
+export function generateBarcelonaTasks(familyProfile: any, daysUntilTrip: number) {
+  const tasks = [];
+  const kids = familyProfile.kids || [];
+  const hasToddler = kids.some((kid: any) => parseInt(kid.age) <= 4);
+
+  // Sagrada Familia with kids
+  tasks.push({
+    id: 'sagrada-familia-tickets',
+    title: 'Book Sagrada Familia Skip-the-Line Tickets',
+    subtitle: 'Gaudí\'s masterpiece - book 2+ months ahead, amazing for kids to see',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: daysUntilTrip <= 60,
+    isCustom: false,
+    priority: 'high',
+    daysBeforeTrip: 60,
+    intelligence: {
+      reasoning: [
+        '🏗️ Still under construction - kids love seeing cranes',
+        '🎫 Must book online 2+ months ahead - sells out',
+        '⛪ Choose tower access for amazing city views',
+        '👶 Stroller accessible, fascinating for all ages'
+      ].join('\n'),
+      source: 'Barcelona family attractions'
+    }
+  });
+
+  // Park Güell strategy
+  tasks.push({
+    id: 'park-guell-strategy',
+    title: 'Book Park Güell Early Morning Slot',
+    subtitle: 'Gaudí\'s whimsical park - early slots cooler and less crowded for families',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: daysUntilTrip <= 30,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 30,
+    intelligence: {
+      reasoning: [
+        '🦎 Famous mosaic lizard - kids love photos here',
+        '🌅 Book 8am slot - cooler and fewer crowds',
+        '🎨 Whimsical architecture kids find magical',
+        '👟 Lots of walking and stairs - bring comfortable shoes'
+      ].join('\n'),
+      source: 'Barcelona family attractions'
+    }
+  });
+
+  // Beach strategy
+  tasks.push({
+    id: 'barcelona-beach-plan',
+    title: 'Plan Beach Day at Barceloneta',
+    subtitle: 'City beach with playgrounds, restaurants, easy metro access - perfect for families',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '🏖️ Barceloneta Beach: closest to city center',
+        '🚇 Yellow Line (L4) direct to Barceloneta station',
+        '🏐 Beach volleyball courts and playgrounds',
+        '🍤 Beachfront restaurants with fresh seafood'
+      ].join('\n'),
+      source: 'Barcelona beach intelligence'
+    }
+  });
+
+  // Las Ramblas safety
+  tasks.push({
+    id: 'las-ramblas-safety',
+    title: 'Plan Las Ramblas Visit with Pickpocket Awareness',
+    subtitle: 'Famous pedestrian street - watch belongings, avoid street performers asking for money',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '🎭 Street performers entertaining but watch belongings',
+        '👜 Keep bags zipped and in front',
+        '🚫 Avoid anyone offering "free" bracelets or roses',
+        '🍎 Boquería Market great for family snacks'
+      ].join('\n'),
+      source: 'Barcelona safety intelligence'
+    }
+  });
+
+  // Metro with family
+  tasks.push({
+    id: 'barcelona-metro-family',
+    title: 'Get Barcelona Metro Family Pass',
+    subtitle: 'T-Familiar pass covers 8 trips for family, most stations elevator accessible',
+    category: 'travel',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 7,
+    intelligence: {
+      reasoning: [
+        '🎫 T-Familiar: 8 trips shared among family members',
+        '🛗 Most metro stations have elevators for strollers',
+        '🚇 Clean, safe, and efficient transport system',
+        '📱 TMB app shows real-time arrivals'
+      ].join('\n'),
+      source: 'Barcelona transport intelligence'
+    }
+  });
+
+  // Siesta planning
+  tasks.push({
+    id: 'barcelona-siesta-planning',
+    title: 'Plan Around Spanish Siesta (2-5pm)',
+    subtitle: 'Many shops close 2-5pm - plan indoor activities or beach time during siesta',
+    category: 'planning',
+    status: 'incomplete',
+    urgent: false,
+    isCustom: false,
+    priority: 'medium',
+    daysBeforeTrip: 14,
+    intelligence: {
+      reasoning: [
+        '😴 Traditional siesta 2-5pm - shops and restaurants close',
+        '🏖️ Perfect beach time when city center closes',
+        '🏛️ Museums usually stay open during siesta',
+        '🍽️ Late lunch 2-3pm, early dinner 8-9pm'
+      ].join('\n'),
+      source: 'Barcelona culture intelligence'
+    }
+  });
+
+  return tasks;
+}

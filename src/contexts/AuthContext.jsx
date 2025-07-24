@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, signInWithGoogle, signOutUser, handleRedirectResult } from '../firebase';
 import { tripService } from '../services/tripService';
+import { tripPersistenceService } from '../services/tripPersistenceService';
+import { errorReporter } from '../utils/errorReporting';
 
 const AuthContext = createContext();
 
@@ -56,8 +58,41 @@ export const AuthProvider = ({ children }) => {
           console.log('✅ Setting user data:', userData);
           setUser(userData);
           
-          // Auto-migrate local trips on first login - temporarily disabled
-          // await tripService.migrateLocalTrips(firebaseUser.uid);
+          // Set user ID for error reporting
+          errorReporter.setUserId(userData.uid);
+          
+          // Re-enabled Firebase trip sync with proper error handling
+          setTimeout(async () => {
+            try {
+              console.log('🔄 Syncing trips for authenticated user...');
+              
+              // Check if Firebase persistence is enabled via environment variable
+              const enableFirebasePersistence = import.meta.env.VITE_ENABLE_FIREBASE_PERSISTENCE !== 'false';
+              
+              if (enableFirebasePersistence) {
+                const syncedTrips = await tripPersistenceService.syncUserTrips(firebaseUser.uid);
+                console.log(`✅ Firebase trip sync completed. ${syncedTrips.length} trips available.`);
+                
+                // Broadcast synced trips to the app
+                window.dispatchEvent(new CustomEvent('tripsSynced', { 
+                  detail: { trips: syncedTrips, userId: firebaseUser.uid } 
+                }));
+              } else {
+                console.log('📱 Firebase persistence disabled, using localStorage fallback...');
+                const localTrips = JSON.parse(localStorage.getItem('famapp-trips') || '[]');
+                window.dispatchEvent(new CustomEvent('tripsSynced', { 
+                  detail: { trips: localTrips, userId: firebaseUser.uid } 
+                }));
+              }
+            } catch (error) {
+              console.error('❌ Error syncing trips, falling back to localStorage:', error);
+              // Always fallback to localStorage if Firebase fails
+              const localTrips = JSON.parse(localStorage.getItem('famapp-trips') || '[]');
+              window.dispatchEvent(new CustomEvent('tripsSynced', { 
+                detail: { trips: localTrips, userId: firebaseUser.uid } 
+              }));
+            }
+          }, 1500); // Increased delay to ensure Firebase is fully ready
         } else {
           console.log('❌ No firebase user, setting user to null');
           setUser(null);
